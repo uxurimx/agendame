@@ -1,8 +1,18 @@
-export default function ReportsPage() {
+import { getBusiness } from "@/lib/getBusiness";
+import { DailyReport } from "@/components/dashboard/DailyReport";
+
+export default async function ReportsPage() {
+  await getBusiness(); // guard de auth
+
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-2" style={{ color: "var(--fg)" }}>Reportes</h1>
-      <p style={{ color: "var(--fg-muted)" }}>Próximamente — corte de caja diario separado por profesional.</p>
+    <div className="dash-page">
+      <div className="dash-page-header">
+        <div>
+          <p className="dash-page-eyebrow">Finanzas</p>
+          <h1 className="dash-page-title">Corte de caja</h1>
+        </div>
+      </div>
+      <DailyReport />
     </div>
   );
 }

@@ -1,100 +1,117 @@
-import { auth } from "@clerk/nextjs/server";
-import { currentUser } from "@clerk/nextjs/server";
-import { LayoutDashboard, Users, Activity, ArrowUpRight } from "lucide-react";
+import { getBusiness } from "@/lib/getBusiness";
+import { db } from "@/db";
+import { appointments, clients } from "@/db/schema";
+import { eq, and, gte, count } from "drizzle-orm";
+import { AppointmentList } from "@/components/dashboard/AppointmentList";
+import type { AptItem } from "@/components/dashboard/AppointmentList";
+import { CalendarDays, Users, TrendingUp, ExternalLink } from "lucide-react";
+
+function today() {
+  return new Date().toISOString().split("T")[0];
+}
 
 export default async function OverviewPage() {
-  const { userId } = await auth();
-  const user = await currentUser();
+  const biz = await getBusiness();
+  const todayStr = today();
 
-  const greeting = user?.firstName ? `Welcome back, ${user.firstName}.` : "Welcome back.";
+  // Citas de hoy con joins
+  const todayApts = await db.query.appointments.findMany({
+    where: and(eq(appointments.businessId, biz.id), eq(appointments.date, todayStr)),
+    with:  { service: true, professional: true, client: true },
+    orderBy: (t, { asc }) => [asc(t.startTime)],
+  });
 
-  // Template stat cards — replace with real data from your modules
-  const stats = [
-    { label: "Total Users", value: "—", icon: Users, hint: "Connect your users table" },
-    { label: "Active Sessions", value: "—", icon: Activity, hint: "Wire up analytics" },
-    { label: "Events Today", value: "—", icon: LayoutDashboard, hint: "Add your events module" },
-  ];
+  // KPIs
+  const completedToday = todayApts.filter((a) => a.status === "completed");
+  const revenueToday   = completedToday.reduce((s, a) => s + Number(a.pricePaid ?? a.service?.price ?? 0), 0);
+
+  // Clientes nuevos este mes
+  const firstOfMonth = new Date();
+  firstOfMonth.setDate(1);
+  firstOfMonth.setHours(0, 0, 0, 0);
+  const [newClientsRow] = await db
+    .select({ value: count() })
+    .from(clients)
+    .where(and(eq(clients.businessId, biz.id), gte(clients.createdAt, firstOfMonth)));
+  const newClientsMonth = newClientsRow?.value ?? 0;
+
+  const bookingUrl = `https://www.agendame.mx/book/${biz.slug}`;
+
+  const apts = todayApts.map((a) => ({
+    id:            a.id,
+    startTime:     a.startTime,
+    endTime:       a.endTime,
+    status:        a.status,
+    pricePaid:     a.pricePaid,
+    paymentStatus: a.paymentStatus,
+    paymentMethod: a.paymentMethod ?? null,
+    notes:         a.notes,
+    service:       a.service ? { name: a.service.name, price: a.service.price } : null,
+    professional:  a.professional ? { name: a.professional.name } : null,
+    client:        a.client ? { name: a.client.name, phone: a.client.phone } : null,
+  })) satisfies AptItem[];
 
   return (
-    <div className="p-8 max-w-5xl">
-      {/* Page header */}
-      <div className="mb-10">
-        <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "var(--fg-muted)" }}>
-          Dashboard
-        </p>
-        <h1 className="font-outfit font-bold text-3xl" style={{ color: "var(--fg)" }}>
-          {greeting}
-        </h1>
-        <p className="mt-1 text-sm" style={{ color: "var(--fg-muted)" }}>
-          Your admin panel is ready. Start building your modules below.
-        </p>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
-        {stats.map(({ label, value, icon: Icon, hint }) => (
-          <div
-            key={label}
-            className="p-5 rounded-2xl border"
-            style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--fg-muted)" }}>
-                {label}
-              </span>
-              <div className="p-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
-                <Icon className="w-3.5 h-3.5 text-indigo-500" />
-              </div>
-            </div>
-            <p className="font-outfit font-bold text-3xl mb-1" style={{ color: "var(--fg)" }}>{value}</p>
-            <p className="text-xs" style={{ color: "var(--fg-muted)" }}>{hint}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Getting started */}
-      <div
-        className="p-6 rounded-2xl border"
-        style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
-      >
-        <h2 className="font-outfit font-bold text-lg mb-4" style={{ color: "var(--fg)" }}>
-          Getting Started
-        </h2>
-        <div className="space-y-3">
-          {[
-            {
-              step: "1",
-              title: "Update site config",
-              desc: "Edit src/config/site.ts to set your app name and description.",
-            },
-            {
-              step: "2",
-              title: "Extend the database schema",
-              desc: "Add your tables to src/db/schema.ts and run npm run db:push.",
-            },
-            {
-              step: "3",
-              title: "Add your modules",
-              desc: "Create new routes under src/app/(dashboard)/ and add them to the SideNav.",
-            },
-          ].map(({ step, title, desc }) => (
-            <div
-              key={step}
-              className="flex items-start gap-4 p-4 rounded-xl border"
-              style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-2)" }}
-            >
-              <span
-                className="w-6 h-6 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-xs font-bold text-indigo-500 flex-shrink-0 mt-0.5"
-              >
-                {step}
-              </span>
-              <div>
-                <p className="text-sm font-semibold mb-0.5" style={{ color: "var(--fg)" }}>{title}</p>
-                <p className="text-xs" style={{ color: "var(--fg-muted)" }}>{desc}</p>
-              </div>
-            </div>
-          ))}
+    <div className="dash-page">
+      {/* Header */}
+      <div className="dash-page-header">
+        <div>
+          <p className="dash-page-eyebrow">Agenda</p>
+          <h1 className="dash-page-title">Hoy · {new Date().toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" })}</h1>
         </div>
+        <a href={bookingUrl} target="_blank" rel="noopener noreferrer" className="dash-btn-secondary">
+          <ExternalLink size={15} /> Ver mi página
+        </a>
+      </div>
+
+      {/* KPIs */}
+      <div className="dash-kpi-grid">
+        <div className="dash-kpi-card">
+          <div className="dash-kpi-icon" style={{ background: "#6E2A9618" }}>
+            <CalendarDays size={20} style={{ color: "#6E2A96" }} />
+          </div>
+          <div>
+            <p className="dash-kpi-val">{todayApts.length}</p>
+            <p className="dash-kpi-label">Citas hoy</p>
+          </div>
+        </div>
+        <div className="dash-kpi-card">
+          <div className="dash-kpi-icon" style={{ background: "#3E7C7418" }}>
+            <TrendingUp size={20} style={{ color: "#3E7C74" }} />
+          </div>
+          <div>
+            <p className="dash-kpi-val">${revenueToday.toLocaleString("es-MX")}</p>
+            <p className="dash-kpi-label">Ingresos del día</p>
+          </div>
+        </div>
+        <div className="dash-kpi-card">
+          <div className="dash-kpi-icon" style={{ background: "#E8631F18" }}>
+            <Users size={20} style={{ color: "#E8631F" }} />
+          </div>
+          <div>
+            <p className="dash-kpi-val">{newClientsMonth}</p>
+            <p className="dash-kpi-label">Nuevas clientas este mes</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Citas */}
+      <div className="dash-section">
+        <div className="svc-header">
+          <h2 className="dash-section-title">Citas de hoy</h2>
+          <span className="dash-pill">
+            {completedToday.length}/{todayApts.length} completadas
+          </span>
+        </div>
+        <AppointmentList appointments={apts} />
+      </div>
+
+      {/* Link de reservas */}
+      <div className="dash-booking-link-card">
+        <p className="dash-booking-link-label">Tu link de reservas</p>
+        <a href={bookingUrl} target="_blank" rel="noopener noreferrer" className="dash-booking-url">
+          agendame.mx/book/{biz.slug}
+        </a>
       </div>
     </div>
   );

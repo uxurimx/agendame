@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { appointments, clients, professionals, services } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, gte, count } from "drizzle-orm";
 import { addMinutes, generateSlots } from "@/lib/time";
 
 const schema = z.object({
   businessId:     z.string().uuid(),
-  professionalId: z.string(), // UUID o "any"
+  professionalId: z.string(),
   serviceId:      z.string().uuid(),
   date:           z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   startTime:      z.string().regex(/^\d{2}:\d{2}$/),
@@ -15,12 +15,34 @@ const schema = z.object({
   clientPhone:    z.string().min(8).max(20),
   clientEmail:    z.string().email().optional().or(z.literal("")),
   notes:          z.string().max(500).optional(),
+  _hp:            z.string().optional(), // honeypot
 });
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const data = schema.parse(body);
+
+    // Honeypot: si el campo oculto tiene contenido, es un bot — responder ok falso
+    if (data._hp) return NextResponse.json({ ok: true, appointmentId: "x" });
+
+    // Rate limit: máx 3 reservas por teléfono por negocio en 24 horas
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const [rateRow] = await db
+      .select({ n: count() })
+      .from(appointments)
+      .innerJoin(clients, eq(appointments.clientId, clients.id))
+      .where(and(
+        eq(clients.phone, data.clientPhone),
+        eq(appointments.businessId, data.businessId),
+        gte(appointments.createdAt, since),
+      ));
+    if ((rateRow?.n ?? 0) >= 3) {
+      return NextResponse.json(
+        { error: "Límite de reservas alcanzado. Contáctanos directamente." },
+        { status: 429 }
+      );
+    }
 
     // Obtener servicio para duración y precio
     const service = await db.query.services.findFirst({

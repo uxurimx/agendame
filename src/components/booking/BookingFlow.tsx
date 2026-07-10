@@ -204,6 +204,7 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
   const [clientPhone, setClientPhone] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [notes,       setNotes]       = useState("");
+  const [_hp,         setHp]          = useState(""); // honeypot: humanos nunca lo llenan
 
   // Cargar slots cuando fecha / profesional cambian
   const loadSlots = useCallback(async () => {
@@ -252,6 +253,7 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
           clientPhone:    clientPhone.trim(),
           clientEmail:    clientEmail.trim(),
           notes:          notes.trim(),
+          _hp,
         }),
       });
       const data = await res.json();
@@ -486,6 +488,10 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
                   rows={3}
                 />
               </label>
+              {/* honeypot: invisible para humanos, atrae bots */}
+              <div aria-hidden="true" style={{ position: "absolute", left: "-9999px", width: 0, height: 0, overflow: "hidden" }}>
+                <input tabIndex={-1} autoComplete="off" value={_hp} onChange={(e) => setHp(e.target.value)} />
+              </div>
             </div>
             {error && <p className="bk-error">{error}</p>}
           </div>

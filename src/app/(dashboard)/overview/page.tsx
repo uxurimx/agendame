@@ -1,10 +1,11 @@
 import { getBusiness } from "@/lib/getBusiness";
 import { db } from "@/db";
-import { appointments, clients } from "@/db/schema";
+import { appointments, clients, professionals } from "@/db/schema";
 import { eq, and, gte, count } from "drizzle-orm";
 import { AppointmentList } from "@/components/dashboard/AppointmentList";
 import type { AptItem } from "@/components/dashboard/AppointmentList";
-import { CalendarDays, Users, TrendingUp, ExternalLink } from "lucide-react";
+import { CalendarDays, Users, TrendingUp, ExternalLink, AlertTriangle } from "lucide-react";
+import Link from "next/link";
 
 function today() {
   return new Date().toISOString().split("T")[0];
@@ -13,6 +14,13 @@ function today() {
 export default async function OverviewPage() {
   const biz = await getBusiness();
   const todayStr = today();
+
+  // Verificar si el negocio tiene profesionales activos
+  const [prosRow] = await db
+    .select({ n: count() })
+    .from(professionals)
+    .where(and(eq(professionals.businessId, biz.id), eq(professionals.isActive, true)));
+  const hasTeam = (prosRow?.n ?? 0) > 0;
 
   // Citas de hoy con joins
   const todayApts = await db.query.appointments.findMany({
@@ -63,6 +71,18 @@ export default async function OverviewPage() {
           <ExternalLink size={15} /> Ver mi página
         </a>
       </div>
+
+      {/* Banner: sin equipo → booking no funciona */}
+      {!hasTeam && (
+        <Link href="/settings" className="dash-alert-banner">
+          <AlertTriangle size={18} style={{ flexShrink: 0 }} />
+          <div>
+            <strong>Tu página de reservas no está lista.</strong>
+            <span> Agrégate como profesional en Ajustes para que tus clientes puedan agendar.</span>
+          </div>
+          <span className="dash-alert-cta">Ir a Ajustes →</span>
+        </Link>
+      )}
 
       {/* KPIs */}
       <div className="dash-kpi-grid">

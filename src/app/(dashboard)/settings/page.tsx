@@ -1,68 +1,104 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { UserButton } from "@clerk/nextjs";
 import ThemeToggle from "@/components/ThemeToggle";
+import { getBusiness } from "@/lib/getBusiness";
+import { db } from "@/db";
+import { professionals } from "@/db/schema";
+import { eq, asc } from "drizzle-orm";
+import { TeamManager } from "@/components/dashboard/TeamManager";
+import type { ProItem } from "@/components/dashboard/TeamManager";
 
 export default async function SettingsPage() {
   const user = await currentUser();
+  const biz  = await getBusiness();
+
+  const pros = await db.query.professionals.findMany({
+    where:   eq(professionals.businessId, biz.id),
+    orderBy: [asc(professionals.isActive), asc(professionals.name)],
+  });
+
+  const team = pros.map((p) => ({
+    id:              p.id,
+    name:            p.name,
+    phone:           p.phone,
+    email:           p.email,
+    bio:             p.bio,
+    commissionType:  p.commissionType,
+    commissionValue: p.commissionValue,
+    isActive:        p.isActive,
+  })) satisfies ProItem[];
 
   return (
-    <div className="p-8 max-w-2xl">
-      {/* Page header */}
-      <div className="mb-10">
-        <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "var(--fg-muted)" }}>
-          Admin
-        </p>
-        <h1 className="font-outfit font-bold text-3xl" style={{ color: "var(--fg)" }}>
-          Settings
-        </h1>
-        <p className="mt-1 text-sm" style={{ color: "var(--fg-muted)" }}>
-          Manage your account and application preferences.
-        </p>
+    <div className="dash-page">
+      <div className="dash-page-header">
+        <div>
+          <p className="dash-page-eyebrow">Configuración</p>
+          <h1 className="dash-page-title">Ajustes</h1>
+        </div>
       </div>
 
-      {/* Account */}
-      <section className="mb-6">
-        <h2 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--fg-muted)" }}>
-          Account
-        </h2>
-        <div
-          className="p-5 rounded-2xl border flex items-center gap-4"
-          style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
-        >
-          <UserButton
-            appearance={{
-              elements: { userButtonAvatarBox: "w-12 h-12 rounded-xl" },
-            }}
-          />
+      {/* Negocio info */}
+      <div className="settings-card" style={{ marginBottom: "1.5rem" }}>
+        <h3 className="settings-section-label">Tu negocio</h3>
+        <div className="settings-row">
+          <span className="settings-key">Nombre</span>
+          <span className="settings-val">{biz.name}</span>
+        </div>
+        <div className="settings-row">
+          <span className="settings-key">Tipo</span>
+          <span className="settings-val" style={{ textTransform: "capitalize" }}>{biz.type}</span>
+        </div>
+        <div className="settings-row">
+          <span className="settings-key">Slug</span>
+          <span className="settings-val" style={{ fontFamily: "monospace", color: "var(--l-berry)" }}>
+            agendame.mx/book/{biz.slug}
+          </span>
+        </div>
+        <div className="settings-row" style={{ border: "none" }}>
+          <span className="settings-key">Plan</span>
+          <span className="settings-val" style={{ textTransform: "capitalize" }}>
+            {biz.plan} · {biz.planStatus}
+            {biz.trialEndsAt && biz.planStatus === "trial" && (
+              <span style={{ color: "#E8631F", marginLeft: ".5rem", fontSize: ".75rem" }}>
+                (trial hasta {new Date(biz.trialEndsAt).toLocaleDateString("es-MX")})
+              </span>
+            )}
+          </span>
+        </div>
+      </div>
+
+      {/* Equipo */}
+      <div className="settings-card" style={{ marginBottom: "1.5rem" }}>
+        <TeamManager professionals={team} />
+      </div>
+
+      {/* Cuenta */}
+      <div className="settings-card" style={{ marginBottom: "1.5rem" }}>
+        <h3 className="settings-section-label">Cuenta</h3>
+        <div style={{ display: "flex", alignItems: "center", gap: ".875rem", padding: ".5rem 0" }}>
+          <UserButton appearance={{ elements: { userButtonAvatarBox: "w-10 h-10 rounded-xl" } }} />
           <div>
-            <p className="font-semibold text-sm" style={{ color: "var(--fg)" }}>
+            <p style={{ fontWeight: 600, fontSize: ".9rem", color: "var(--fg)" }}>
               {user?.firstName} {user?.lastName}
             </p>
-            <p className="text-xs mt-0.5" style={{ color: "var(--fg-muted)" }}>
+            <p style={{ fontSize: ".78rem", color: "var(--fg-muted)" }}>
               {user?.primaryEmailAddress?.emailAddress}
             </p>
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* Appearance */}
-      <section>
-        <h2 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--fg-muted)" }}>
-          Appearance
-        </h2>
-        <div
-          className="p-5 rounded-2xl border flex items-center justify-between"
-          style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
-        >
+      {/* Apariencia */}
+      <div className="settings-card">
+        <h3 className="settings-section-label">Apariencia</h3>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: ".5rem 0" }}>
           <div>
-            <p className="font-semibold text-sm" style={{ color: "var(--fg)" }}>Theme</p>
-            <p className="text-xs mt-0.5" style={{ color: "var(--fg-muted)" }}>
-              Toggle between light and dark mode.
-            </p>
+            <p style={{ fontWeight: 600, fontSize: ".9rem", color: "var(--fg)" }}>Tema</p>
+            <p style={{ fontSize: ".78rem", color: "var(--fg-muted)" }}>Modo claro u oscuro</p>
           </div>
           <ThemeToggle />
         </div>
-      </section>
+      </div>
     </div>
   );
 }

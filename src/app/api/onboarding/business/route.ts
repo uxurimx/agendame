@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { db } from "@/db";
-import { users, businesses } from "@/db/schema";
+import { users, businesses, professionals } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 const schema = z.object({
@@ -72,6 +72,18 @@ export async function POST(req: NextRequest) {
         trialEndsAt,
       })
       .returning({ id: businesses.id });
+
+    // Auto-crear al dueño como profesional (necesario para que el motor de slots funcione)
+    const ownerName = clerkUser
+      ? `${clerkUser.firstName ?? ""} ${clerkUser.lastName ?? ""}`.trim() || data.name
+      : data.name;
+    await db.insert(professionals).values({
+      businessId:      created.id,
+      name:            ownerName,
+      phone:           data.phone ?? null,
+      commissionType:  "percentage",
+      commissionValue: "0",
+    });
 
     return NextResponse.json({ businessId: created.id, slug: data.slug });
   } catch (err) {

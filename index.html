@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agéndame — Agenda de citas fácil para manicuristas, lashistas, barberos y estéticas</title>
+<meta name="description" content="Agéndame es la forma fácil de agendar citas para manicuristas, lashistas, barberos y estéticas en México, sin necesitar experiencia en tecnología. Bloqueo automático de horario, historial de clientas, equipo con comisiones, caja diaria y pagos en línea. Prueba gratis 3 días.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://www.agendame.mx/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Agéndame">
+<meta property="og:title" content="Agéndame — Agenda tus citas, sin caos de WhatsApp">
+<meta property="og:description" content="La forma fácil de agendar citas para manicuristas, lashistas, barberos y estéticas. Sin necesitar experiencia en tecnología. Prueba gratis 3 días.">
+<meta property="og:url" content="https://www.agendame.mx/">
+<meta property="og:locale" content="es_MX">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Agéndame — Agenda tus citas, sin caos de WhatsApp">
+<meta name="twitter:description" content="La forma fácil de agendar citas para manicuristas, lashistas, barberos y estéticas en México. Prueba gratis 3 días.">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Agéndame",
+  "url": "https://www.agendame.mx/",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web, PWA (instalable en iOS y Android)",
+  "description": "Sistema de citas online para manicuristas, lashistas, estilistas, barberos y estéticas en México. Incluye bloqueo automático de horario según duración del servicio, historial de clientas con fotos de referencia, notificaciones, corte de caja diario, pagos en línea y programa de fidelidad.",
+  "inLanguage": "es-MX",
+  "audience": {
+    "@type": "Audience",
+    "audienceType": "Manicuristas, lashistas, estilistas, barberos y profesionales de estética independientes"
+  },
+  "offers": [
+    {
+      "@type": "Offer",
+      "name": "Plan Básico",
+      "price": "299",
+      "priceCurrency": "MXN",
+      "description": "Hasta 2 profesionales en el equipo. Agenda con bloqueo automático, link de reservas, notificaciones, historial de clientas y corte de caja diario. Sin fidelidad ni pagos en línea.",
+      "eligibleDuration": { "@type": "QuantitativeValue", "value": "1", "unitCode": "MON" }
+    },
+    {
+      "@type": "Offer",
+      "name": "Plan Pro",
+      "price": "399",
+      "priceCurrency": "MXN",
+      "description": "Equipo de 3 profesionales o más, con comisión configurable por persona. Todo lo del Plan Básico, más programa de fidelidad y pagos en línea al confirmar la cita.",
+      "eligibleDuration": { "@type": "QuantitativeValue", "value": "1", "unitCode": "MON" }
+    },
+    {
+      "@type": "Offer",
+      "name": "Plan Multisucursal",
+      "price": "749",
+      "priceCurrency": "MXN",
+      "description": "Para negocios con 2 o más sucursales y profesionales ilimitadas. Incluye panel unificado o vistas separadas por sucursal, pagos en línea en todas las sucursales y todo lo del Plan Pro.",
+      "eligibleDuration": { "@type": "QuantitativeValue", "value": "1", "unitCode": "MON" }
+    }
+  ],
+  "sameAs": ["https://www.instagram.com/agendamemx"]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "¿Qué es Agéndame?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Agéndame es un sistema de citas online pensado para manicuristas, lashistas, estilistas, barberos y profesionales de estética en México. Organiza la agenda, bloquea el tiempo automáticamente según la duración de cada servicio y avisa cuando alguien agenda." }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Necesito saber de tecnología para usar Agéndame?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No. Agéndame está diseñado para emprendedoras y profesionales sin experiencia técnica, con una agenda simple tipo lista, sin cuadrículas complicadas ni configuración avanzada." }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Agéndame sirve para barberías y estéticas, o solo para manicuristas?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Sirve para cualquier negocio de servicios por cita: manicuristas, lashistas, estilistas, barberos y estéticas." }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Cuánto cuesta Agéndame?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Agéndame tiene tres planes: Plan Básico $299 al mes, Plan Pro $399 al mes con fidelidad y pagos en línea, y Plan Multisucursal $749 al mes para negocios con 2 o más sucursales. Los tres incluyen 3 días de prueba gratis." }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Puedo cancelar mi suscripción a Agéndame cuando quiera?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Sí. Ningún plan de Agéndame tiene contrato forzoso, y se puede cancelar en cualquier momento." }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Cómo pagan mis clientas en línea con Agéndame?",
+      "acceptedAnswer": { "@type": "Answer", "text": "El Plan Pro y el Plan Multisucursal incluyen pagos en línea al momento de confirmar la cita, para reducir cancelaciones de última hora." }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Puedo tener el link con el nombre de mi negocio solamente?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Sí. Desde la misma plataforma se levanta una solicitud de compra, se ve el costo y se paga ahí mismo, sin trámites externos." }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Agéndame permite varias trabajadoras y separar sus comisiones?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Sí. Cada profesional del equipo se da de alta con su propia comisión, por porcentaje o monto fijo, y el corte de caja diario separa automáticamente cuánto generó cada una." }
+    }
+  ]
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F5FA;
+    --ink: #1A1420;
+    --ink-soft: #6b6270;
+    --berry: #6E2A96;
+    --berry-dark: #4B1D68;
+    --gold: #E8631F;
+    --rose: #EFE6F5;
+    --rose-accent: #E8631F;
+    --sage: #3E7C74;
+    --white: #FFFFFF;
+    --line: rgba(26,20,32,0.13);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, .display { font-family: 'Fraunces', serif; font-weight: 500; margin: 0; }
+  p { margin: 0; line-height: 1.55; }
+  a { color: inherit; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  .eyebrow {
+    font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--berry); font-weight: 600; margin-bottom: 14px; display: block;
+  }
+  button, .btn {
+    font-family: 'Inter', sans-serif; font-weight: 600; font-size: 15px;
+    border: none; cursor: pointer; border-radius: 999px; padding: 14px 28px;
+    display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .btn-primary { background: linear-gradient(135deg, var(--berry), var(--gold)); color: var(--white); }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(110,42,150,0.30); }
+  .btn-ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--line); }
+  :focus-visible { outline: 2px solid var(--berry); outline-offset: 3px; }
+
+  /* ticket shape — the signature element */
+  .ticket {
+    position: relative;
+    background: var(--white);
+    border-radius: 20px;
+    box-shadow: 0 24px 48px rgba(36,26,34,0.10);
+  }
+  .ticket::before, .ticket::after {
+    content: ''; position: absolute; top: 50%; transform: translateY(-50%);
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--notch, var(--bg));
+  }
+  .ticket::before { left: -13px; }
+  .ticket::after { right: -13px; }
+  .ticket-split { display: flex; }
+  .ticket-main { flex: 1; padding: 26px 28px; }
+  .ticket-stub {
+    width: 128px; flex-shrink: 0; padding: 26px 16px;
+    border-left: 2px dashed var(--line);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; gap: 6px;
+  }
+
+  /* nav */
+  nav { padding: 24px 0; }
+  nav .wrap { display: flex; align-items: center; justify-content: space-between; }
+  .logo-mark { display: inline-flex; align-items: center; gap: 9px; }
+  .logo-mark svg { width: 26px; height: 26px; flex-shrink: 0; }
+  .logo { font-size: 21px; font-style: italic; }
+  .logo span { color: var(--rose-accent); }
+
+  /* hero */
+  .hero { padding: 40px 0 90px; }
+  .hero .wrap { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center; }
+  .hero h1 { font-size: 46px; line-height: 1.08; letter-spacing: -0.01em; }
+  .hero h1 em { color: var(--berry); font-style: italic; }
+  .hero .sub { font-size: 17px; color: var(--ink-soft); margin: 22px 0 30px; max-width: 440px; }
+  .hero-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .hero-note { font-size: 13px; color: var(--ink-soft); }
+  .hero-visual { --notch: var(--bg); transform: rotate(-3deg); }
+  .hero-visual .ticket-main p.name { font-size: 17px; font-weight: 600; }
+  .hero-visual .ticket-main p.service { font-size: 14px; color: var(--ink-soft); margin-top: 4px; }
+  .hero-visual .ticket-main p.time { font-size: 13px; color: var(--ink-soft); margin-top: 14px; }
+  .status-pill {
+    display: inline-block; margin-top: 16px; font-size: 12px; font-weight: 600;
+    background: rgba(79,120,105,0.14); color: var(--sage); padding: 4px 12px; border-radius: 999px;
+  }
+  .hero-visual .price { font-family: 'Fraunces', serif; font-size: 22px; }
+  .hero-visual .stub-label { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+  #ticket-content { transition: opacity 0.3s ease; }
+  .carousel-dots { display: flex; justify-content: center; gap: 8px; margin-top: 20px; }
+  .carousel-dots .dot {
+    width: 8px; height: 8px; padding: 0; border-radius: 50%; border: none;
+    background: var(--line); cursor: pointer;
+  }
+  .carousel-dots .dot.active { background: var(--berry); width: 20px; border-radius: 4px; }
+
+  /* problem */
+  .problem { padding: 70px 0; border-top: 1px solid var(--line); }
+  .problem-head { max-width: 560px; margin-bottom: 40px; }
+  .problem-head h2 { font-size: 32px; }
+  .problem-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .problem-card {
+    background: var(--rose); border-radius: 16px; padding: 26px 24px;
+    font-size: 15px; line-height: 1.5;
+  }
+  .problem-tail { margin-top: 36px; font-family: 'Fraunces', serif; font-style: italic; font-size: 20px; color: var(--berry); }
+
+  /* features */
+  .features { padding: 70px 0; }
+  .features-head { max-width: 560px; margin-bottom: 40px; }
+  .features-head h2 { font-size: 32px; }
+  .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .feature-card {
+    background: var(--white); border: 1px solid var(--line); border-radius: 16px; padding: 26px;
+  }
+  .feature-card .tag {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: var(--gold);
+    display: block; margin-bottom: 12px;
+  }
+  .feature-card p { font-size: 15px; color: var(--ink-soft); }
+
+  /* how it works */
+  .how { padding: 70px 0; border-top: 1px solid var(--line); }
+  .how-head { max-width: 560px; margin-bottom: 44px; }
+  .how-head h2 { font-size: 32px; }
+  .how-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .how-step { --notch: var(--bg); }
+  .how-step .ticket-main { padding: 22px 22px 26px; }
+  .how-step .stub-tag {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: var(--berry);
+    display: block; margin-bottom: 10px;
+  }
+  .how-step p.desc { font-size: 14.5px; color: var(--ink-soft); }
+
+  /* pricing */
+  .pricing { padding: 70px 0 90px; border-top: 1px solid var(--line); }
+  .pricing-head { text-align: center; max-width: 520px; margin: 0 auto 46px; }
+  .pricing-head h2 { font-size: 34px; }
+  .price-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .price-card {
+    --notch: var(--bg);
+    position: relative;
+  }
+  .price-card.pro { --notch: var(--rose); }
+  .price-card .ticket-main { padding: 26px 22px; }
+  .ribbon {
+    position: absolute; top: -12px; left: 30px;
+    background: var(--sage); color: var(--white); font-size: 11.5px; font-weight: 600;
+    padding: 5px 14px; border-radius: 999px;
+  }
+  .badge-pro {
+    position: absolute; top: -12px; right: 30px;
+    background: var(--gold); color: var(--white); font-size: 11.5px; font-weight: 600;
+    padding: 5px 14px; border-radius: 999px;
+  }
+  .price-card.pro .ticket-main { background: var(--rose); }
+  .price-card.pro .ticket-stub { background: var(--rose); }
+  .plan-name { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); font-weight: 600; }
+  .plan-price { font-size: 34px; margin: 10px 0 4px; }
+  .plan-price sup { font-size: 16px; font-weight: 500; }
+  .plan-cycle { font-size: 13px; color: var(--ink-soft); margin-bottom: 22px; display: block; }
+  .plan-list { list-style: none; margin: 0 0 24px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .plan-list li { font-size: 14.5px; padding-left: 22px; position: relative; }
+  .plan-list li::before { content: '✓'; position: absolute; left: 0; color: var(--sage); font-weight: 700; }
+  .price-card .ticket-stub { justify-content: center; }
+  .price-card .ticket-stub span.days { font-family: 'Fraunces', serif; font-size: 30px; }
+  .price-card .ticket-stub span.days-label { font-size: 11px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.06em; }
+
+  footer { padding: 40px 0 50px; border-top: 1px solid var(--line); }
+  footer .wrap { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+  footer p { font-size: 13px; color: var(--ink-soft); }
+  footer a.ig { font-weight: 600; color: var(--rose-accent); text-decoration: none; }
+
+  /* faq */
+  .faq { padding: 20px 0 90px; }
+  .faq-list { display: flex; flex-direction: column; gap: 10px; max-width: 720px; }
+  .faq-item {
+    background: var(--white); border: 1px solid var(--line); border-radius: 14px; padding: 4px 22px;
+  }
+  .faq-item summary {
+    padding: 16px 0; font-size: 15.5px; font-weight: 600; cursor: pointer; list-style: none;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-item summary::after { content: '+'; font-size: 20px; color: var(--berry); font-weight: 400; }
+  .faq-item[open] summary::after { content: '–'; }
+  .faq-item p { font-size: 14.5px; color: var(--ink-soft); padding-bottom: 18px; max-width: 600px; }
+
+  @media (max-width: 860px) {
+    .hero .wrap { grid-template-columns: 1fr; }
+    .hero-visual { justify-self: center; max-width: 380px; transform: rotate(-2deg); }
+    .problem-grid, .feature-grid, .how-row, .price-grid { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 34px; }
+    .ticket-split { flex-direction: column; }
+    .ticket-stub { width: 100%; border-left: none; border-top: 2px dashed var(--line); flex-direction: row; justify-content: space-between; padding: 14px 24px; }
+    .ticket::before, .ticket::after { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <span class="logo-mark">
+      <img src="agendame-icon.png" alt="Agéndame" style="height:32px;width:auto">
+      <span class="logo">agénda<span>me</span></span>
+    </span>
+    <a href="#precios" class="btn btn-primary">Prueba gratis 3 días</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div>
+      <span class="eyebrow">Para manicuristas, estilistas, barberos y lashistas</span>
+      <h1>Tu agenda, sin <em>caos de WhatsApp.</em></h1>
+      <p class="sub">Agéndame organiza tus citas, bloquea tu tiempo según lo que dura cada servicio y avisa a tus clientas — todo desde un link que tú compartes.</p>
+      <div class="hero-actions">
+        <a href="#precios" class="btn btn-primary">Empezar prueba gratis</a>
+        <a href="#como-funciona" class="btn btn-ghost">Ver cómo funciona</a>
+      </div>
+      <p class="hero-note" style="margin-top:18px">3 días gratis · sin tarjeta · cancela cuando quieras</p>
+    </div>
+
+    <div class="ticket hero-visual" aria-label="Ejemplos de citas confirmadas en Agéndame, rotando entre distintos tipos de servicio">
+      <div class="ticket-split" id="ticket-content">
+        <div class="ticket-main">
+          <p class="name" id="t-name">Estefanía Duarte</p>
+          <p class="service" id="t-service">Aplicación gelish</p>
+          <p class="time" id="t-time">2 de julio · 9:00 am</p>
+          <span class="status-pill" id="t-status">Confirmada</span>
+        </div>
+        <div class="ticket-stub">
+          <span class="stub-label">Total</span>
+          <span class="price" id="t-price">$150</span>
+        </div>
+      </div>
+    </div>
+    <div class="carousel-dots" role="tablist" aria-label="Seleccionar ejemplo de cita">
+      <button class="dot active" onclick="showTicket(0)" aria-label="Ver cita 1"></button>
+      <button class="dot" onclick="showTicket(1)" aria-label="Ver cita 2"></button>
+      <button class="dot" onclick="showTicket(2)" aria-label="Ver cita 3"></button>
+      <button class="dot" onclick="showTicket(3)" aria-label="Ver cita 4"></button>
+    </div>
+  </div>
+</header>
+
+<section class="problem">
+  <div class="wrap">
+    <div class="problem-head">
+      <span class="eyebrow">El problema de siempre</span>
+      <h2>Agendar por WhatsApp funciona… hasta que no.</h2>
+    </div>
+    <div class="problem-grid">
+      <div class="problem-card">Se te cruzan dos citas en el chat y una clienta llega sin espacio.</div>
+      <div class="problem-card">Pierdes el mensaje con la foto del diseño que te pidieron.</div>
+      <div class="problem-card">Al final del día no sabes si lo que cobraste cuadra con lo agendado.</div>
+    </div>
+    <p class="problem-tail">Agéndame resuelve los tres.</p>
+  </div>
+</section>
+
+<section class="features">
+  <div class="wrap">
+    <div class="features-head">
+      <span class="eyebrow">Qué incluye</span>
+      <h2>Todo lo que ya haces a mano, ahora en un solo lugar.</h2>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <span class="tag">AGENDA</span>
+        <h3 style="font-size:17px;margin:0 0 8px">Agenda visual por bloques</h3>
+        <p>Ve tu día en una lista simple: qué está ocupado, qué está libre y cuánto dura cada cita — sin cuadrículas complicadas.</p>
+      </div>
+      <div class="feature-card">
+        <span class="tag">CLIENTAS</span>
+        <h3 style="font-size:17px;margin:0 0 8px">Historial de clientas</h3>
+        <p>El historial de cada clienta, con sus diseños y fotos anteriores, listo antes de que llegue a su cita.</p>
+      </div>
+      <div class="feature-card">
+        <span class="tag">CAJA</span>
+        <h3 style="font-size:17px;margin:0 0 8px">Corte de caja diario</h3>
+        <p>Un corte automático al final del día que te dice si lo cobrado cuadra con lo que agendaste.</p>
+      </div>
+      <div class="feature-card">
+        <span class="tag">AVISOS</span>
+        <h3 style="font-size:17px;margin:0 0 8px">Notificaciones al instante</h3>
+        <p>Te llega una notificación cada vez que alguien agenda, cancela o está por llegar.</p>
+      </div>
+      <div class="feature-card">
+        <span class="tag">EQUIPO</span>
+        <h3 style="font-size:17px;margin:0 0 8px">Trabaja en equipo</h3>
+        <p>Tus clientas eligen "cualquiera disponible" o una profesional específica. Tú defines la comisión de cada una y el corte del día se separa solo, por persona.</p>
+      </div>
+      <div class="feature-card">
+        <span class="tag">FIDELIDAD (OPCIONAL)</span>
+        <h3 style="font-size:17px;margin:0 0 8px">Programa de fidelidad</h3>
+        <p>Actívalo cuando quieras premiar a tus clientas frecuentes con descuentos o visitas de regalo. Tú decides si lo usas o no.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="como-funciona">
+  <div class="wrap">
+    <div class="how-head">
+      <span class="eyebrow">Cómo funciona</span>
+      <h2>Tres pasos, como llenar un ticket de cita.</h2>
+    </div>
+    <div class="how-row">
+      <div class="ticket how-step">
+        <div class="ticket-main">
+          <span class="stub-tag">Servicio</span>
+          <p class="desc">Sube tus servicios, precios y duración una sola vez.</p>
+        </div>
+      </div>
+      <div class="ticket how-step">
+        <div class="ticket-main">
+          <span class="stub-tag">Comparte</span>
+          <p class="desc">Comparte <strong>tunombre.agendame.mx</strong> en tus redes sociales y/o WhatsApp*</p>
+        </div>
+      </div>
+      <div class="ticket how-step">
+        <div class="ticket-main">
+          <span class="stub-tag">Confirmación</span>
+          <p class="desc">Tus clientas agendan solas. Tú solo revisas tu día.</p>
+        </div>
+      </div>
+    </div>
+    <p style="font-size:12.5px;color:var(--ink-soft);margin-top:16px">*Con nombre personalizado disponible como compra adicional.</p>
+  </div>
+</section>
+
+<section class="pricing" id="precios">
+  <div class="wrap">
+    <div class="pricing-head">
+      <span class="eyebrow">Precios</span>
+      <h2>Empieza gratis. Sigue cuando te convenza.</h2>
+      <p style="font-size:14px;color:var(--ink-soft);margin-top:10px">Sin contratos forzosos. Cancela cuando quieras, en cualquier plan.</p>
+    </div>
+    <div class="price-grid">
+
+      <div class="ticket price-card">
+        <span class="ribbon">3 días gratis</span>
+        <div class="ticket-split">
+          <div class="ticket-main">
+            <span class="plan-name">Plan Básico</span>
+            <p class="plan-price">$299<sup>/mes</sup></p>
+            <span class="plan-cycle">Hasta 2 profesionales · sin fidelidad</span>
+            <ul class="plan-list">
+              <li>Hasta 2 profesionales en tu equipo</li>
+              <li>Agenda con bloqueo automático por servicio</li>
+              <li>Link de reservas personalizado</li>
+              <li>Notificaciones de nuevas citas</li>
+              <li>Historial de clientas con fotos</li>
+              <li>Corte de caja diario, separado por profesional</li>
+            </ul>
+            <a href="#" class="btn btn-ghost" style="width:100%;justify-content:center">Probar 3 días gratis</a>
+          </div>
+          <div class="ticket-stub">
+            <span class="days">3</span>
+            <span class="days-label">días<br>gratis</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ticket price-card pro">
+        <span class="badge-pro">Recomendado</span>
+        <div class="ticket-split">
+          <div class="ticket-main">
+            <span class="plan-name">Plan Pro</span>
+            <p class="plan-price">$399<sup>/mes</sup></p>
+            <span class="plan-cycle">Equipo de 3+ · fidelidad y pagos en línea</span>
+            <ul class="plan-list">
+              <li>Equipo de 3 profesionales o más</li>
+              <li>Todo lo del Plan Básico</li>
+              <li>Comisión configurable por profesional</li>
+              <li>Programa de fidelidad para tus clientas</li>
+              <li>Pagos en línea al confirmar la cita</li>
+            </ul>
+            <a href="#" class="btn btn-primary" style="width:100%;justify-content:center">Probar 3 días gratis</a>
+          </div>
+          <div class="ticket-stub">
+            <span class="days">3</span>
+            <span class="days-label">días<br>gratis</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ticket price-card">
+        <span class="ribbon">3 días gratis</span>
+        <div class="ticket-split">
+          <div class="ticket-main">
+            <span class="plan-name">Plan Multisucursal</span>
+            <p class="plan-price">$749<sup>/mes</sup></p>
+            <span class="plan-cycle">Para 2 o más sucursales</span>
+            <ul class="plan-list">
+              <li>Profesionales y sucursales ilimitadas</li>
+              <li>Todo lo del Plan Pro</li>
+              <li>Pagos en línea en todas las sucursales</li>
+              <li>Panel unificado o vistas separadas por sucursal</li>
+              <li>Fácil de cancelar cuando quieras</li>
+            </ul>
+            <a href="#" class="btn btn-ghost" style="width:100%;justify-content:center">Probar 3 días gratis</a>
+          </div>
+          <div class="ticket-stub">
+            <span class="days">3</span>
+            <span class="days-label">días<br>gratis</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section class="faq" id="preguntas">
+  <div class="wrap">
+    <div class="pricing-head" style="text-align:left;max-width:560px;margin:0 0 34px">
+      <span class="eyebrow">Preguntas frecuentes</span>
+      <h2 style="font-size:32px">Dudas que resolvemos antes de que las escribas</h2>
+    </div>
+    <div class="faq-list">
+      <details class="faq-item" open>
+        <summary>¿Qué es Agéndame?</summary>
+        <p>Agéndame es un sistema de citas online pensado para manicuristas, lashistas, estilistas, barberos y profesionales de estética en México. Organiza la agenda, bloquea el tiempo automáticamente según la duración de cada servicio y avisa cuando alguien agenda.</p>
+      </details>
+      <details class="faq-item">
+        <summary>¿Necesito saber de tecnología para usarlo?</summary>
+        <p>No. Agéndame está pensado para emprendedoras y profesionales sin experiencia técnica: agenda tipo lista, sin cuadrículas complicadas ni configuración avanzada.</p>
+      </details>
+      <details class="faq-item">
+        <summary>¿Sirve para barberías y estéticas, o solo para manicuristas?</summary>
+        <p>Sirve para cualquier negocio de servicios por cita: manicuristas, lashistas, estilistas, barberos y estéticas.</p>
+      </details>
+      <details class="faq-item">
+        <summary>¿Cuánto cuesta Agéndame?</summary>
+        <p>Tres planes: Básico $299/mes, Pro $399/mes con fidelidad y pagos en línea, y Multisucursal $749/mes para 2 o más sucursales. Los tres incluyen 3 días de prueba gratis.</p>
+      </details>
+      <details class="faq-item">
+        <summary>¿Puedo cancelar cuando quiera?</summary>
+        <p>Sí. Ningún plan tiene contrato forzoso — cancelas cuando quieras, sin penalización.</p>
+      </details>
+      <details class="faq-item">
+        <summary>¿Cómo pagan mis clientas en línea?</summary>
+        <p>El Plan Pro y el Plan Multisucursal incluyen pagos en línea al confirmar la cita, para reducir cancelaciones de última hora.</p>
+      </details>
+      <details class="faq-item">
+        <summary>¿Puedo tener el link con el nombre de mi negocio solamente?</summary>
+        <p>Sí. Desde la misma plataforma levantas una solicitud de compra, ves el costo y pagas ahí mismo — sin trámites externos.</p>
+      </details>
+      <details class="faq-item">
+        <summary>¿Puedo tener varias trabajadoras y separar sus comisiones?</summary>
+        <p>Sí. Cada profesional se da de alta con su propia comisión (porcentaje o monto fijo), y el corte de caja diario separa automáticamente cuánto generó cada una.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span class="logo-mark">
+      <img src="agendame-icon.png" alt="Agéndame" style="height:32px;width:auto">
+      <span class="logo">agénda<span>me</span></span>
+    </span>
+    <p>Síguenos en Instagram — <a class="ig" href="https://www.instagram.com/agendamemx" target="_blank" rel="noopener">@agendamemx</a></p>
+    <p>agendame.mx · © 2026 Agéndame</p>
+  </div>
+</footer>
+
+<script>
+  var tickets = [
+    { name: 'Estefanía Duarte', service: 'Aplicación gelish', time: '2 de julio · 9:00 am', price: '$150' },
+    { name: 'Diana Sánchez', service: 'Cita de pestañas + microblading', time: '6 de julio · 11:00 am', price: '$2,200' },
+    { name: 'José Torres', service: 'Corte de cabello + delineado de barba', time: '9 de julio · 4:00 pm', price: '$499' },
+    { name: 'Renata Silva', service: 'Depilación de cejas + facial exprés', time: '8 de julio · 1:00 pm', price: '$480' }
+  ];
+  var currentTicket = 0;
+
+  function showTicket(i) {
+    currentTicket = i;
+    var content = document.getElementById('ticket-content');
+    var t = tickets[i];
+    content.style.opacity = 0;
+    setTimeout(function () {
+      document.getElementById('t-name').textContent = t.name;
+      document.getElementById('t-service').textContent = t.service;
+      document.getElementById('t-time').textContent = t.time;
+      document.getElementById('t-price').textContent = t.price;
+      content.style.opacity = 1;
+    }, 250);
+    document.querySelectorAll('.carousel-dots .dot').forEach(function (d, idx) {
+      d.classList.toggle('active', idx === i);
+    });
+  }
+
+  setInterval(function () {
+    showTicket((currentTicket + 1) % tickets.length);
+  }, 4000);
+</script>
+
+
+</body>
+</html>

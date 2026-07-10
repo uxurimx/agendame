@@ -151,6 +151,37 @@ export const dailyReports = pgTable('daily_reports', {
   index('report_business_date_idx').on(t.businessId, t.date),
 ]);
 
+// ── Support Tickets (Poxelbit) ───────────────────────────────
+// type:     bug | mejora | soporte | sugerencia | otro
+// priority: baja | media | alta | urgente
+// status:   abierto | en_proceso | resuelto | cerrado
+export const tickets = pgTable('tickets', {
+  id:           uuid('id').primaryKey().defaultRandom(),
+  businessId:   uuid('business_id').notNull().references(() => businesses.id, { onDelete: 'cascade' }),
+  userId:       text('user_id').notNull(),
+  userEmail:    text('user_email').notNull(),
+  businessName: text('business_name').notNull(),
+  title:        text('title').notNull(),
+  description:  text('description').notNull(),
+  type:         varchar('type',     { length: 30 }).notNull().default('soporte'),
+  priority:     varchar('priority', { length: 20 }).notNull().default('media'),
+  status:       varchar('status',   { length: 30 }).notNull().default('abierto'),
+  response:     text('response'),
+  respondedAt:  timestamp('responded_at'),
+  createdAt:    timestamp('created_at').defaultNow(),
+  updatedAt:    timestamp('updated_at').defaultNow(),
+}, (t) => [
+  index('ticket_business_idx').on(t.businessId),
+  index('ticket_status_idx').on(t.status),
+]);
+
+export const ticketsRelations = relations(tickets, ({ one }) => ({
+  business: one(businesses, { fields: [tickets.businessId], references: [businesses.id] }),
+}));
+
+export type Ticket    = typeof tickets.$inferSelect;
+export type NewTicket = typeof tickets.$inferInsert;
+
 // ── Time Blocks (vacaciones, descansos, bloqueos) ────────────
 export const timeBlocks = pgTable('time_blocks', {
   id:             uuid('id').primaryKey().defaultRandom(),

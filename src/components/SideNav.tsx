@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Settings, BarChart2, Calendar,
-  Users, Scissors, FileText, ChevronRight, X,
+  Users, Scissors, FileText, ChevronRight, X, LifeBuoy,
 } from "lucide-react";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { siteConfig } from "@/config/site";
@@ -116,6 +116,17 @@ export default function SideNav({ isOpen = false, onClose }: SideNavProps) {
           {navItems.map((item) => (
             <NavLink key={item.href} {...item} />
           ))}
+
+          {/* Poxelbit — soporte técnico */}
+          <div className="pt-4 pb-1">
+            <p
+              className="px-3 text-[10px] font-semibold uppercase tracking-widest"
+              style={{ color: "var(--fg-muted)" }}
+            >
+              Poxelbit
+            </p>
+          </div>
+          <NavLink href="/support" icon={LifeBuoy} name="Soporte" />
 
           {isAdmin && (
             <>

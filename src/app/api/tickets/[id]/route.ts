@@ -6,21 +6,31 @@ import { tickets } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notifyTicketResponse } from "@/lib/notify";
 
+async function getAdminStatus() {
+  const clerkUser  = await currentUser();
+  const userEmail  = clerkUser?.emailAddresses[0]?.emailAddress ?? "";
+  return userEmail === (process.env.ADMIN_EMAIL ?? "");
+}
+
 const schema = z.object({
   status:   z.enum(["abierto", "en_proceso", "resuelto", "cerrado"]).optional(),
   response: z.string().max(3000).optional(),
 });
 
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { userId } = await auth();
+  if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!(await getAdminStatus())) return NextResponse.json({ error: "Acceso denegado" }, { status: 403 });
+
+  const { id } = await params;
+  await db.delete(tickets).where(eq(tickets.id, id));
+  return NextResponse.json({ ok: true });
+}
+
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-
-  const clerkUser = await currentUser();
-  const userEmail = clerkUser?.emailAddresses[0]?.emailAddress ?? "";
-  const adminEmail = process.env.ADMIN_EMAIL ?? "";
-  const isAdmin = userEmail === adminEmail;
-
-  if (!isAdmin) return NextResponse.json({ error: "Acceso denegado" }, { status: 403 });
+  if (!(await getAdminStatus())) return NextResponse.json({ error: "Acceso denegado" }, { status: 403 });
 
   const { id } = await params;
   const ticket = await db.query.tickets.findFirst({ where: eq(tickets.id, id) });

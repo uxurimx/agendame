@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
-import { businesses, professionals, appointments } from "@/db/schema";
+import { businesses, professionals, appointments, timeBlocks } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { generateSlots } from "@/lib/time";
 
@@ -55,6 +55,15 @@ export async function GET(req: NextRequest) {
     proIds = pros.map((p) => p.id);
   }
 
+  // Bloques de tiempo del negocio para ese día
+  const allBlocks = await db.query.timeBlocks.findMany({
+    where: and(eq(timeBlocks.businessId, businessId), eq(timeBlocks.date, date)),
+  });
+  // Bloques sin profesional asignado = bloquean a TODOS
+  const businessWideBlocks = allBlocks
+    .filter((b) => !b.professionalId)
+    .map((b) => ({ startTime: b.startTime, endTime: b.endTime }));
+
   // Para cada profesional, obtener sus citas ese día
   // Retornar slots donde AL MENOS UN profesional esté libre
   const slotAvailability: Map<string, string[]> = new Map(); // slot → [proIds disponibles]
@@ -67,9 +76,16 @@ export async function GET(req: NextRequest) {
       ),
     });
 
-    const bookedSlots = booked
-      .filter((a) => a.status !== "cancelled")
-      .map((a) => ({ startTime: a.startTime, endTime: a.endTime }));
+    // Bloques específicos de este profesional
+    const proBlocks = allBlocks
+      .filter((b) => b.professionalId === proId)
+      .map((b) => ({ startTime: b.startTime, endTime: b.endTime }));
+
+    const bookedSlots = [
+      ...booked.filter((a) => a.status !== "cancelled").map((a) => ({ startTime: a.startTime, endTime: a.endTime })),
+      ...businessWideBlocks,
+      ...proBlocks,
+    ];
 
     const available = generateSlots(daySchedule.open, daySchedule.close, durationMin, bookedSlots);
 

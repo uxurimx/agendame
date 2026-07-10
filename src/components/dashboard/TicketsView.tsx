@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { LifeBuoy, Plus, ChevronDown, ChevronUp, Send, RefreshCw, X } from "lucide-react";
+import { LifeBuoy, Plus, ChevronDown, ChevronUp, Send, RefreshCw, X, Trash2 } from "lucide-react";
 
 type TicketType     = "bug" | "mejora" | "soporte" | "sugerencia" | "otro";
 type TicketPriority = "baja" | "media" | "alta" | "urgente";
@@ -216,8 +216,16 @@ function AdminResponsePanel({ ticket, onUpdated }: { ticket: Ticket; onUpdated: 
   );
 }
 
-function TicketCard({ ticket, isAdmin, onUpdated }: { ticket: Ticket; isAdmin: boolean; onUpdated: () => void }) {
+function TicketCard({ ticket, isAdmin, onUpdated, onDeleted }: { ticket: Ticket; isAdmin: boolean; onUpdated: () => void; onDeleted: () => void }) {
   const [expanded, setExpanded] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete() {
+    if (!confirm(`¿Eliminar ticket "${ticket.title}"?`)) return;
+    setDeleting(true);
+    await fetch(`/api/tickets/${ticket.id}`, { method: "DELETE" });
+    onDeleted();
+  }
 
   return (
     <div className="rounded-2xl border p-4 flex flex-col gap-2" style={{ background: "var(--surface,#fff)", borderColor: "var(--border,#e2e8f0)" }}>
@@ -238,9 +246,18 @@ function TicketCard({ ticket, isAdmin, onUpdated }: { ticket: Ticket; isAdmin: b
             {new Date(ticket.createdAt).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })}
           </p>
         </div>
-        <button onClick={() => setExpanded(e => !e)} className="p-1 rounded-lg hover:bg-black/5 shrink-0">
-          {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </button>
+        <div className="flex items-center gap-1 shrink-0">
+          {isAdmin && (
+            <button onClick={handleDelete} disabled={deleting}
+              className="p-1 rounded-lg hover:bg-red-50 disabled:opacity-40 transition-colors"
+              title="Eliminar ticket">
+              <Trash2 size={14} style={{ color: "#dc2626" }} />
+            </button>
+          )}
+          <button onClick={() => setExpanded(e => !e)} className="p-1 rounded-lg hover:bg-black/5">
+            {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+        </div>
       </div>
 
       {expanded && (
@@ -345,7 +362,7 @@ export function TicketsView({ isAdmin }: { isAdmin: boolean }) {
       ) : (
         <div className="flex flex-col gap-3">
           {filtered.map(t => (
-            <TicketCard key={t.id} ticket={t} isAdmin={isAdmin} onUpdated={load} />
+            <TicketCard key={t.id} ticket={t} isAdmin={isAdmin} onUpdated={load} onDeleted={load} />
           ))}
         </div>
       )}

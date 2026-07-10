@@ -7,8 +7,8 @@ import { eq, desc } from "drizzle-orm";
 import { notifyNewTicket } from "@/lib/notify";
 
 const schema = z.object({
-  title:       z.string().min(5).max(200),
-  description: z.string().min(10).max(2000),
+  title:       z.string().min(3).max(200),
+  description: z.string().min(3).max(2000),
   type:        z.enum(["bug", "mejora", "soporte", "sugerencia", "otro"]).default("soporte"),
   priority:    z.enum(["baja", "media", "alta", "urgente"]).default("media"),
 });
@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
+    console.log("[tickets POST] body:", JSON.stringify(body));
     const data = schema.parse(body);
 
     const [ticket] = await db.insert(tickets).values({
@@ -79,8 +80,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(ticket);
   } catch (err) {
-    if (err instanceof z.ZodError) return NextResponse.json({ error: err.message }, { status: 400 });
-    console.error("[tickets POST]", err);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    if (err instanceof z.ZodError) {
+      console.error("[tickets POST] ZodError:", JSON.stringify(err.issues));
+      return NextResponse.json({ error: err.message, issues: err.issues }, { status: 400 });
+    }
+    console.error("[tickets POST] unexpected:", err);
+    return NextResponse.json({ error: String(err) }, { status: 500 });
   }
 }

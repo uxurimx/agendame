@@ -29,7 +29,7 @@ const PRIORITY_LABEL: Record<string, string> = {
 };
 
 export async function notifyNewTicket(data: TicketPayload) {
-  const adminEmail = process.env.ADMIN_EMAIL ?? "torresdevmx@gmail.com";
+  const adminEmail = process.env.NOTIFY_EMAIL ?? process.env.ADMIN_EMAIL ?? "torresdevmx@gmail.com";
 
   const html = `
     <div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:24px">

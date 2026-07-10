@@ -83,13 +83,14 @@ function NewTicketForm({ onCreated }: { onCreated: () => void }) {
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await fetch("/api/tickets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
-      if (!res.ok) throw new Error();
+      const res  = await fetch("/api/tickets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? `Error ${res.status}`);
       setForm({ title: "", description: "", type: "soporte", priority: "media" });
       setOpen(false);
       onCreated();
-    } catch {
-      alert("Error al enviar ticket.");
+    } catch (err) {
+      alert(`Error al enviar ticket: ${err instanceof Error ? err.message : "desconocido"}`);
     } finally {
       setSaving(false);
     }

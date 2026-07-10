@@ -54,9 +54,11 @@ export async function notifyNewTicket(data: TicketPayload) {
   `;
 
   // 1. Resend email al admin
+  // RESEND_FROM: dominio verificado ej "soporte@agendame.mx" — sin él, solo envía al email de tu cuenta Resend
+  const fromAddr = process.env.RESEND_FROM ?? "onboarding@resend.dev";
   if (process.env.RESEND_API_KEY) {
     await resend.emails.send({
-      from:    "Poxelbit Soporte <onboarding@resend.dev>",
+      from:    `Poxelbit Soporte <${fromAddr}>`,
       to:      adminEmail,
       subject: `[${PRIORITY_LABEL[data.priority] ?? data.priority}] ${TYPE_LABEL[data.type] ?? data.type}: ${data.title}`,
       html,
@@ -96,8 +98,9 @@ export async function notifyTicketResponse(to: string, data: TicketPayload) {
     </div>
   `;
 
+  const fromAddr = process.env.RESEND_FROM ?? "onboarding@resend.dev";
   await resend.emails.send({
-    from:    "Poxelbit Soporte <onboarding@resend.dev>",
+    from:    `Poxelbit Soporte <${fromAddr}>`,
     to,
     subject: `Re: ${data.title} — Poxelbit Soporte`,
     html,

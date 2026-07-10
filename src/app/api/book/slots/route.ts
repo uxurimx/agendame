@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
 import { businesses, professionals, appointments } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -9,11 +10,20 @@ const DAY_KEYS: DayKey[] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 
 export async function GET(req: NextRequest) {
   const p = req.nextUrl.searchParams;
-  const businessId     = p.get("businessId") ?? "";
+  let businessId       = p.get("businessId") ?? "";
   const professionalId = p.get("professionalId") ?? ""; // "any" o UUID
   const serviceId      = p.get("serviceId") ?? "";
   const date           = p.get("date") ?? ""; // YYYY-MM-DD
   const durationMin    = parseInt(p.get("durationMin") ?? "60", 10);
+
+  // Si businessId es "__from_session__", resolverlo desde la sesión (uso interno del dashboard)
+  if (businessId === "__from_session__") {
+    const { userId } = await auth();
+    if (userId) {
+      const biz = await db.query.businesses.findFirst({ where: eq(businesses.ownerId, userId) });
+      businessId = biz?.id ?? "";
+    }
+  }
 
   if (!businessId || !date || !serviceId) {
     return NextResponse.json({ slots: [] });

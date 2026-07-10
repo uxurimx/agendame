@@ -10,6 +10,10 @@ const schema = z.object({
   paymentStatus: z.enum(["pending", "paid", "online"]).optional(),
   paymentMethod: z.enum(["cash", "card", "transfer", "online"]).optional(),
   notes:         z.string().max(500).optional(),
+  // Reprogramar
+  date:          z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  startTime:     z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  endTime:       z.string().regex(/^\d{2}:\d{2}$/).optional(),
 });
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

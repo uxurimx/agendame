@@ -151,6 +151,28 @@ export const dailyReports = pgTable('daily_reports', {
   index('report_business_date_idx').on(t.businessId, t.date),
 ]);
 
+// ── Time Blocks (vacaciones, descansos, bloqueos) ────────────
+export const timeBlocks = pgTable('time_blocks', {
+  id:             uuid('id').primaryKey().defaultRandom(),
+  businessId:     uuid('business_id').notNull().references(() => businesses.id, { onDelete: 'cascade' }),
+  professionalId: uuid('professional_id').references(() => professionals.id, { onDelete: 'cascade' }),
+  date:           date('date').notNull(),
+  startTime:      time('start_time').notNull(),
+  endTime:        time('end_time').notNull(),
+  reason:         text('reason'),
+  createdAt:      timestamp('created_at').defaultNow(),
+}, (t) => [
+  index('block_biz_date_idx').on(t.businessId, t.date),
+]);
+
+export const timeBlocksRelations = relations(timeBlocks, ({ one }) => ({
+  business:     one(businesses,    { fields: [timeBlocks.businessId],     references: [businesses.id] }),
+  professional: one(professionals, { fields: [timeBlocks.professionalId], references: [professionals.id] }),
+}));
+
+export type TimeBlock    = typeof timeBlocks.$inferSelect;
+export type NewTimeBlock = typeof timeBlocks.$inferInsert;
+
 // ── Analytics ─────────────────────────────────────────────────
 export const pageViews = pgTable('page_views', {
   id:          serial('id').primaryKey(),

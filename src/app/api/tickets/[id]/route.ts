@@ -44,9 +44,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       .where(eq(tickets.id, id))
       .returning();
 
-    // Notificar al usuario cuando el admin responde
+    // Await notify antes de responder — Vercel mata la función al retornar la response
     if (data.response && ticket.userEmail) {
-      notifyTicketResponse(ticket.userEmail, {
+      await notifyTicketResponse(ticket.userEmail, {
         ticketId:     ticket.id,
         title:        ticket.title,
         type:         ticket.type,
@@ -55,7 +55,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         businessName: ticket.businessName,
         userEmail:    ticket.userEmail,
         response:     data.response,
-      }).catch(() => {});
+      }).catch((e) => console.error("[tickets/id] notify failed:", e));
     }
 
     return NextResponse.json(updated);

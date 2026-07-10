@@ -67,8 +67,8 @@ export async function POST(req: NextRequest) {
       priority:     data.priority,
     }).returning();
 
-    // Notificar al admin (no bloquea la respuesta)
-    notifyNewTicket({
+    // Await notify antes de responder — Vercel mata la función al retornar la response
+    await notifyNewTicket({
       ticketId:     ticket.id,
       title:        ticket.title,
       type:         ticket.type,
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
       description:  ticket.description,
       businessName: biz.name,
       userEmail,
-    }).catch(() => {});
+    }).catch((e) => console.error("[tickets] notify failed:", e));
 
     return NextResponse.json(ticket);
   } catch (err) {

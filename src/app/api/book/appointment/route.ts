@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
-import { appointments, clients, professionals, services } from "@/db/schema";
+import { appointments, clients, professionals, services, timeBlocks } from "@/db/schema";
 import { eq, and, gte, count } from "drizzle-orm";
-import { addMinutes, generateSlots } from "@/lib/time";
+import { addMinutes, timeToMinutes } from "@/lib/time";
 
 const schema = z.object({
   businessId:     z.string().uuid(),
@@ -17,6 +17,44 @@ const schema = z.object({
   notes:          z.string().max(500).optional(),
   _hp:            z.string().optional(), // honeypot
 });
+
+function overlaps(startA: string, endA: string, startB: string, endB: string) {
+  const aStart = timeToMinutes(startA);
+  const aEnd = timeToMinutes(endA);
+  const bStart = timeToMinutes(startB);
+  const bEnd = timeToMinutes(endB);
+  return aStart < bEnd && aEnd > bStart;
+}
+
+async function isProfessionalAvailable(
+  businessId: string,
+  professionalId: string,
+  date: string,
+  startTime: string,
+  endTime: string,
+) {
+  const [dayAppointments, dayBlocks] = await Promise.all([
+    db.query.appointments.findMany({
+      where: and(eq(appointments.professionalId, professionalId), eq(appointments.date, date)),
+    }),
+    db.query.timeBlocks.findMany({
+      where: and(eq(timeBlocks.businessId, businessId), eq(timeBlocks.date, date)),
+    }),
+  ]);
+
+  const hasAppointmentConflict = dayAppointments
+    .filter((apt) => apt.status !== "cancelled")
+    .some((apt) => overlaps(startTime, endTime, apt.startTime, apt.endTime));
+
+  if (hasAppointmentConflict) return false;
+
+  const hasBlockConflict = dayBlocks.some((block) => {
+    const appliesToProfessional = !block.professionalId || block.professionalId === professionalId;
+    return appliesToProfessional && overlaps(startTime, endTime, block.startTime, block.endTime);
+  });
+
+  return !hasBlockConflict;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -64,29 +102,31 @@ export async function POST(req: NextRequest) {
 
       // Buscar el primer profesional libre en ese slot
       for (const pro of pros) {
-        const booked = await db.query.appointments.findMany({
-          where: and(eq(appointments.professionalId, pro.id), eq(appointments.date, data.date)),
-        });
-        const bookedSlots = booked
-          .filter((a) => a.status !== "cancelled")
-          .map((a) => ({ startTime: a.startTime, endTime: a.endTime }));
-        const free = generateSlots(data.startTime, endTime, service.durationMin, bookedSlots);
-        if (free.length > 0) { proId = pro.id; break; }
+        const available = await isProfessionalAvailable(
+          data.businessId,
+          pro.id,
+          data.date,
+          data.startTime,
+          endTime,
+        );
+        if (available) {
+          proId = pro.id;
+          break;
+        }
       }
       if (proId === "any") return NextResponse.json({ error: "Sin disponibilidad" }, { status: 409 });
     }
 
     // Verificar que el slot sigue libre (protección contra race condition)
-    const conflicting = await db.query.appointments.findFirst({
-      where: and(eq(appointments.professionalId, proId), eq(appointments.date, data.date)),
-    });
-    if (conflicting && conflicting.status !== "cancelled") {
-      // Revisar solapamiento
-      const bookedSlots = [{ startTime: conflicting.startTime, endTime: conflicting.endTime }];
-      const free = generateSlots(data.startTime, endTime, service.durationMin, bookedSlots);
-      if (!free.includes(data.startTime)) {
-        return NextResponse.json({ error: "El horario ya no está disponible" }, { status: 409 });
-      }
+    const stillAvailable = await isProfessionalAvailable(
+      data.businessId,
+      proId,
+      data.date,
+      data.startTime,
+      endTime,
+    );
+    if (!stillAvailable) {
+      return NextResponse.json({ error: "El horario ya no está disponible" }, { status: 409 });
     }
 
     // Obtener profesional para comisión

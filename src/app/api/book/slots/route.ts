@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
-import { businesses, professionals, appointments, timeBlocks } from "@/db/schema";
+import { businesses, professionals, appointments, services, timeBlocks } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { generateSlots } from "@/lib/time";
 
@@ -14,7 +14,6 @@ export async function GET(req: NextRequest) {
   const professionalId = p.get("professionalId") ?? ""; // "any" o UUID
   const serviceId      = p.get("serviceId") ?? "";
   const date           = p.get("date") ?? ""; // YYYY-MM-DD
-  const durationMin    = parseInt(p.get("durationMin") ?? "60", 10);
 
   // Si businessId es "__from_session__", resolverlo desde la sesión (uso interno del dashboard)
   if (businessId === "__from_session__") {
@@ -28,6 +27,12 @@ export async function GET(req: NextRequest) {
   if (!businessId || !date || !serviceId) {
     return NextResponse.json({ slots: [] });
   }
+
+  const service = await db.query.services.findFirst({
+    where: eq(services.id, serviceId),
+  });
+  if (!service) return NextResponse.json({ slots: [] });
+  const durationMin = service.durationMin;
 
   // Horario del negocio para ese día
   const business = await db.query.businesses.findFirst({

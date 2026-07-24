@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { LifeBuoy, Plus, ChevronDown, ChevronUp, Send, RefreshCw, X, Trash2 } from "lucide-react";
+import { LifeBuoy, Plus, ChevronDown, ChevronUp, Send, RefreshCw, X, Trash2, Pencil } from "lucide-react";
 
 type TicketType     = "bug" | "mejora" | "soporte" | "sugerencia" | "otro";
 type TicketPriority = "baja" | "media" | "alta" | "urgente";
@@ -19,6 +19,12 @@ interface Ticket {
   response:     string | null;
   respondedAt:  string | null;
   createdAt:    string;
+}
+
+interface TicketEditFormProps {
+  ticket: Ticket;
+  onClose: () => void;
+  onSaved: () => void;
 }
 
 const TYPE_CONFIG: Record<TicketType, { label: string; color: string }> = {
@@ -169,6 +175,121 @@ function NewTicketForm({ onCreated }: { onCreated: () => void }) {
   );
 }
 
+function TicketEditForm({ ticket, onClose, onSaved }: TicketEditFormProps) {
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    title: ticket.title,
+    description: ticket.description,
+    type: ticket.type,
+    priority: ticket.priority,
+  });
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/tickets/${ticket.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? `Error ${res.status}`);
+      onSaved();
+      onClose();
+    } catch (err) {
+      alert(`Error al editar ticket: ${err instanceof Error ? err.message : "desconocido"}`);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <form
+        onSubmit={submit}
+        className="w-full max-w-lg rounded-2xl shadow-xl p-6 flex flex-col gap-4"
+        style={{ background: "var(--surface,#fff)" }}
+      >
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold text-lg" style={{ color: "var(--fg,#0f172a)" }}>Editar ticket</h3>
+          <button type="button" onClick={onClose} className="p-1 rounded-lg hover:bg-black/5"><X size={18} /></button>
+        </div>
+
+        <input
+          required
+          placeholder="Título corto del problema o solicitud"
+          value={form.title}
+          onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+          className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2"
+          style={{ borderColor: "var(--border,#e2e8f0)", background: "var(--surface-2,#f8fafc)", color: "var(--fg,#0f172a)" }}
+        />
+
+        <div className="flex gap-3">
+          <label className="flex-1 flex flex-col gap-1">
+            <span className="text-xs font-medium" style={{ color: "var(--fg-muted,#64748b)" }}>Tipo</span>
+            <select
+              value={form.type}
+              onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as TicketType }))}
+              className="rounded-xl border px-3 py-2 text-sm outline-none"
+              style={{ borderColor: "var(--border,#e2e8f0)", background: "var(--surface-2,#f8fafc)", color: "var(--fg,#0f172a)" }}
+            >
+              <option value="soporte">🛟 Soporte</option>
+              <option value="bug">🐛 Bug</option>
+              <option value="mejora">✨ Mejora</option>
+              <option value="sugerencia">💡 Sugerencia</option>
+              <option value="otro">💬 Otro</option>
+            </select>
+          </label>
+          <label className="flex-1 flex flex-col gap-1">
+            <span className="text-xs font-medium" style={{ color: "var(--fg-muted,#64748b)" }}>Prioridad</span>
+            <select
+              value={form.priority}
+              onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value as TicketPriority }))}
+              className="rounded-xl border px-3 py-2 text-sm outline-none"
+              style={{ borderColor: "var(--border,#e2e8f0)", background: "var(--surface-2,#f8fafc)", color: "var(--fg,#0f172a)" }}
+            >
+              <option value="baja">Baja</option>
+              <option value="media">Media</option>
+              <option value="alta">Alta</option>
+              <option value="urgente">🔴 Urgente</option>
+            </select>
+          </label>
+        </div>
+
+        <textarea
+          required
+          rows={5}
+          placeholder="Describe el problema o solicitud con detalle..."
+          value={form.description}
+          onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+          className="w-full rounded-xl border px-3 py-2 text-sm outline-none resize-none"
+          style={{ borderColor: "var(--border,#e2e8f0)", background: "var(--surface-2,#f8fafc)", color: "var(--fg,#0f172a)" }}
+        />
+
+        <div className="flex gap-3 justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl border text-sm font-medium"
+            style={{ borderColor: "var(--border,#e2e8f0)", color: "var(--fg-muted,#64748b)" }}
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white disabled:opacity-50"
+            style={{ background: "var(--l-berry,#6E2A96)" }}
+          >
+            <Send size={14} /> {saving ? "Guardando..." : "Guardar cambios"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 function AdminResponsePanel({ ticket, onUpdated }: { ticket: Ticket; onUpdated: () => void }) {
   const [status,   setStatus]   = useState<TicketStatus>(ticket.status);
   const [response, setResponse] = useState(ticket.response ?? "");
@@ -177,14 +298,16 @@ function AdminResponsePanel({ ticket, onUpdated }: { ticket: Ticket; onUpdated: 
   async function save() {
     setSaving(true);
     try {
-      await fetch(`/api/tickets/${ticket.id}`, {
+      const res = await fetch(`/api/tickets/${ticket.id}`, {
         method:  "PATCH",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ status, response: response.trim() || undefined }),
       });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? `Error ${res.status}`);
       onUpdated();
-    } catch {
-      alert("Error al actualizar.");
+    } catch (err) {
+      alert(`Error al actualizar: ${err instanceof Error ? err.message : "desconocido"}`);
     } finally {
       setSaving(false);
     }
@@ -219,62 +342,83 @@ function AdminResponsePanel({ ticket, onUpdated }: { ticket: Ticket; onUpdated: 
 function TicketCard({ ticket, isAdmin, onUpdated, onDeleted }: { ticket: Ticket; isAdmin: boolean; onUpdated: () => void; onDeleted: () => void }) {
   const [expanded, setExpanded] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   async function handleDelete() {
     if (!confirm(`¿Eliminar ticket "${ticket.title}"?`)) return;
     setDeleting(true);
-    await fetch(`/api/tickets/${ticket.id}`, { method: "DELETE" });
-    onDeleted();
+    try {
+      const res = await fetch(`/api/tickets/${ticket.id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? `Error ${res.status}`);
+      onDeleted();
+    } catch (err) {
+      alert(`Error al eliminar ticket: ${err instanceof Error ? err.message : "desconocido"}`);
+    } finally {
+      setDeleting(false);
+    }
   }
 
   return (
-    <div className="rounded-2xl border p-4 flex flex-col gap-2" style={{ background: "var(--surface,#fff)", borderColor: "var(--border,#e2e8f0)" }}>
-      <div className="flex items-start gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-2 mb-1">
-            <TypeBadge type={ticket.type} />
-            <PriorityBadge priority={ticket.priority} />
-            <StatusBadge status={ticket.status} />
-            {isAdmin && (
-              <span className="text-xs ml-auto" style={{ color: "var(--fg-muted,#64748b)" }}>
-                {ticket.businessName}
-              </span>
-            )}
+    <>
+      <div className="rounded-2xl border p-4 flex flex-col gap-2" style={{ background: "var(--surface,#fff)", borderColor: "var(--border,#e2e8f0)" }}>
+        <div className="flex items-start gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <TypeBadge type={ticket.type} />
+              <PriorityBadge priority={ticket.priority} />
+              <StatusBadge status={ticket.status} />
+              {isAdmin && (
+                <span className="text-xs ml-auto" style={{ color: "var(--fg-muted,#64748b)" }}>
+                  {ticket.businessName}
+                </span>
+              )}
+            </div>
+            <p className="font-semibold text-sm" style={{ color: "var(--fg,#0f172a)" }}>{ticket.title}</p>
+            <p className="text-xs mt-0.5" style={{ color: "var(--fg-muted,#64748b)" }}>
+              {new Date(ticket.createdAt).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })}
+            </p>
           </div>
-          <p className="font-semibold text-sm" style={{ color: "var(--fg,#0f172a)" }}>{ticket.title}</p>
-          <p className="text-xs mt-0.5" style={{ color: "var(--fg-muted,#64748b)" }}>
-            {new Date(ticket.createdAt).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })}
-          </p>
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
-          {isAdmin && (
-            <button onClick={handleDelete} disabled={deleting}
-              className="p-1 rounded-lg hover:bg-red-50 disabled:opacity-40 transition-colors"
-              title="Eliminar ticket">
-              <Trash2 size={14} style={{ color: "#dc2626" }} />
+
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              onClick={() => setEditing(true)}
+              className="p-1 rounded-lg hover:bg-black/5 transition-colors"
+              title="Editar ticket"
+            >
+              <Pencil size={14} style={{ color: "var(--fg-muted,#64748b)" }} />
             </button>
-          )}
-          <button onClick={() => setExpanded(e => !e)} className="p-1 rounded-lg hover:bg-black/5">
-            {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </button>
+            {isAdmin && (
+              <button onClick={handleDelete} disabled={deleting}
+                className="p-1 rounded-lg hover:bg-red-50 disabled:opacity-40 transition-colors"
+                title="Eliminar ticket">
+                <Trash2 size={14} style={{ color: "#dc2626" }} />
+              </button>
+            )}
+            <button onClick={() => setExpanded(e => !e)} className="p-1 rounded-lg hover:bg-black/5">
+              {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
+          </div>
         </div>
+
+        {expanded && (
+          <div className="flex flex-col gap-3">
+            <p className="text-sm whitespace-pre-wrap" style={{ color: "var(--fg,#0f172a)" }}>{ticket.description}</p>
+
+            {ticket.response && (
+              <div className="rounded-xl p-3" style={{ background: "#f0fdf4", borderLeft: "4px solid #059669" }}>
+                <p className="text-xs font-semibold mb-1" style={{ color: "#059669" }}>Respuesta del equipo:</p>
+                <p className="text-sm whitespace-pre-wrap" style={{ color: "#1a1420" }}>{ticket.response}</p>
+              </div>
+            )}
+
+            {isAdmin && <AdminResponsePanel ticket={ticket} onUpdated={onUpdated} />}
+          </div>
+        )}
       </div>
 
-      {expanded && (
-        <div className="flex flex-col gap-3">
-          <p className="text-sm whitespace-pre-wrap" style={{ color: "var(--fg,#0f172a)" }}>{ticket.description}</p>
-
-          {ticket.response && (
-            <div className="rounded-xl p-3" style={{ background: "#f0fdf4", borderLeft: "4px solid #059669" }}>
-              <p className="text-xs font-semibold mb-1" style={{ color: "#059669" }}>Respuesta del equipo:</p>
-              <p className="text-sm whitespace-pre-wrap" style={{ color: "#1a1420" }}>{ticket.response}</p>
-            </div>
-          )}
-
-          {isAdmin && <AdminResponsePanel ticket={ticket} onUpdated={onUpdated} />}
-        </div>
-      )}
-    </div>
+      {editing && <TicketEditForm ticket={ticket} onClose={() => setEditing(false)} onSaved={onUpdated} />}
+    </>
   );
 }
 

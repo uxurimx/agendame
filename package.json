@@ -13,6 +13,7 @@
   "dependencies": {
     "@clerk/nextjs": "^6.38.0",
     "@neondatabase/serverless": "^1.0.2",
+    "@uploadthing/react": "^7.3.3",
     "dotenv": "^17.3.1",
     "drizzle-orm": "^0.45.1",
     "lucide-react": "^0.575.0",
@@ -22,6 +23,7 @@
     "recharts": "^3.9.2",
     "resend": "^6.17.2",
     "svix": "^1.96.1",
+    "uploadthing": "^7.7.4",
     "zod": "^4.3.6"
   },
   "devDependencies": {

@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Search, ChevronRight, X, Phone, Mail, Calendar, Star, Loader2 } from "lucide-react";
+import { useRef, useState, useEffect } from "react";
+import { Search, ChevronRight, X, Phone, Mail, Calendar, Star, Loader2, Image, Upload } from "lucide-react";
 import { formatTime } from "@/lib/time";
+import { ReferenceImageModal } from "@/components/dashboard/ReferenceImageModal";
+import { useUploadThing } from "@/lib/uploadthing";
 
 export interface ClientItem {
   id:                string;
@@ -25,6 +27,13 @@ interface AptHistory {
   professional: { name: string } | null;
 }
 
+interface ClientPhotoItem {
+  id: string;
+  url: string;
+  notes: string | null;
+  createdAt: string | null;
+}
+
 const STATUS_LABELS: Record<string, string> = {
   pending:   "Pendiente",
   confirmed: "Confirmada",
@@ -40,19 +49,77 @@ const STATUS_COLORS: Record<string, string> = {
   no_show:   "#9ca3af",
 };
 
+function PhotoUploader({ clientId, onSaved }: { clientId: string; onSaved: (p: ClientPhotoItem) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const { startUpload, isUploading } = useUploadThing("clientPhoto", {
+    onClientUploadComplete: async (files) => {
+      for (const f of files) {
+        const res = await fetch("/api/client-photos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ clientId, url: f.ufsUrl }),
+        });
+        if (res.ok) onSaved(await res.json());
+      }
+    },
+    onUploadError: (err) => alert(`Error al subir: ${err.message}`),
+  });
+
+  return (
+    <>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        multiple
+        style={{ display: "none" }}
+        onChange={(e) => {
+          const files = Array.from(e.target.files ?? []).slice(0, 4);
+          if (files.length) startUpload(files);
+          e.target.value = "";
+        }}
+      />
+      <button
+        type="button"
+        className="cl-upload-btn"
+        disabled={isUploading}
+        onClick={() => inputRef.current?.click()}
+      >
+        {isUploading ? <Loader2 size={13} className="spin" /> : <Upload size={13} />}
+        {isUploading ? "Subiendo…" : "Subir foto"}
+      </button>
+    </>
+  );
+}
+
 function ClientDetail({ client, onClose }: { client: ClientItem; onClose: () => void }) {
   const [history, setHistory] = useState<AptHistory[]>([]);
+  const [photos, setPhotos] = useState<ClientPhotoItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [photosLoading, setPhotosLoading] = useState(true);
+  const [selectedPhoto, setSelectedPhoto] = useState<ClientPhotoItem | null>(null);
 
   useEffect(() => {
     fetch(`/api/appointments?clientId=${client.id}`)
       .then((r) => r.json())
       .then((d) => { setHistory(d); setLoading(false); });
+
+    fetch(`/api/client-photos?clientId=${client.id}`)
+      .then((r) => r.json())
+      .then((d) => { setPhotos(Array.isArray(d) ? d : []); setPhotosLoading(false); });
   }, [client.id]);
 
   return (
     <div className="cl-detail-backdrop" onClick={onClose}>
       <div className="cl-detail" onClick={(e) => e.stopPropagation()}>
+        {selectedPhoto && (
+          <ReferenceImageModal
+            imageUrl={selectedPhoto.url}
+            title={`Referencia de ${client.name}`}
+            onClose={() => setSelectedPhoto(null)}
+          />
+        )}
         <div className="cl-detail-header">
           <div>
             <h3 className="cl-detail-name">{client.name}</h3>
@@ -104,6 +171,22 @@ function ClientDetail({ client, onClose }: { client: ClientItem; onClose: () => 
                 )}
               </div>
             </div>
+          ))}
+        </div>
+        <div className="cl-photos-header">
+          <h4 className="cl-hist-title" style={{ margin: 0 }}>Referencias visuales</h4>
+          <PhotoUploader clientId={client.id} onSaved={(p) => setPhotos((prev) => [p, ...prev])} />
+        </div>
+        {photosLoading && <div className="bk-slots-loading"><Loader2 size={16} className="spin" /> Cargando…</div>}
+        {!photosLoading && photos.length === 0 && <p className="apt-empty">Sin imágenes registradas</p>}
+        <div className="cl-photo-grid">
+          {photos.map((photo) => (
+            <button key={photo.id} type="button" className="cl-photo-card" onClick={() => setSelectedPhoto(photo)}>
+              <img src={photo.url} alt={`Referencia de ${client.name}`} className="cl-photo-thumb" />
+              <span className="cl-photo-meta">
+                <Image size={12} /> {photo.createdAt ? new Date(photo.createdAt).toLocaleDateString("es-MX") : "Sin fecha"}
+              </span>
+            </button>
           ))}
         </div>
       </div>

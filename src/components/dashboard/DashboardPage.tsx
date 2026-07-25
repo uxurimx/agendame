@@ -1,7 +1,7 @@
 import { getBusiness } from "@/lib/getBusiness";
 import { db } from "@/db";
-import { appointments, clients, professionals } from "@/db/schema";
-import { eq, and, asc, desc, gte, count } from "drizzle-orm";
+import { appointments, clientPhotos, clients, professionals } from "@/db/schema";
+import { eq, and, asc, desc, gte, count, inArray } from "drizzle-orm";
 import { OverviewDashboard } from "@/components/dashboard/OverviewDashboard";
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
@@ -51,6 +51,19 @@ export default async function DashboardPage() {
   const hasTeam = pros.length > 0;
   const newClientsMonth = newClientsRow[0]?.value ?? 0;
   const bookingUrl = `${siteConfig.url}/book/${biz.slug}`;
+  const appointmentIds = [...new Set([...todayApts, ...recentApts].map((appointment) => appointment.id))];
+  const photos = appointmentIds.length > 0
+    ? await db.query.clientPhotos.findMany({
+      where: inArray(clientPhotos.appointmentId, appointmentIds),
+      orderBy: [desc(clientPhotos.createdAt)],
+    })
+    : [];
+  const latestPhotoByAppointment = new Map<string, string>();
+  for (const photo of photos) {
+    if (photo.appointmentId && !latestPhotoByAppointment.has(photo.appointmentId)) {
+      latestPhotoByAppointment.set(photo.appointmentId, photo.url);
+    }
+  }
 
   function mapApt(appointment: typeof todayApts[number]) {
     return {
@@ -76,6 +89,7 @@ export default async function DashboardPage() {
         name: appointment.client.name,
         phone: appointment.client.phone,
       } : null,
+      latestReferenceImageUrl: latestPhotoByAppointment.get(appointment.id) ?? null,
     };
   }
 

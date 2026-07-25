@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
-import { appointments, clients, professionals, services, timeBlocks, serviceProfessionals } from "@/db/schema";
+import { appointments, clientPhotos, clients, professionals, services, timeBlocks, serviceProfessionals } from "@/db/schema";
 import { eq, and, gte, count } from "drizzle-orm";
 import { addMinutes, timeToMinutes } from "@/lib/time";
+import { normalizeReferenceImageDataUrl } from "@/lib/reference-image";
 
 const schema = z.object({
   businessId:     z.string().uuid(),
@@ -15,6 +16,7 @@ const schema = z.object({
   clientPhone:    z.string().min(8).max(20),
   clientEmail:    z.string().email().optional().or(z.literal("")),
   notes:          z.string().max(500).optional(),
+  referenceImageDataUrl: z.string().optional(),
   _hp:            z.string().optional(), // honeypot
 });
 
@@ -60,6 +62,9 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const data = schema.parse(body);
+    const referenceImageDataUrl = data.referenceImageDataUrl
+      ? normalizeReferenceImageDataUrl(data.referenceImageDataUrl)
+      : null;
 
     // Honeypot: si el campo oculto tiene contenido, es un bot — responder ok falso
     if (data._hp) return NextResponse.json({ ok: true, appointmentId: "x" });
@@ -196,6 +201,15 @@ export async function POST(req: NextRequest) {
         paymentStatus:   "pending",
       })
       .returning({ id: appointments.id });
+
+    if (referenceImageDataUrl) {
+      await db.insert(clientPhotos).values({
+        clientId,
+        appointmentId: apt.id,
+        url: referenceImageDataUrl,
+        notes: data.notes?.trim() || null,
+      });
+    }
 
     return NextResponse.json({
       ok:            true,

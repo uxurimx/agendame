@@ -7,11 +7,13 @@ import {
   Check,
   CreditCard,
   ExternalLink,
+  Image,
   Loader2,
   Users,
   X,
 } from "lucide-react";
 import { formatTime } from "@/lib/time";
+import { ReferenceImageModal } from "@/components/dashboard/ReferenceImageModal";
 
 interface AppointmentItem {
   id: string;
@@ -27,6 +29,7 @@ interface AppointmentItem {
   service: { name: string; price: string } | null;
   professional: { id: string; name: string } | null;
   client: { name: string; phone: string | null } | null;
+  latestReferenceImageUrl: string | null;
 }
 
 interface OverviewDashboardProps {
@@ -67,6 +70,7 @@ export function OverviewDashboard({
   const router = useRouter();
   const [checkingId, setCheckingId] = useState<string | null>(null);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [referenceImageOpen, setReferenceImageOpen] = useState<{ url: string; title: string } | null>(null);
   const [, startTransition] = useTransition();
 
   const activeToday = useMemo(
@@ -131,6 +135,42 @@ export function OverviewDashboard({
     }
   }
 
+  function AppointmentHighlight({
+    label,
+    appointment,
+    empty,
+  }: {
+    label: string;
+    appointment: AppointmentItem | null;
+    empty: string;
+  }) {
+    return (
+      <article className="ov-kpi-card ov-kpi-card--wide">
+        <span className="ov-kpi-label">{label}</span>
+        {appointment ? (
+          <div className="ov-kpi-inline-wrap">
+            <strong className="ov-kpi-inline">{`${appointment.client?.name ?? "—"} · ${formatTime(appointment.startTime)}`}</strong>
+            {appointment.latestReferenceImageUrl && (
+              <button
+                type="button"
+                className="ov-photo-trigger"
+                onClick={() => setReferenceImageOpen({
+                  url: appointment.latestReferenceImageUrl!,
+                  title: `Referencia de ${appointment.client?.name ?? "clienta"}`,
+                })}
+                title="Ver imagen de referencia"
+              >
+                <Image size={14} />
+              </button>
+            )}
+          </div>
+        ) : (
+          <strong className="ov-kpi-inline">{empty}</strong>
+        )}
+      </article>
+    );
+  }
+
   return (
     <section className="ov-root">
       <div className="ov-hero">
@@ -177,14 +217,8 @@ export function OverviewDashboard({
             <Users size={16} style={{ opacity: 0.6 }} />{newClientsMonth}
           </strong>
         </article>
-        <article className="ov-kpi-card ov-kpi-card--wide">
-          <span className="ov-kpi-label">Cliente actual</span>
-          <strong className="ov-kpi-inline">{currentAppointment ? `${currentAppointment.client?.name ?? "—"} · ${formatTime(currentAppointment.startTime)}` : "Sin cita en curso"}</strong>
-        </article>
-        <article className="ov-kpi-card ov-kpi-card--wide">
-          <span className="ov-kpi-label">Próxima cita</span>
-          <strong className="ov-kpi-inline">{nextAppointment ? `${nextAppointment.client?.name ?? "—"} · ${formatTime(nextAppointment.startTime)}` : "No hay más citas hoy"}</strong>
-        </article>
+        <AppointmentHighlight label="Cliente actual" appointment={currentAppointment} empty="Sin cita en curso" />
+        <AppointmentHighlight label="Próxima cita" appointment={nextAppointment} empty="No hay más citas hoy" />
       </div>
 
       <div className="ov-grid">
@@ -308,6 +342,13 @@ export function OverviewDashboard({
             )}
           </div>
         </div>
+      )}
+      {referenceImageOpen && (
+        <ReferenceImageModal
+          imageUrl={referenceImageOpen.url}
+          title={referenceImageOpen.title}
+          onClose={() => setReferenceImageOpen(null)}
+        />
       )}
     </section>
   );

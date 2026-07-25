@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type ChangeEvent } from "react";
 import { formatTime, addMinutes } from "@/lib/time";
+import { normalizeReferenceImageDataUrl } from "@/lib/reference-image";
 import {
   Calendar, Clock, ChevronLeft, ChevronRight,
   CheckCircle, User, Scissors, Phone, Loader2,
@@ -206,6 +207,8 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
   const [clientPhone, setClientPhone] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [notes,       setNotes]       = useState("");
+  const [referenceImageDataUrl, setReferenceImageDataUrl] = useState<string | null>(null);
+  const [referenceImageError, setReferenceImageError] = useState("");
   const [_hp,         setHp]          = useState(""); // honeypot: humanos nunca lo llenan
   const eligibleProfessionals = selectedService?.professionalIds?.length
     ? professionals.filter((pro) => selectedService.professionalIds?.includes(pro.id))
@@ -275,6 +278,7 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
           clientPhone:    clientPhone.trim(),
           clientEmail:    clientEmail.trim(),
           notes:          notes.trim(),
+          referenceImageDataUrl: referenceImageDataUrl ?? undefined,
           _hp,
         }),
       });
@@ -302,8 +306,36 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
     setClientPhone("");
     setClientEmail("");
     setNotes("");
+    setReferenceImageDataUrl(null);
+    setReferenceImageError("");
     setError("");
     setConfirmed(false);
+  }
+
+  async function handleReferenceImageChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    setReferenceImageError("");
+
+    if (!file) {
+      setReferenceImageDataUrl(null);
+      return;
+    }
+
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result ?? ""));
+        reader.onerror = () => reject(new Error("No pude leer la imagen."));
+        reader.readAsDataURL(file);
+      });
+
+      const normalized = normalizeReferenceImageDataUrl(dataUrl);
+      setReferenceImageDataUrl(normalized);
+    } catch (imageError) {
+      setReferenceImageDataUrl(null);
+      setReferenceImageError(imageError instanceof Error ? imageError.message : "No pude cargar la imagen.");
+      event.target.value = "";
+    }
   }
 
   if (confirmed && selectedService && selectedDate && selectedSlot) {
@@ -517,6 +549,25 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
                   rows={3}
                 />
               </label>
+              <label className="bk-label">
+                Imagen de referencia <span className="bk-optional">(opcional)</span>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={handleReferenceImageChange}
+                  className="bk-input"
+                />
+                <span className="bk-upload-hint">JPG, PNG o WEBP. Máximo 900 KB.</span>
+              </label>
+              {referenceImageDataUrl && (
+                <div className="bk-image-preview-card">
+                  <img src={referenceImageDataUrl} alt="Referencia" className="bk-image-preview" />
+                  <button type="button" className="bk-btn-back" onClick={() => setReferenceImageDataUrl(null)}>
+                    Quitar imagen
+                  </button>
+                </div>
+              )}
+              {referenceImageError && <p className="bk-error">{referenceImageError}</p>}
               {/* honeypot: invisible para humanos, atrae bots */}
               <div aria-hidden="true" style={{ position: "absolute", left: "-9999px", width: 0, height: 0, overflow: "hidden" }}>
                 <input tabIndex={-1} autoComplete="off" value={_hp} onChange={(e) => setHp(e.target.value)} />

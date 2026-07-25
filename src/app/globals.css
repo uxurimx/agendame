@@ -817,6 +817,335 @@ body {
 }
 .dash-booking-url:hover { text-decoration: underline; }
 
+/* Overview dashboard */
+.ov-root {
+  --ov-wine: #8c3157;
+  --ov-wine-dark: #742746;
+  --ov-paper: #f6efe8;
+  --ov-ink: #2f2530;
+  --ov-muted: #8a7b81;
+  --ov-line: rgba(91, 64, 74, 0.12);
+  margin-bottom: 1.5rem;
+}
+.ov-hero {
+  background: linear-gradient(180deg, var(--ov-wine), var(--ov-wine-dark));
+  color: #fff;
+  border-radius: 28px 28px 18px 18px;
+  padding: 1.2rem 1.35rem 4.15rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+.ov-hero::after {
+  content: "";
+  position: absolute;
+  right: -24px;
+  top: 32px;
+  width: 120px;
+  height: 120px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255,255,255,.12), transparent 65%);
+}
+.ov-title {
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-weight: 700;
+  line-height: 1.05;
+}
+.ov-subtitle {
+  margin-top: .3rem;
+  color: rgba(255,255,255,.8);
+  text-transform: capitalize;
+}
+.ov-notify-pill {
+  min-width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.16);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .3rem;
+  font-weight: 700;
+}
+.ov-icon-button {
+  cursor: pointer;
+  transition: transform .15s ease, background .15s ease, border-color .15s ease, opacity .15s ease;
+}
+.ov-icon-button:hover {
+  transform: scale(1.04);
+}
+.ov-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .7rem;
+  margin-top: -3rem;
+  position: relative;
+  z-index: 1;
+  padding: 0 1rem;
+}
+.ov-kpi-card {
+  background: rgba(255,255,255,.96);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(112, 76, 89, .12);
+  border-radius: 18px;
+  padding: .9rem 1rem;
+  color: var(--ov-ink);
+  box-shadow: 0 14px 28px rgba(65, 24, 43, .18);
+}
+.ov-kpi-card--wide {
+  grid-column: span 2;
+}
+.ov-kpi-label {
+  display: block;
+  font-size: .72rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: #7a5866;
+  margin-bottom: .3rem;
+}
+.ov-kpi-value {
+  font-size: 2rem;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--ov-wine);
+}
+.ov-kpi-inline {
+  font-size: 1rem;
+  line-height: 1.25;
+  font-weight: 700;
+  color: var(--ov-ink);
+}
+.ov-grid {
+  background: var(--ov-paper);
+  border-radius: 0 0 28px 28px;
+  padding: .95rem 1.05rem 1.05rem;
+  display: grid;
+  gap: 1rem;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.4);
+}
+.ov-panel,
+.ov-income-card {
+  background: rgba(255,255,255,.72);
+  border: 1px solid var(--ov-line);
+  border-radius: 22px;
+  padding: 1rem;
+}
+.ov-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-bottom: .9rem;
+  color: var(--ov-ink);
+}
+.ov-panel-head h3 {
+  font-size: .78rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #6f5f64;
+}
+.ov-panel-head span {
+  font-size: .8rem;
+  color: var(--ov-muted);
+}
+.ov-empty {
+  color: var(--ov-muted);
+  font-size: .92rem;
+}
+.ov-check-list,
+.ov-notice-list,
+.ov-mini-stack {
+  display: grid;
+  gap: .75rem;
+}
+.ov-check-row,
+.ov-notice-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: .8rem;
+  align-items: center;
+  padding: .8rem;
+  background: #fff;
+  border: 1px solid rgba(82, 59, 66, .1);
+  border-radius: 18px;
+}
+.ov-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: #f0dfe1;
+  color: #8c3157;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .8rem;
+  font-weight: 700;
+}
+.ov-check-copy,
+.ov-notice-copy {
+  min-width: 0;
+}
+.ov-check-copy strong,
+.ov-notice-copy strong {
+  display: block;
+  color: var(--ov-ink);
+  font-size: .95rem;
+  line-height: 1.2;
+}
+.ov-check-copy span,
+.ov-notice-copy span {
+  display: block;
+  margin-top: .22rem;
+  color: var(--ov-muted);
+  font-size: .82rem;
+  line-height: 1.25;
+}
+.ov-check-price {
+  color: var(--ov-ink);
+  font-weight: 700;
+  font-size: .95rem;
+  white-space: nowrap;
+}
+.ov-check-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(82, 59, 66, .16);
+  background: #fff;
+  color: var(--ov-wine);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .15s ease, background .15s ease, border-color .15s ease;
+}
+.ov-check-btn:hover:not(:disabled) {
+  transform: scale(1.04);
+  background: #fff7f9;
+  border-color: rgba(140, 49, 87, .24);
+}
+.ov-check-btn:disabled {
+  opacity: .7;
+}
+.ov-income-card {
+  background: #2a2029;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.ov-income-card strong {
+  display: block;
+  font-size: 2rem;
+  line-height: 1;
+  margin: .15rem 0 .35rem;
+}
+.ov-income-card p {
+  color: rgba(255,255,255,.68);
+  max-width: 26rem;
+}
+.ov-income-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  background: rgba(255, 197, 57, .14);
+  border: 1px solid rgba(255, 197, 57, .22);
+  color: #ffc539;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.ov-notice-row {
+  grid-template-columns: auto 1fr;
+}
+.ov-notice-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #d39a36;
+  box-shadow: 0 0 0 4px rgba(211, 154, 54, .12);
+}
+.ov-panel-link {
+  border: 0;
+  background: transparent;
+  color: var(--ov-wine);
+  font-size: .82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ov-notifications-modal {
+  width: min(100%, 32rem);
+  border-radius: 24px;
+  background: #fff;
+  border: 1px solid var(--ov-line);
+  box-shadow: 0 24px 48px rgba(47, 37, 48, .18);
+  padding: 1rem;
+}
+.ov-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-bottom: .9rem;
+}
+.ov-modal-head h3 {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--ov-ink);
+}
+.ov-modal-head p {
+  margin-top: .15rem;
+  font-size: .82rem;
+  color: var(--ov-muted);
+}
+.ov-modal-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(82, 59, 66, .16);
+  background: #fff;
+  color: var(--ov-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .ov-hero {
+    padding: 1rem 1.05rem 4rem;
+    border-radius: 24px 24px 16px 16px;
+  }
+  .ov-kpi-grid {
+    padding: 0 .6rem;
+    gap: .6rem;
+    margin-top: -2.8rem;
+  }
+  .ov-grid {
+    border-radius: 0 0 24px 24px;
+    padding: .85rem;
+  }
+  .ov-check-row,
+  .ov-notice-row {
+    grid-template-columns: auto 1fr auto;
+  }
+  .ov-check-btn {
+    grid-column: 3;
+    grid-row: span 2;
+    align-self: center;
+  }
+  .ov-income-card {
+    align-items: flex-start;
+  }
+  .ov-notifications-modal {
+    width: min(100%, 100vw - 1.5rem);
+    padding: .95rem;
+  }
+}
+
 /* Appointment list */
 .apt-list  { display: flex; flex-direction: column; gap: .5rem; margin-top: .75rem; }
 .apt-empty { display: flex; flex-direction: column; align-items: center; gap: .5rem; padding: 2.5rem 1rem; color: var(--fg-muted); text-align: center; }

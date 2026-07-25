@@ -551,7 +551,7 @@ function Step4({ slug }: { slug: string }) {
       </div>
 
       <button
-        onClick={() => router.push("/overview")}
+        onClick={() => router.push("/dashboard")}
         className="w-full py-3.5 rounded-xl font-semibold text-white text-sm"
         style={{ background: "linear-gradient(135deg,#6E2A96,#E8631F)" }}
       >

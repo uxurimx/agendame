@@ -50,6 +50,7 @@ export const professionals = pgTable('professionals', {
   email:           text('email'),
   bio:             text('bio'),
   avatarUrl:       text('avatar_url'),
+  colorHex:        varchar('color_hex', { length: 7 }).default('#F7C8D0'),
   commissionType:  varchar('commission_type', { length: 20 }).notNull().default('percentage'),
   commissionValue: numeric('commission_value', { precision: 10, scale: 2 }).notNull().default('0'),
   isActive:        boolean('is_active').notNull().default(true),

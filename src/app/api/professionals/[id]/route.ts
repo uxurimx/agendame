@@ -10,6 +10,7 @@ const schema = z.object({
   phone:           z.string().max(20).optional(),
   email:           z.string().email().optional().or(z.literal("")),
   bio:             z.string().max(500).optional(),
+  colorHex:        z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
   commissionType:  z.enum(["percentage", "fixed"]).optional(),
   commissionValue: z.number().min(0).max(100).optional(),
   isActive:        z.boolean().optional(),

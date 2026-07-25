@@ -57,7 +57,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     const body = await req.json();
     const data = schema.parse(body);
-    if (!isAdmin && (data.status !== undefined || data.response !== undefined)) {
+    const canUserCloseResolved = !isAdmin && data.status === "cerrado" && ticket.status === "resuelto" && data.response === undefined;
+    if (!isAdmin && !canUserCloseResolved && (data.status !== undefined || data.response !== undefined)) {
       return NextResponse.json({ error: "Solo admin puede responder o cambiar el estado" }, { status: 403 });
     }
 
@@ -68,7 +69,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (data.description !== undefined) updateData.description = data.description;
     if (data.type !== undefined) updateData.type = data.type;
     if (data.priority !== undefined) updateData.priority = data.priority;
-    if (isAdmin && data.status !== undefined) updateData.status = data.status;
+    if ((isAdmin || canUserCloseResolved) && data.status !== undefined) updateData.status = data.status;
     if (isAdmin && data.response !== undefined) updateData.response = data.response;
 
     if (data.response !== undefined) {

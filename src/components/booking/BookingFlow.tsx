@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { formatTime, addMinutes } from "@/lib/time";
 import {
   Calendar, Clock, ChevronLeft, ChevronRight,
-  CheckCircle, User, Scissors, Phone, Mail, Loader2,
+  CheckCircle, User, Scissors, Phone, Loader2,
 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────
@@ -15,6 +15,7 @@ interface ServiceInfo {
   durationMin: number;
   description?: string;
   category?:   string;
+  professionalIds?: string[];
 }
 interface ProInfo {
   id:       string;
@@ -40,7 +41,8 @@ interface BookingFlowProps {
   services:      ServiceInfo[];
 }
 
-const STEPS = ["Servicio", "Profesional", "Fecha", "Tus datos"];
+const STEPS_WITH_PRO = ["Servicio", "Profesional", "Fecha", "Tus datos"];
+const STEPS_SINGLE_PRO = ["Servicio", "Fecha", "Tus datos"];
 const DAY_LABELS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 const DAY_KEYS   = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 const MONTH_NAMES = [
@@ -205,6 +207,26 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
   const [clientEmail, setClientEmail] = useState("");
   const [notes,       setNotes]       = useState("");
   const [_hp,         setHp]          = useState(""); // honeypot: humanos nunca lo llenan
+  const eligibleProfessionals = selectedService?.professionalIds?.length
+    ? professionals.filter((pro) => selectedService.professionalIds?.includes(pro.id))
+    : professionals;
+  const hasSingleProfessional = eligibleProfessionals.length === 1;
+  const visibleSteps = hasSingleProfessional ? STEPS_SINGLE_PRO : STEPS_WITH_PRO;
+  const dateStep = hasSingleProfessional ? 1 : 2;
+  const detailsStep = hasSingleProfessional ? 2 : 3;
+
+  useEffect(() => {
+    if (hasSingleProfessional) {
+      setSelectedPro(eligibleProfessionals[0] ?? null);
+      setStep((current) => (current === 1 ? dateStep : Math.min(current, detailsStep)));
+      return;
+    }
+
+    setSelectedPro((current) => {
+      if (current === "any") return current;
+      return current && eligibleProfessionals.some((pro) => pro.id === current.id) ? current : null;
+    });
+  }, [hasSingleProfessional, eligibleProfessionals, dateStep, detailsStep]);
 
   // Cargar slots cuando fecha / profesional cambian
   const loadSlots = useCallback(async () => {
@@ -231,8 +253,8 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
   }, [selectedDate, selectedService, selectedPro, business.id]);
 
   useEffect(() => {
-    if (step === 2 && selectedDate) loadSlots();
-  }, [step, selectedDate, loadSlots]);
+    if (step === dateStep && selectedDate) loadSlots();
+  }, [step, dateStep, selectedDate, loadSlots]);
 
   async function handleSubmit() {
     if (!selectedService || !selectedDate || !selectedSlot) return;
@@ -301,9 +323,9 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
 
   const canNext =
     (step === 0 && !!selectedService) ||
-    (step === 1 && selectedPro !== null) ||
-    (step === 2 && !!selectedSlot) ||
-    step === 3;
+    (!hasSingleProfessional && step === 1 && selectedPro !== null) ||
+    (step === dateStep && !!selectedSlot) ||
+    step === detailsStep;
 
   return (
     <div className="bk-root">
@@ -322,7 +344,7 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
 
       {/* Progress */}
       <div className="bk-progress">
-        {STEPS.map((label, i) => (
+        {visibleSteps.map((label, i) => (
           <div key={i} className={`bk-step${i <= step ? " bk-step--done" : ""}`}>
             <div className="bk-step-dot">{i < step ? "✓" : i + 1}</div>
             <span className="bk-step-label">{label}</span>
@@ -341,7 +363,14 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
                 <button
                   key={svc.id}
                   type="button"
-                  onClick={() => setSelectedService(svc)}
+                  onClick={() => {
+                    setSelectedService(svc);
+                    setSelectedPro(null);
+                    setSelectedDate("");
+                    setSelectedSlot("");
+                    setSlots([]);
+                    setSlotsClosed(false);
+                  }}
                   className={`bk-service-item${selectedService?.id === svc.id ? " bk-service-item--selected" : ""}`}
                 >
                   <div className="bk-service-info">
@@ -359,7 +388,7 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
         )}
 
         {/* Step 1: Profesional */}
-        {step === 1 && (
+        {!hasSingleProfessional && step === 1 && (
           <div>
             <h2 className="bk-section-title"><User size={18} /> ¿Con quién?</h2>
             <div className="bk-pro-list">
@@ -374,7 +403,7 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
                   <p className="bk-pro-sub">El primero disponible</p>
                 </div>
               </button>
-              {professionals.map((pro) => (
+              {eligibleProfessionals.map((pro) => (
                 <button
                   key={pro.id}
                   type="button"
@@ -396,7 +425,7 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
         )}
 
         {/* Step 2: Fecha y hora */}
-        {step === 2 && (
+        {step === dateStep && (
           <div>
             <h2 className="bk-section-title"><Calendar size={18} /> Selecciona fecha</h2>
             <BookingCalendar
@@ -439,7 +468,7 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
         )}
 
         {/* Step 3: Datos del cliente */}
-        {step === 3 && (
+        {step === detailsStep && (
           <div>
             <h2 className="bk-section-title"><Phone size={18} /> Tus datos</h2>
             <div className="bk-summary-pill">
@@ -506,7 +535,7 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
           </button>
         )}
         <div style={{ flex: 1 }} />
-        {step < 3 ? (
+        {step < detailsStep ? (
           <button
             type="button"
             disabled={!canNext}

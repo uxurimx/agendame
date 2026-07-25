@@ -10,6 +10,7 @@ const schema = z.object({
   phone:           z.string().max(20).optional(),
   email:           z.string().email().optional().or(z.literal("")),
   bio:             z.string().max(500).optional(),
+  colorHex:        z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
   commissionType:  z.enum(["percentage", "fixed"]).default("percentage"),
   commissionValue: z.number().min(0).max(100).default(0),
 });
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest) {
       phone:           data.phone ?? null,
       email:           data.email || null,
       bio:             data.bio ?? null,
+      colorHex:        data.colorHex ?? "#F7C8D0",
       commissionType:  data.commissionType,
       commissionValue: String(data.commissionValue),
     }).returning();

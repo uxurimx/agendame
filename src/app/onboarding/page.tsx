@@ -15,7 +15,7 @@ export default async function OnboardingPage() {
   const existing = await db.query.businesses.findFirst({
     where: eq(businesses.ownerId, userId),
   });
-  if (existing) redirect("/overview");
+  if (existing) redirect("/dashboard");
 
   return <OnboardingFlow />;
 }

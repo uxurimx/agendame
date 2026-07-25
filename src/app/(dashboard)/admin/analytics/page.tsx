@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { pageViews, analyticsEvents } from "@/db/schema";
-import { sql, gte, and } from "drizzle-orm";
+import { sql, gte } from "drizzle-orm";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import AnalyticsCharts from "./AnalyticsCharts";
@@ -125,7 +125,7 @@ export default async function AnalyticsPage({
 
   const user = await currentUser();
   const email = user?.emailAddresses[0]?.emailAddress;
-  if (ADMIN_EMAIL && email !== ADMIN_EMAIL) redirect("/overview");
+  if (ADMIN_EMAIL && email !== ADMIN_EMAIL) redirect("/dashboard");
 
   const { days: daysParam } = await searchParams;
   const days = parseInt(daysParam ?? "30", 10);

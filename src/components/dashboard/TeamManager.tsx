@@ -10,16 +10,20 @@ export interface ProItem {
   phone:           string | null;
   email:           string | null;
   bio:             string | null;
+  colorHex:        string | null;
   commissionType:  string;
   commissionValue: string;
   isActive:        boolean;
 }
+
+const COLOR_PRESETS = ["#F7C8D0", "#F9DCC4", "#FAEDCB", "#C9E4DE", "#CDE7F0", "#E4C1F9"];
 
 function ProModal({ pro, onClose }: { pro?: ProItem; onClose: () => void }) {
   const [name,      setName]      = useState(pro?.name ?? "");
   const [phone,     setPhone]     = useState(pro?.phone ?? "");
   const [email,     setEmail]     = useState(pro?.email ?? "");
   const [bio,       setBio]       = useState(pro?.bio ?? "");
+  const [colorHex,  setColorHex]  = useState(pro?.colorHex ?? COLOR_PRESETS[0]);
   const [commType,  setCommType]  = useState<"percentage" | "fixed">(
     (pro?.commissionType as "percentage" | "fixed") ?? "percentage"
   );
@@ -41,6 +45,7 @@ function ProModal({ pro, onClose }: { pro?: ProItem; onClose: () => void }) {
           phone:           phone.trim() || undefined,
           email:           email.trim() || undefined,
           bio:             bio.trim()   || undefined,
+          colorHex,
           commissionType:  commType,
           commissionValue: commVal,
         }),
@@ -98,6 +103,28 @@ function ProModal({ pro, onClose }: { pro?: ProItem; onClose: () => void }) {
           <label className="svc-label">
             Bio / Especialidad
             <input className="svc-input" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Ej: Especialista en uñas acrílicas" />
+          </label>
+          <label className="svc-label">
+            Color en agenda
+            <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
+              {COLOR_PRESETS.map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => setColorHex(color)}
+                  className="svc-icon-btn"
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 999,
+                    borderColor: colorHex === color ? "var(--l-berry)" : "var(--border)",
+                    background: color,
+                    boxShadow: colorHex === color ? "0 0 0 2px rgba(110,42,150,.15)" : "none",
+                  }}
+                  title={color}
+                />
+              ))}
+            </div>
           </label>
           {error && <p style={{ color: "#e53e3e", fontSize: ".8rem" }}>{error}</p>}
         </div>
@@ -170,7 +197,7 @@ export function TeamManager({ professionals }: { professionals: ProItem[] }) {
           {professionals.map((pro) => (
             <div key={pro.id} className={`svc-item${!pro.isActive ? " svc-item--inactive" : ""}`}>
               <div style={{ display: "flex", alignItems: "center", gap: ".75rem", flex: 1 }}>
-                <div className="bk-pro-avatar" style={{ width: 40, height: 40 }}>
+                <div className="bk-pro-avatar" style={{ width: 40, height: 40, background: pro.colorHex ?? COLOR_PRESETS[0] }}>
                   {pro.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="svc-item-info" style={{ flex: 1 }}>

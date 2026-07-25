@@ -1,10 +1,11 @@
 import { getBusiness } from "@/lib/getBusiness";
 import { db } from "@/db";
-import { appointments, professionals } from "@/db/schema";
-import { eq, and, asc, desc } from "drizzle-orm";
+import { appointments, clients, professionals } from "@/db/schema";
+import { eq, and, asc, desc, gte, count } from "drizzle-orm";
 import { OverviewDashboard } from "@/components/dashboard/OverviewDashboard";
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { siteConfig } from "@/config/site";
 
 function mexicoISODate() {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -24,7 +25,11 @@ export default async function DashboardPage() {
   const biz = await getBusiness();
   const today = mexicoISODate();
 
-  const [pros, todayApts, recentApts] = await Promise.all([
+  const firstOfMonth = new Date();
+  firstOfMonth.setDate(1);
+  firstOfMonth.setHours(0, 0, 0, 0);
+
+  const [pros, todayApts, recentApts, newClientsRow] = await Promise.all([
     db.query.professionals.findMany({
       where: and(eq(professionals.businessId, biz.id), eq(professionals.isActive, true)),
     }),
@@ -39,51 +44,43 @@ export default async function DashboardPage() {
       orderBy: [desc(appointments.createdAt)],
       limit: 5,
     }),
+    db.select({ value: count() }).from(clients).where(
+      and(eq(clients.businessId, biz.id), gte(clients.createdAt, firstOfMonth)),
+    ),
   ]);
   const hasTeam = pros.length > 0;
+  const newClientsMonth = newClientsRow[0]?.value ?? 0;
+  const bookingUrl = `${siteConfig.url}/book/${biz.slug}`;
 
-  const todayAppointments = todayApts.map((appointment) => ({
-    id: appointment.id,
-    date: appointment.date,
-    startTime: appointment.startTime,
-    endTime: appointment.endTime,
-    status: appointment.status,
-    pricePaid: appointment.pricePaid,
-    createdAt: appointment.createdAt?.toISOString?.() ?? null,
-    service: appointment.service ? {
-      name: appointment.service.name,
-      price: String(appointment.service.price),
-    } : null,
-    professional: appointment.professional ? {
-      id: appointment.professional.id,
-      name: appointment.professional.name,
-    } : null,
-    client: appointment.client ? {
-      name: appointment.client.name,
-      phone: appointment.client.phone,
-    } : null,
-  }));
-  const recentAppointments = recentApts.map((appointment) => ({
-    id: appointment.id,
-    date: appointment.date,
-    startTime: appointment.startTime,
-    endTime: appointment.endTime,
-    status: appointment.status,
-    pricePaid: appointment.pricePaid,
-    createdAt: appointment.createdAt?.toISOString?.() ?? null,
-    service: appointment.service ? {
-      name: appointment.service.name,
-      price: String(appointment.service.price),
-    } : null,
-    professional: appointment.professional ? {
-      id: appointment.professional.id,
-      name: appointment.professional.name,
-    } : null,
-    client: appointment.client ? {
-      name: appointment.client.name,
-      phone: appointment.client.phone,
-    } : null,
-  }));
+  function mapApt(appointment: typeof todayApts[number]) {
+    return {
+      id: appointment.id,
+      date: appointment.date,
+      startTime: appointment.startTime,
+      endTime: appointment.endTime,
+      status: appointment.status,
+      pricePaid: appointment.pricePaid,
+      paymentStatus: appointment.paymentStatus ?? null,
+      paymentMethod: appointment.paymentMethod ?? null,
+      notes: appointment.notes ?? null,
+      createdAt: appointment.createdAt?.toISOString?.() ?? null,
+      service: appointment.service ? {
+        name: appointment.service.name,
+        price: String(appointment.service.price),
+      } : null,
+      professional: appointment.professional ? {
+        id: appointment.professional.id,
+        name: appointment.professional.name,
+      } : null,
+      client: appointment.client ? {
+        name: appointment.client.name,
+        phone: appointment.client.phone,
+      } : null,
+    };
+  }
+
+  const todayAppointments = todayApts.map(mapApt);
+  const recentAppointments = recentApts.map(mapApt);
 
   return (
     <div className="dash-page" style={{ maxWidth: "100%" }}>
@@ -100,6 +97,8 @@ export default async function DashboardPage() {
 
       <OverviewDashboard
         businessName={biz.name}
+        bookingUrl={bookingUrl}
+        newClientsMonth={newClientsMonth}
         todayAppointments={todayAppointments}
         recentAppointments={recentAppointments}
       />

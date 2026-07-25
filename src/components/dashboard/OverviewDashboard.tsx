@@ -6,7 +6,9 @@ import {
   Bell,
   Check,
   CreditCard,
+  ExternalLink,
   Loader2,
+  Users,
   X,
 } from "lucide-react";
 import { formatTime } from "@/lib/time";
@@ -18,6 +20,9 @@ interface AppointmentItem {
   endTime: string;
   status: string;
   pricePaid: string | null;
+  paymentStatus: string | null;
+  paymentMethod: string | null;
+  notes: string | null;
   createdAt: string | null;
   service: { name: string; price: string } | null;
   professional: { id: string; name: string } | null;
@@ -26,6 +31,8 @@ interface AppointmentItem {
 
 interface OverviewDashboardProps {
   businessName: string;
+  bookingUrl: string;
+  newClientsMonth: number;
   todayAppointments: AppointmentItem[];
   recentAppointments: AppointmentItem[];
 }
@@ -52,6 +59,8 @@ function nowMinutesInMexico() {
 
 export function OverviewDashboard({
   businessName,
+  bookingUrl,
+  newClientsMonth,
   todayAppointments,
   recentAppointments,
 }: OverviewDashboardProps) {
@@ -131,15 +140,26 @@ export function OverviewDashboard({
             {new Date().toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" })}
           </p>
         </div>
-        <button
-          type="button"
-          className="ov-notify-pill ov-icon-button"
-          onClick={() => setNotificationsOpen(true)}
-          title="Ver notificaciones"
-        >
-          <Bell size={14} />
-          <span>{notifications.length}</span>
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <a
+            href={bookingUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="dash-btn-secondary"
+            style={{ fontSize: "13px" }}
+          >
+            <ExternalLink size={14} /> Ver mi página
+          </a>
+          <button
+            type="button"
+            className="ov-notify-pill ov-icon-button"
+            onClick={() => setNotificationsOpen(true)}
+            title="Ver notificaciones"
+          >
+            <Bell size={14} />
+            <span>{notifications.length}</span>
+          </button>
+        </div>
       </div>
 
       <div className="ov-kpi-grid">
@@ -150,6 +170,12 @@ export function OverviewDashboard({
         <article className="ov-kpi-card">
           <span className="ov-kpi-label">Por confirmar</span>
           <strong className="ov-kpi-value">{pendingToday.length}</strong>
+        </article>
+        <article className="ov-kpi-card">
+          <span className="ov-kpi-label">Nuevas clientas este mes</span>
+          <strong className="ov-kpi-value" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <Users size={16} style={{ opacity: 0.6 }} />{newClientsMonth}
+          </strong>
         </article>
         <article className="ov-kpi-card ov-kpi-card--wide">
           <span className="ov-kpi-label">Cliente actual</span>
@@ -182,6 +208,11 @@ export function OverviewDashboard({
                   </div>
                   <div className="ov-check-price">
                     ${Number(appointment.pricePaid ?? appointment.service?.price ?? 0).toLocaleString("es-MX")}
+                    {appointment.paymentMethod && (
+                      <span style={{ fontSize: "10px", opacity: 0.65, display: "block" }}>
+                        {appointment.paymentMethod}
+                      </span>
+                    )}
                   </div>
                   <button
                     type="button"

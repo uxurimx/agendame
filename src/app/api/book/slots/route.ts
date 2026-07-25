@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
-import { businesses, professionals, appointments, services, timeBlocks } from "@/db/schema";
+import { businesses, professionals, appointments, services, timeBlocks, serviceProfessionals } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { generateSlots } from "@/lib/time";
 
@@ -49,15 +49,36 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ slots: [], closed: true });
   }
 
-  // Obtener profesionales activos del negocio
+  const serviceProRows = await db.query.serviceProfessionals.findMany({
+    where: eq(serviceProfessionals.serviceId, serviceId),
+    columns: {
+      professionalId: true,
+    },
+  });
+
+  let eligiblePros = await db.query.professionals.findMany({
+    where: and(eq(professionals.businessId, businessId), eq(professionals.isActive, true)),
+  });
+
+  if (serviceProRows.length > 0) {
+    const eligibleIds = serviceProRows.map((row) => row.professionalId);
+    eligiblePros = eligiblePros.filter((pro) => eligibleIds.includes(pro.id));
+  }
+
+  if (eligiblePros.length === 0) {
+    return NextResponse.json({ slots: [] });
+  }
+
+  // Obtener profesionales elegibles para el servicio
   let proIds: string[] = [];
   if (professionalId && professionalId !== "any") {
-    proIds = [professionalId];
+    proIds = eligiblePros.some((pro) => pro.id === professionalId) ? [professionalId] : [];
   } else {
-    const pros = await db.query.professionals.findMany({
-      where: and(eq(professionals.businessId, businessId), eq(professionals.isActive, true)),
-    });
-    proIds = pros.map((p) => p.id);
+    proIds = eligiblePros.map((p) => p.id);
+  }
+
+  if (proIds.length === 0) {
+    return NextResponse.json({ slots: [] });
   }
 
   // Bloques de tiempo del negocio para ese día

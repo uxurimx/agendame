@@ -343,6 +343,7 @@ function TicketCard({ ticket, isAdmin, onUpdated, onDeleted }: { ticket: Ticket;
   const [expanded, setExpanded] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [closing, setClosing] = useState(false);
 
   async function handleDelete() {
     if (!confirm(`¿Eliminar ticket "${ticket.title}"?`)) return;
@@ -356,6 +357,24 @@ function TicketCard({ ticket, isAdmin, onUpdated, onDeleted }: { ticket: Ticket;
       alert(`Error al eliminar ticket: ${err instanceof Error ? err.message : "desconocido"}`);
     } finally {
       setDeleting(false);
+    }
+  }
+
+  async function handleCloseResolved() {
+    setClosing(true);
+    try {
+      const res = await fetch(`/api/tickets/${ticket.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "cerrado" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? `Error ${res.status}`);
+      onUpdated();
+    } catch (err) {
+      alert(`Error al cerrar ticket: ${err instanceof Error ? err.message : "desconocido"}`);
+    } finally {
+      setClosing(false);
     }
   }
 
@@ -412,6 +431,23 @@ function TicketCard({ ticket, isAdmin, onUpdated, onDeleted }: { ticket: Ticket;
               </div>
             )}
 
+            {!isAdmin && ticket.status === "resuelto" && (
+              <div className="rounded-xl p-3 flex items-center justify-between gap-3 flex-wrap" style={{ background: "#eff6ff", borderLeft: "4px solid #2563eb" }}>
+                <div>
+                  <p className="text-xs font-semibold mb-1" style={{ color: "#2563eb" }}>Ticket resuelto</p>
+                  <p className="text-sm" style={{ color: "#1a1420" }}>Revísalo y ciérralo cuando confirmes que ya quedó.</p>
+                </div>
+                <button
+                  onClick={handleCloseResolved}
+                  disabled={closing}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold text-white disabled:opacity-50"
+                  style={{ background: "#2563eb" }}
+                >
+                  {closing ? "Cerrando..." : "Cerrar ticket"}
+                </button>
+              </div>
+            )}
+
             {isAdmin && <AdminResponsePanel ticket={ticket} onUpdated={onUpdated} />}
           </div>
         )}
@@ -443,6 +479,7 @@ export function TicketsView({ isAdmin }: { isAdmin: boolean }) {
   useEffect(() => { load(); }, [load]);
 
   const filtered = filter === "todos" ? tickets : tickets.filter(t => t.status === filter);
+  const resolvedToReviewCount = tickets.filter((ticket) => ticket.status === "resuelto").length;
 
   return (
     <div className="flex flex-col gap-6">
@@ -470,6 +507,29 @@ export function TicketsView({ isAdmin }: { isAdmin: boolean }) {
           <NewTicketForm onCreated={load} />
         </div>
       </div>
+
+      {resolvedToReviewCount > 0 && (
+        <div
+          className="rounded-2xl border px-4 py-3 flex items-center justify-between gap-3 flex-wrap"
+          style={{ background: "#eff6ff", borderColor: "#bfdbfe" }}
+        >
+          <div>
+            <p className="text-sm font-semibold" style={{ color: "#1d4ed8" }}>
+              {resolvedToReviewCount} ticket{resolvedToReviewCount !== 1 ? "s" : ""} resuelto{resolvedToReviewCount !== 1 ? "s" : ""} por revisar
+            </p>
+            <p className="text-xs" style={{ color: "#1e3a8a" }}>
+              Ábrelos, revisa la respuesta y ciérralos cuando confirmes que ya quedaron.
+            </p>
+          </div>
+          <button
+            onClick={() => setFilter("resuelto")}
+            className="px-3 py-1.5 rounded-xl text-xs font-semibold text-white"
+            style={{ background: "#2563eb" }}
+          >
+            Ver resueltos
+          </button>
+        </div>
+      )}
 
       {/* Filtros */}
       <div className="flex gap-2 flex-wrap">

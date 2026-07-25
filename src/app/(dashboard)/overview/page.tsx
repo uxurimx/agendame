@@ -1,7 +1,7 @@
 import { getBusiness } from "@/lib/getBusiness";
 import { db } from "@/db";
-import { professionals } from "@/db/schema";
-import { eq, and, count } from "drizzle-orm";
+import { professionals, services } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 import { AgendaCalendar } from "@/components/dashboard/AgendaCalendar";
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
@@ -9,12 +9,24 @@ import Link from "next/link";
 export default async function OverviewPage() {
   const biz = await getBusiness();
 
-  const pros = await db.query.professionals.findMany({
-    where: and(eq(professionals.businessId, biz.id), eq(professionals.isActive, true)),
-  });
-  const hasTeam = pros.length > 0;
+  const [pros, svcList] = await Promise.all([
+    db.query.professionals.findMany({
+      where: and(eq(professionals.businessId, biz.id), eq(professionals.isActive, true)),
+    }),
+    db.query.services.findMany({
+      where: and(eq(services.businessId, biz.id), eq(services.isActive, true)),
+    }),
+  ]);
 
-  const proList = pros.map((p) => ({ id: p.id, name: p.name }));
+  const hasTeam = pros.length > 0;
+  const proList = pros.map((p) => ({ id: p.id, name: p.name, colorHex: p.colorHex ?? "#F7C8D0" }));
+  const serviceList = svcList.map((service) => ({
+    id: service.id,
+    name: service.name,
+    description: service.description ?? "",
+    price: String(service.price),
+    durationMin: service.durationMin,
+  }));
 
   return (
     <div className="dash-page" style={{ maxWidth: "100%" }}>
@@ -36,7 +48,7 @@ export default async function OverviewPage() {
         </Link>
       )}
 
-      <AgendaCalendar businessId={biz.id} professionals={proList} />
+      <AgendaCalendar businessId={biz.id} professionals={proList} services={serviceList} />
     </div>
   );
 }

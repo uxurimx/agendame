@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
-  LayoutDashboard, Settings, BarChart2, Calendar,
+  Settings, BarChart2, LayoutDashboard, Calendar,
   Users, Scissors, FileText, ChevronRight, X, LifeBuoy,
 } from "lucide-react";
 import { UserButton, useUser } from "@clerk/nextjs";
-import { siteConfig } from "@/config/site";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const navItems = [
@@ -28,59 +28,93 @@ interface SideNavProps {
   onClose?: () => void;
 }
 
+function NavLink({
+  href,
+  icon: Icon,
+  name,
+  active,
+  badgeCount,
+}: {
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  name: string;
+  active: boolean;
+  badgeCount?: number;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 group ${
+        active ? "font-semibold" : ""
+      }`}
+      style={
+        active
+          ? {
+              background: "linear-gradient(135deg, #6E2A96, #E8631F)",
+              color: "white",
+              boxShadow: "0 4px 14px rgba(110,42,150,0.28)",
+            }
+          : { color: "var(--fg-muted)" }
+      }
+      onMouseEnter={(e) => {
+        if (!active) (e.currentTarget as HTMLElement).style.backgroundColor = "var(--surface-2)";
+      }}
+      onMouseLeave={(e) => {
+        if (!active) (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+      }}
+    >
+      <div className="flex items-center gap-3">
+        <Icon
+          className={`w-4 h-4 transition-colors ${
+            active ? "text-white" : "group-hover:text-purple-500"
+          }`}
+        />
+        <span className="text-sm">{name}</span>
+        {badgeCount !== undefined && badgeCount > 0 && (
+          <span
+            className="min-w-[1.25rem] h-5 px-1.5 rounded-full inline-flex items-center justify-center text-[11px] font-bold"
+            style={{
+              background: active ? "rgba(255,255,255,.2)" : "#E8631F",
+              color: "#fff",
+            }}
+          >
+            {badgeCount}
+          </span>
+        )}
+      </div>
+      {active && <ChevronRight className="w-3.5 h-3.5 opacity-60" />}
+    </Link>
+  );
+}
+
 export default function SideNav({ isOpen = false, onClose }: SideNavProps) {
   const pathname = usePathname();
   const { user } = useUser();
   const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
   const isAdmin = user?.primaryEmailAddress?.emailAddress === adminEmail;
+  const [supportResolvedCount, setSupportResolvedCount] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSupportCount() {
+      try {
+        const res = await fetch("/api/tickets", { cache: "no-store" });
+        const data = await res.json();
+        if (!res.ok || cancelled || !Array.isArray(data)) return;
+        const resolved = data.filter((ticket: { status?: string }) => ticket.status === "resuelto").length;
+        setSupportResolvedCount(resolved);
+      } catch {
+        if (!cancelled) setSupportResolvedCount(0);
+      }
+    }
+
+    void loadSupportCount();
+    return () => { cancelled = true; };
+  }, []);
 
   function isActive(href: string) {
     return pathname === href || pathname.startsWith(href + "/");
-  }
-
-  function NavLink({
-    href,
-    icon: Icon,
-    name,
-  }: {
-    href: string;
-    icon: React.ComponentType<{ className?: string }>;
-    name: string;
-  }) {
-    const active = isActive(href);
-    return (
-      <Link
-        href={href}
-        className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 group ${
-          active ? "font-semibold" : ""
-        }`}
-        style={
-          active
-            ? {
-                background: "linear-gradient(135deg, #6E2A96, #E8631F)",
-                color: "white",
-                boxShadow: "0 4px 14px rgba(110,42,150,0.28)",
-              }
-            : { color: "var(--fg-muted)" }
-        }
-        onMouseEnter={(e) => {
-          if (!active) (e.currentTarget as HTMLElement).style.backgroundColor = "var(--surface-2)";
-        }}
-        onMouseLeave={(e) => {
-          if (!active) (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <Icon
-            className={`w-4 h-4 transition-colors ${
-              active ? "text-white" : "group-hover:text-purple-500"
-            }`}
-          />
-          <span className="text-sm">{name}</span>
-        </div>
-        {active && <ChevronRight className="w-3.5 h-3.5 opacity-60" />}
-      </Link>
-    );
   }
 
   return (
@@ -115,7 +149,7 @@ export default function SideNav({ isOpen = false, onClose }: SideNavProps) {
         {/* Navegación */}
         <nav className="flex-1 space-y-1">
           {navItems.map((item) => (
-            <NavLink key={item.href} {...item} />
+            <NavLink key={item.href} {...item} active={isActive(item.href)} />
           ))}
 
           {/* Poxelbit — soporte técnico */}
@@ -127,7 +161,7 @@ export default function SideNav({ isOpen = false, onClose }: SideNavProps) {
               Poxelbit
             </p>
           </div>
-          <NavLink href="/support" icon={LifeBuoy} name="Soporte" />
+          <NavLink href="/support" icon={LifeBuoy} name="Soporte" badgeCount={supportResolvedCount} active={isActive("/support")} />
 
           {isAdmin && (
             <>
@@ -140,7 +174,7 @@ export default function SideNav({ isOpen = false, onClose }: SideNavProps) {
                 </p>
               </div>
               {adminItems.map((item) => (
-                <NavLink key={item.href} {...item} />
+                <NavLink key={item.href} {...item} active={isActive(item.href)} />
               ))}
             </>
           )}

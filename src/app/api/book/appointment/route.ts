@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
-import { appointments, clients, professionals, services, timeBlocks } from "@/db/schema";
+import { appointments, clients, professionals, services, timeBlocks, serviceProfessionals } from "@/db/schema";
 import { eq, and, gte, count } from "drizzle-orm";
 import { addMinutes, timeToMinutes } from "@/lib/time";
 
@@ -89,32 +89,48 @@ export async function POST(req: NextRequest) {
     if (!service) return NextResponse.json({ error: "Servicio no encontrado" }, { status: 404 });
 
     const endTime = addMinutes(data.startTime, service.durationMin);
+    const serviceProRows = await db.query.serviceProfessionals.findMany({
+      where: eq(serviceProfessionals.serviceId, data.serviceId),
+      columns: {
+        professionalId: true,
+      },
+    });
+    const eligiblePros = await db.query.professionals.findMany({
+      where: and(
+        eq(professionals.businessId, data.businessId),
+        eq(professionals.isActive, true),
+      ),
+    });
+    const eligibleProIds = serviceProRows.length > 0
+      ? eligiblePros
+        .filter((pro) => serviceProRows.some((row) => row.professionalId === pro.id))
+        .map((pro) => pro.id)
+      : eligiblePros.map((pro) => pro.id);
+
+    if (eligibleProIds.length === 0) {
+      return NextResponse.json({ error: "No hay profesionales disponibles para este servicio" }, { status: 409 });
+    }
 
     // Resolver profesional si es "any"
     let proId = data.professionalId;
     if (proId === "any") {
-      const pros = await db.query.professionals.findMany({
-        where: and(
-          eq(professionals.businessId, data.businessId),
-          eq(professionals.isActive, true),
-        ),
-      });
-
       // Buscar el primer profesional libre en ese slot
-      for (const pro of pros) {
+      for (const eligibleProId of eligibleProIds) {
         const available = await isProfessionalAvailable(
           data.businessId,
-          pro.id,
+          eligibleProId,
           data.date,
           data.startTime,
           endTime,
         );
         if (available) {
-          proId = pro.id;
+          proId = eligibleProId;
           break;
         }
       }
       if (proId === "any") return NextResponse.json({ error: "Sin disponibilidad" }, { status: 409 });
+    } else if (!eligibleProIds.includes(proId)) {
+      return NextResponse.json({ error: "La profesional seleccionada no ofrece este servicio" }, { status: 409 });
     }
 
     // Verificar que el slot sigue libre (protección contra race condition)

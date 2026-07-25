@@ -35,5 +35,9 @@ export async function GET(req: NextRequest) {
     }),
   ]);
 
-  return NextResponse.json({ appointments: apts, blocks });
+  return NextResponse.json({
+    appointments: apts,
+    blocks,
+    schedule: biz.schedule,
+  });
 }

@@ -27,14 +27,30 @@ export default async function BookPage({ params }: Props) {
   });
   if (!biz) notFound();
 
-  const [pros, svcs] = await Promise.all([
+  const [pros, svcs, serviceProRows] = await Promise.all([
     db.query.professionals.findMany({
       where: and(eq(professionals.businessId, biz.id), eq(professionals.isActive, true)),
     }),
     db.query.services.findMany({
       where: and(eq(services.businessId, biz.id), eq(services.isActive, true)),
     }),
+    db.query.serviceProfessionals.findMany({
+      columns: {
+        serviceId: true,
+        professionalId: true,
+      },
+    }),
   ]);
+
+  const activeProfessionalIds = new Set(pros.map((pro) => pro.id));
+  const serviceProfessionalMap = new Map<string, string[]>();
+
+  for (const row of serviceProRows) {
+    if (!activeProfessionalIds.has(row.professionalId)) continue;
+    const proIds = serviceProfessionalMap.get(row.serviceId) ?? [];
+    proIds.push(row.professionalId);
+    serviceProfessionalMap.set(row.serviceId, proIds);
+  }
 
   return (
     <div className="min-h-screen" style={{ background: "var(--l-rose, #EFE6F5)" }}>
@@ -56,6 +72,7 @@ export default async function BookPage({ params }: Props) {
           durationMin: s.durationMin,
           description: s.description ?? undefined,
           category:    s.category ?? undefined,
+          professionalIds: serviceProfessionalMap.get(s.id) ?? [],
         }))}
       />
     </div>

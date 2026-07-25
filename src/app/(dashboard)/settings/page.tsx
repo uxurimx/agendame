@@ -23,6 +23,7 @@ export default async function SettingsPage() {
     phone:           p.phone,
     email:           p.email,
     bio:             p.bio,
+    colorHex:        p.colorHex,
     commissionType:  p.commissionType,
     commissionValue: p.commissionValue,
     isActive:        p.isActive,

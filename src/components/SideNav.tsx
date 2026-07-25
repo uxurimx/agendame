@@ -11,6 +11,7 @@ import { siteConfig } from "@/config/site";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const navItems = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Agenda",    href: "/overview",  icon: Calendar },
   { name: "Clientes",  href: "/clients",   icon: Users },
   { name: "Servicios", href: "/services",  icon: Scissors },

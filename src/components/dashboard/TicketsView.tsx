@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { LifeBuoy, Plus, ChevronDown, ChevronUp, Send, RefreshCw, X, Trash2, Pencil } from "lucide-react";
+import { LifeBuoy, Plus, ChevronDown, ChevronUp, Send, RefreshCw, X, Trash2, Pencil, GitCommit, Check } from "lucide-react";
 
 type TicketType     = "bug" | "mejora" | "soporte" | "sugerencia" | "otro";
 type TicketPriority = "baja" | "media" | "alta" | "urgente";
@@ -458,10 +458,112 @@ function TicketCard({ ticket, isAdmin, onUpdated, onDeleted }: { ticket: Ticket;
   );
 }
 
+function CommitModal({ onClose }: { onClose: () => void }) {
+  const [message,  setMessage]  = useState("");
+  const [phase,    setPhase]    = useState<"idle" | "committing" | "pushing" | "done" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  async function run() {
+    if (!message.trim()) return;
+    setPhase("committing");
+    try {
+      const r1 = await fetch("/api/admin/git", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "commit", message: message.trim() }),
+      });
+      const d1 = await r1.json();
+      if (!r1.ok) throw new Error(d1?.error ?? `Error ${r1.status}`);
+
+      setPhase("pushing");
+      const r2 = await fetch("/api/admin/git", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "push" }),
+      });
+      const d2 = await r2.json();
+      if (!r2.ok) throw new Error(d2?.error ?? `Error ${r2.status}`);
+
+      setPhase("done");
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Error desconocido");
+      setPhase("error");
+    }
+  }
+
+  const busy = phase === "committing" || phase === "pushing";
+  const done = phase === "done";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div className="w-full max-w-md rounded-2xl shadow-xl p-6 flex flex-col gap-4"
+        style={{ background: "var(--surface,#fff)" }}>
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold text-lg" style={{ color: "var(--fg,#0f172a)" }}>Commit & Push</h3>
+          <button type="button" onClick={onClose} disabled={busy}
+            className="p-1 rounded-lg hover:bg-black/5 disabled:opacity-40">
+            <X size={18} />
+          </button>
+        </div>
+
+        {done ? (
+          <div className="flex flex-col items-center gap-3 py-4">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center"
+              style={{ background: "#f0fdf4" }}>
+              <Check size={24} style={{ color: "#059669" }} />
+            </div>
+            <p className="text-sm font-semibold" style={{ color: "#059669" }}>¡Commit y push exitosos!</p>
+            <button type="button" onClick={onClose}
+              className="px-4 py-2 rounded-xl border text-sm font-medium"
+              style={{ borderColor: "var(--border,#e2e8f0)", color: "var(--fg-muted,#64748b)" }}>
+              Cerrar
+            </button>
+          </div>
+        ) : (
+          <>
+            <textarea
+              rows={3}
+              placeholder="Mensaje del commit..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              disabled={busy}
+              autoFocus
+              className="w-full rounded-xl border px-3 py-2 text-sm outline-none resize-none font-mono disabled:opacity-50"
+              style={{ borderColor: "var(--border,#e2e8f0)", background: "var(--surface-2,#f8fafc)", color: "var(--fg,#0f172a)" }}
+            />
+
+            {phase === "error" && (
+              <p className="text-xs rounded-xl px-3 py-2 whitespace-pre-wrap"
+                style={{ background: "#fef2f2", color: "#dc2626" }}>
+                {errorMsg}
+              </p>
+            )}
+
+            <div className="flex gap-3 justify-end">
+              <button type="button" onClick={onClose} disabled={busy}
+                className="px-4 py-2 rounded-xl border text-sm font-medium disabled:opacity-40"
+                style={{ borderColor: "var(--border,#e2e8f0)", color: "var(--fg-muted,#64748b)" }}>
+                Cancelar
+              </button>
+              <button type="button" onClick={run} disabled={busy || !message.trim()}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white disabled:opacity-50"
+                style={{ background: "var(--l-berry,#6E2A96)" }}>
+                <GitCommit size={14} />
+                {phase === "committing" ? "Commiteando..." : phase === "pushing" ? "Pusheando..." : "Commit & Push"}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function TicketsView({ isAdmin }: { isAdmin: boolean }) {
-  const [tickets,  setTickets]  = useState<Ticket[]>([]);
-  const [loading,  setLoading]  = useState(true);
-  const [filter,   setFilter]   = useState<TicketStatus | "todos">("todos");
+  const [tickets,     setTickets]     = useState<Ticket[]>([]);
+  const [loading,     setLoading]     = useState(true);
+  const [filter,      setFilter]      = useState<TicketStatus | "todos">("todos");
+  const [commitOpen,  setCommitOpen]  = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -501,8 +603,14 @@ export function TicketsView({ isAdmin }: { isAdmin: boolean }) {
         </div>
         <div className="flex items-center gap-2">
           <button onClick={load} className="p-2 rounded-xl border hover:bg-black/5"
-            style={{ borderColor: "var(--border,#e2e8f0)" }}>
+            style={{ borderColor: "var(--border,#e2e8f0)" }}
+            title="Recargar tickets">
             <RefreshCw size={16} style={{ color: "var(--fg-muted,#64748b)" }} />
+          </button>
+          <button onClick={() => setCommitOpen(true)} className="p-2 rounded-xl border hover:bg-black/5"
+            style={{ borderColor: "var(--border,#e2e8f0)" }}
+            title="Commit & Push">
+            <GitCommit size={16} style={{ color: "var(--fg-muted,#64748b)" }} />
           </button>
           <NewTicketForm onCreated={load} />
         </div>
@@ -550,6 +658,8 @@ export function TicketsView({ isAdmin }: { isAdmin: boolean }) {
           </button>
         ))}
       </div>
+
+      {commitOpen && <CommitModal onClose={() => setCommitOpen(false)} />}
 
       {/* Tickets */}
       {loading ? (

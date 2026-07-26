@@ -1064,39 +1064,39 @@ export function AgendaCalendar({ businessId, professionals, services }: AgendaPr
       )}
 
       <div className="ag-header">
-        <div className="ag-header-left">
-          <div>
+        <div className="ag-header-top">
+          <div className="ag-header-left">
+            <div className="ag-header-copy">
             <p className="ag-week-label">{formatRangeLabel(viewMode, timelineDays, monthCursor)}</p>
             <p className="ag-week-sub">
               {availableOnly ? `${totalAvailable} horarios libres` : `${totalThisWeek} citas visibles`}
             </p>
-          </div>
-          {viewMode !== "week" && (
-            <>
+            </div>
+            <div className="ag-header-nav">
               <button type="button" onClick={prevPeriod} className="cal-nav-btn"><ChevronLeft size={16} /></button>
               <button type="button" onClick={nextPeriod} className="cal-nav-btn"><ChevronRight size={16} /></button>
-            </>
-          )}
-        </div>
-        <div className="ag-header-right">
-          <button
-            type="button"
-            onClick={() => { setActionTab("agendar"); setActionDate(toISO(new Date())); setActionTime(undefined); }}
-            className="ag-icon-btn ag-icon-btn--berry"
-            title="Agendar"
-            aria-label="Agendar"
-          >
-            <Plus size={16} />
-          </button>
-          <button
-            type="button"
-            onClick={() => { setActionTab("bloqueo"); setActionDate(toISO(new Date())); setActionTime(undefined); }}
-            className="ag-icon-btn ag-icon-btn--slate"
-            title="Bloquear tiempo"
-            aria-label="Bloquear tiempo"
-          >
-            <LockKeyhole size={16} />
-          </button>
+            </div>
+          </div>
+          <div className="ag-header-right">
+            <button
+              type="button"
+              onClick={() => { setActionTab("agendar"); setActionDate(toISO(new Date())); setActionTime(undefined); }}
+              className="ag-icon-btn ag-icon-btn--berry"
+              title="Agendar"
+              aria-label="Agendar"
+            >
+              <Plus size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={() => { setActionTab("bloqueo"); setActionDate(toISO(new Date())); setActionTime(undefined); }}
+              className="ag-icon-btn ag-icon-btn--slate"
+              title="Bloquear tiempo"
+              aria-label="Bloquear tiempo"
+            >
+              <LockKeyhole size={16} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1214,29 +1214,7 @@ export function AgendaCalendar({ businessId, professionals, services }: AgendaPr
             {timelineDays.map((day, index) => (
               <div key={toISO(day)} className={`ag-day-header${isToday(toISO(day)) ? " ag-day-header--today" : ""}`}>
                 <div className="ag-day-name-row">
-                  {viewMode === "week" && index === 0 && (
-                    <button
-                      type="button"
-                      onClick={prevPeriod}
-                      className="ag-day-nav-btn"
-                      title="Ver semana anterior"
-                      aria-label="Ver semana anterior"
-                    >
-                      <ChevronLeft size={13} />
-                    </button>
-                  )}
                   <span className="ag-day-name">{viewMode === "day" ? getDayName(toISO(day)) : DAY_NAMES[index]}</span>
-                  {viewMode === "week" && index === timelineDays.length - 1 && (
-                    <button
-                      type="button"
-                      onClick={nextPeriod}
-                      className="ag-day-nav-btn"
-                      title="Ver semana siguiente"
-                      aria-label="Ver semana siguiente"
-                    >
-                      <ChevronRight size={13} />
-                    </button>
-                  )}
                 </div>
                 <span className="ag-day-num">{day.getDate()}</span>
               </div>

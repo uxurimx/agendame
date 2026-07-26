@@ -1596,13 +1596,20 @@ body {
 /* Header */
 .ag-header {
   display: flex;
+  flex-direction: column;
+  gap: .75rem;
+}
+.ag-header-top {
+  width: 100%;
+  display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  flex-wrap: wrap;
 }
-.ag-header-left  { display: flex; align-items: center; gap: .625rem; }
+.ag-header-left  { display: flex; align-items: center; gap: .625rem; min-width: 0; }
+.ag-header-copy  { min-width: 0; }
 .ag-header-right { display: flex; align-items: center; gap: .5rem; }
+.ag-header-nav   { display: inline-flex; align-items: center; gap: .375rem; }
 .ag-week-label { font-size: .95rem; font-weight: 800; color: var(--fg); }
 .ag-week-sub   { font-size: .72rem; color: var(--fg-muted); }
 .ag-today-btn {
@@ -1678,22 +1685,6 @@ body {
   min-height: 18px;
 }
 .ag-day-name { font-size: .68rem; font-weight: 600; color: var(--fg-muted); text-transform: uppercase; }
-.ag-day-nav-btn {
-  width: 18px;
-  height: 18px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  color: var(--l-berry);
-  border-radius: 999px;
-  cursor: pointer;
-  transition: background .15s, color .15s;
-}
-.ag-day-nav-btn:hover {
-  background: rgba(110,42,150,.08);
-}
 .ag-day-num  { font-size: 1rem; font-weight: 800; color: var(--fg); line-height: 1; }
 .ag-day-header--today .ag-day-num {
   background: var(--l-berry); color: #fff;
@@ -1976,19 +1967,11 @@ body {
 
 @media (max-width: 768px) {
   .ag-filters {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    gap: .5rem;
   }
   .ag-toggle-group,
-  .ag-select,
-  .ag-filter-chip,
-  .ag-icon-select {
-    width: 100%;
-  }
-  .ag-icon-select,
-  .ag-filter-chip--icon {
-    justify-self: stretch;
-    width: 100%;
+  .ag-select {
+    width: auto;
   }
   .ag-available-wrap {
     grid-template-columns: 1fr;
@@ -2006,10 +1989,29 @@ body {
   .ag-day-num  { font-size: .85rem; }
   .ag-apt-name { font-size: .65rem; }
   .ag-apt-svc  { display: none; }
-  .ag-body     { max-height: 60vh; }
+  .ag-body     { max-height: 416px; }
+  .ag-header-top {
+    align-items: flex-start;
+    gap: .75rem;
+  }
+  .ag-header-left {
+    flex: 1;
+    justify-content: space-between;
+  }
+  .ag-header-copy {
+    flex: 1;
+  }
+  .ag-week-label {
+    font-size: .88rem;
+    line-height: 1.2;
+  }
   .ag-header-right {
-    width: 100%;
-    justify-content: flex-end;
+    flex-shrink: 0;
+  }
+  .ag-icon-select,
+  .ag-filter-chip--icon {
+    width: 42px;
+    flex: 0 0 42px;
   }
   .ag-legend {
     gap: .55rem;

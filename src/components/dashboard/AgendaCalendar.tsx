@@ -63,6 +63,14 @@ interface AptItem {
   client: { name: string; phone: string } | null;
 }
 
+interface ActionReasonPanelProps {
+  title: string;
+  confirmLabel: string;
+  loading: boolean;
+  onCancel: () => void;
+  onConfirm: (reason: string) => void;
+}
+
 interface BlockItem {
   id: string;
   date: string;
@@ -346,7 +354,7 @@ function AptModal({
   onClose: () => void;
   onRefresh: () => void;
 }) {
-  const [mode, setMode] = useState<"view" | "pay" | "reschedule">("view");
+  const [mode, setMode] = useState<"view" | "pay" | "reschedule" | "cancel">("view");
   const [payMethod, setPayMethod] = useState<"cash" | "card" | "transfer">("cash");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -420,9 +428,19 @@ function AptModal({
         {mode === "reschedule" && (
           <ReschedulePanel
             apt={apt}
-            onConfirm={(date, startTime, endTime) => patch({ date, startTime, endTime, status: "confirmed" })}
+            onConfirm={(date, startTime, endTime, reason) => patch({ date, startTime, endTime, status: "confirmed", historyReason: reason })}
             onCancel={() => setMode("view")}
             loading={loading}
+          />
+        )}
+
+        {mode === "cancel" && (
+          <ActionReasonPanel
+            title="Motivo de cancelación"
+            confirmLabel="Confirmar cancelación"
+            loading={loading}
+            onCancel={() => setMode("view")}
+            onConfirm={(reason) => patch({ status: "cancelled", historyReason: reason })}
           />
         )}
 
@@ -441,7 +459,7 @@ function AptModal({
                 <button type="button" onClick={() => setMode("pay")} className="ag-action-btn ag-action-btn--green">
                   <CreditCard size={14} /> Completar
                 </button>
-                <button type="button" disabled={loading} onClick={() => patch({ status: "cancelled" })} className="ag-action-btn ag-action-btn--red">
+                <button type="button" disabled={loading} onClick={() => setMode("cancel")} className="ag-action-btn ag-action-btn--red">
                   <XCircle size={14} /> Cancelar
                 </button>
               </>
@@ -457,13 +475,14 @@ function ReschedulePanel({
   apt, onConfirm, onCancel, loading,
 }: {
   apt: AptItem;
-  onConfirm: (date: string, startTime: string, endTime: string) => void;
+  onConfirm: (date: string, startTime: string, endTime: string, reason: string) => void;
   onCancel: () => void;
   loading: boolean;
 }) {
   const [date, setDate] = useState(apt.date);
   const [slots, setSlots] = useState<string[]>([]);
   const [slot, setSlot] = useState("");
+  const [reason, setReason] = useState("");
   const [fetching, setFetching] = useState(false);
 
   const fetchSlots = useCallback(async (selectedDate: string) => {
@@ -493,7 +512,7 @@ function ReschedulePanel({
 
   function confirm() {
     if (!slot || !apt.service) return;
-    onConfirm(date, slot, addMinutes(slot, apt.service.durationMin));
+    onConfirm(date, slot, addMinutes(slot, apt.service.durationMin), reason.trim());
   }
 
   return (
@@ -514,10 +533,53 @@ function ReschedulePanel({
           ))}
         </div>
       )}
+      <label className="svc-label" style={{ marginBottom: ".75rem" }}>
+        Motivo del movimiento
+        <textarea
+          className="svc-input"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          rows={3}
+          maxLength={500}
+          placeholder="Ej. la clienta pidió otro horario"
+        />
+      </label>
       <div className="apt-modal-actions">
         <button type="button" onClick={onCancel} className="apt-btn-ghost">Cancelar</button>
-        <button type="button" disabled={!slot || loading} onClick={confirm} className="apt-btn-confirm">
+        <button type="button" disabled={!slot || !reason.trim() || loading} onClick={confirm} className="apt-btn-confirm">
           {loading && <Loader2 size={14} className="spin" />} Confirmar cambio
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ActionReasonPanel({
+  title,
+  confirmLabel,
+  loading,
+  onCancel,
+  onConfirm,
+}: ActionReasonPanelProps) {
+  const [reason, setReason] = useState("");
+
+  return (
+    <div>
+      <label className="svc-label" style={{ marginBottom: ".75rem" }}>
+        {title}
+        <textarea
+          className="svc-input"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          rows={3}
+          maxLength={500}
+          placeholder="Escribe el motivo"
+        />
+      </label>
+      <div className="apt-modal-actions">
+        <button type="button" onClick={onCancel} className="apt-btn-ghost">Volver</button>
+        <button type="button" disabled={!reason.trim() || loading} onClick={() => onConfirm(reason.trim())} className="ag-action-btn ag-action-btn--red">
+          {loading && <Loader2 size={14} className="spin" />} {confirmLabel}
         </button>
       </div>
     </div>

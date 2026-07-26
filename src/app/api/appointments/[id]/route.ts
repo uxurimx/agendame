@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { db } from "@/db";
-import { appointments, businesses } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { appointmentEvents, appointments, businesses, timeBlocks } from "@/db/schema";
+import { and, eq } from "drizzle-orm";
+import { timeToMinutes } from "@/lib/time";
 
 const schema = z.object({
   status:        z.enum(["pending", "confirmed", "completed", "cancelled", "no_show"]).optional(),
@@ -14,7 +15,47 @@ const schema = z.object({
   date:          z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   startTime:     z.string().regex(/^\d{2}:\d{2}$/).optional(),
   endTime:       z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  historyReason: z.string().trim().max(500).optional(),
 });
+
+function overlaps(startA: string, endA: string, startB: string, endB: string) {
+  const aStart = timeToMinutes(startA);
+  const aEnd = timeToMinutes(endA);
+  const bStart = timeToMinutes(startB);
+  const bEnd = timeToMinutes(endB);
+  return aStart < bEnd && aEnd > bStart;
+}
+
+async function isProfessionalAvailableExcludingAppointment(
+  businessId: string,
+  professionalId: string,
+  date: string,
+  startTime: string,
+  endTime: string,
+  appointmentId: string,
+) {
+  const [dayAppointments, dayBlocks] = await Promise.all([
+    db.query.appointments.findMany({
+      where: and(eq(appointments.professionalId, professionalId), eq(appointments.date, date)),
+    }),
+    db.query.timeBlocks.findMany({
+      where: and(eq(timeBlocks.businessId, businessId), eq(timeBlocks.date, date)),
+    }),
+  ]);
+
+  const hasAppointmentConflict = dayAppointments
+    .filter((item) => item.id !== appointmentId && item.status !== "cancelled")
+    .some((item) => overlaps(startTime, endTime, item.startTime, item.endTime));
+
+  if (hasAppointmentConflict) return false;
+
+  const hasBlockConflict = dayBlocks.some((block) => {
+    const appliesToProfessional = !block.professionalId || block.professionalId === professionalId;
+    return appliesToProfessional && overlaps(startTime, endTime, block.startTime, block.endTime);
+  });
+
+  return !hasBlockConflict;
+}
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
@@ -32,11 +73,73 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     const body = await req.json();
     const data = schema.parse(body);
+    const updateData = { ...data };
+    delete updateData.historyReason;
+    const historyReason = data.historyReason?.trim();
+    const nextDate = data.date ?? apt.date;
+    const nextStartTime = data.startTime ?? apt.startTime;
+    const nextEndTime = data.endTime ?? apt.endTime;
+    const isReschedule = nextDate !== apt.date || nextStartTime !== apt.startTime || nextEndTime !== apt.endTime;
+    const isCancellation = data.status === "cancelled" && apt.status !== "cancelled";
+
+    if (isReschedule && (!data.date || !data.startTime || !data.endTime)) {
+      return NextResponse.json({ error: "Reprogramación incompleta" }, { status: 400 });
+    }
+
+    if ((isReschedule || isCancellation) && !historyReason) {
+      return NextResponse.json({ error: "El motivo es obligatorio" }, { status: 400 });
+    }
+
+    if (isReschedule) {
+      const available = await isProfessionalAvailableExcludingAppointment(
+        biz.id,
+        apt.professionalId,
+        nextDate,
+        nextStartTime,
+        nextEndTime,
+        apt.id,
+      );
+      if (!available) {
+        return NextResponse.json({ error: "El nuevo horario no está disponible" }, { status: 409 });
+      }
+    }
 
     await db
       .update(appointments)
-      .set({ ...data, updatedAt: new Date() })
+      .set({
+        ...updateData,
+        updatedAt: new Date(),
+      })
       .where(eq(appointments.id, id));
+
+    if (isReschedule) {
+      await db.insert(appointmentEvents).values({
+        appointmentId: apt.id,
+        businessId: biz.id,
+        clientId: apt.clientId,
+        eventType: "moved",
+        reason: historyReason!,
+        fromDate: apt.date,
+        fromStartTime: apt.startTime,
+        fromEndTime: apt.endTime,
+        toDate: nextDate,
+        toStartTime: nextStartTime,
+        toEndTime: nextEndTime,
+      });
+    }
+
+    if (isCancellation) {
+      await db.insert(appointmentEvents).values({
+        appointmentId: apt.id,
+        businessId: biz.id,
+        clientId: apt.clientId,
+        eventType: "cancelled",
+        reason: historyReason!,
+        fromDate: apt.date,
+        fromStartTime: apt.startTime,
+        fromEndTime: apt.endTime,
+      });
+    }
 
     return NextResponse.json({ ok: true });
   } catch (err) {

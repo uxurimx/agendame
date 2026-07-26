@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
-import { appointments, businesses, clients, professionals, services, serviceProfessionals, timeBlocks } from "@/db/schema";
-import { eq, and, asc, desc } from "drizzle-orm";
+import { appointmentEvents, appointments, businesses, clients, professionals, services, serviceProfessionals, timeBlocks } from "@/db/schema";
+import { eq, and, asc, desc, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { addMinutes, timeToMinutes } from "@/lib/time";
 
@@ -78,7 +78,39 @@ export async function GET(req: NextRequest) {
       : [asc(appointments.startTime)],
   });
 
-  return NextResponse.json(list);
+  if (!clientId) {
+    return NextResponse.json(list);
+  }
+
+  const appointmentIds = list.map((item) => item.id);
+  const events = appointmentIds.length > 0
+    ? await db.query.appointmentEvents.findMany({
+      where: inArray(appointmentEvents.appointmentId, appointmentIds),
+      orderBy: [desc(appointmentEvents.createdAt)],
+    })
+    : [];
+  const eventsByAppointment = new Map<string, typeof events>();
+  for (const event of events) {
+    const current = eventsByAppointment.get(event.appointmentId) ?? [];
+    current.push(event);
+    eventsByAppointment.set(event.appointmentId, current);
+  }
+
+  return NextResponse.json(list.map((item) => ({
+    ...item,
+    history: (eventsByAppointment.get(item.id) ?? []).map((event) => ({
+      id: event.id,
+      eventType: event.eventType,
+      reason: event.reason,
+      fromDate: event.fromDate,
+      fromStartTime: event.fromStartTime,
+      fromEndTime: event.fromEndTime,
+      toDate: event.toDate,
+      toStartTime: event.toStartTime,
+      toEndTime: event.toEndTime,
+      createdAt: event.createdAt?.toISOString?.() ?? null,
+    })),
+  })));
 }
 
 export async function POST(req: NextRequest) {

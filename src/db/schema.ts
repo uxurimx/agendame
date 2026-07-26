@@ -136,6 +136,27 @@ export const appointments = pgTable('appointments', {
   index('apt_client_idx').on(t.clientId),                          // historial cliente
 ]);
 
+// ── Appointment Events (historial de movimientos/cancelaciones) ───────────
+export const appointmentEvents = pgTable('appointment_events', {
+  id:            uuid('id').primaryKey().defaultRandom(),
+  appointmentId: uuid('appointment_id').notNull().references(() => appointments.id, { onDelete: 'cascade' }),
+  businessId:    uuid('business_id').notNull().references(() => businesses.id, { onDelete: 'cascade' }),
+  clientId:      uuid('client_id').notNull().references(() => clients.id, { onDelete: 'cascade' }),
+  eventType:     varchar('event_type', { length: 30 }).notNull(), // moved | cancelled
+  reason:        text('reason').notNull(),
+  fromDate:      date('from_date'),
+  fromStartTime: time('from_start_time'),
+  fromEndTime:   time('from_end_time'),
+  toDate:        date('to_date'),
+  toStartTime:   time('to_start_time'),
+  toEndTime:     time('to_end_time'),
+  createdAt:     timestamp('created_at').defaultNow(),
+}, (t) => [
+  index('apt_evt_appointment_idx').on(t.appointmentId),
+  index('apt_evt_client_idx').on(t.clientId),
+  index('apt_evt_business_idx').on(t.businessId),
+]);
+
 // ── Daily Reports (corte de caja) ────────────────────────────
 // professionalId null = totales del negocio completo
 export const dailyReports = pgTable('daily_reports', {
@@ -265,6 +286,7 @@ export const serviceProfessionalsRelations = relations(serviceProfessionals, ({ 
 export const clientsRelations = relations(clients, ({ one, many }) => ({
   business:     one(businesses, { fields: [clients.businessId], references: [businesses.id] }),
   appointments: many(appointments),
+  appointmentEvents: many(appointmentEvents),
   photos:       many(clientPhotos),
 }));
 
@@ -277,6 +299,12 @@ export const appointmentsRelations = relations(appointments, ({ one }) => ({
   professional: one(professionals, { fields: [appointments.professionalId], references: [professionals.id] }),
   service:      one(services,      { fields: [appointments.serviceId],      references: [services.id] }),
   client:       one(clients,       { fields: [appointments.clientId],       references: [clients.id] }),
+}));
+
+export const appointmentEventsRelations = relations(appointmentEvents, ({ one }) => ({
+  appointment: one(appointments, { fields: [appointmentEvents.appointmentId], references: [appointments.id] }),
+  business:    one(businesses,   { fields: [appointmentEvents.businessId],    references: [businesses.id] }),
+  client:      one(clients,      { fields: [appointmentEvents.clientId],      references: [clients.id] }),
 }));
 
 export const dailyReportsRelations = relations(dailyReports, ({ one }) => ({
@@ -292,6 +320,7 @@ export type Service      = typeof services.$inferSelect;
 export type Client       = typeof clients.$inferSelect;
 export type ClientPhoto  = typeof clientPhotos.$inferSelect;
 export type Appointment  = typeof appointments.$inferSelect;
+export type AppointmentEvent = typeof appointmentEvents.$inferSelect;
 export type DailyReport  = typeof dailyReports.$inferSelect;
 
 export type NewBusiness     = typeof businesses.$inferInsert;
@@ -299,3 +328,4 @@ export type NewProfessional = typeof professionals.$inferInsert;
 export type NewService      = typeof services.$inferInsert;
 export type NewClient       = typeof clients.$inferInsert;
 export type NewAppointment  = typeof appointments.$inferInsert;
+export type NewAppointmentEvent = typeof appointmentEvents.$inferInsert;

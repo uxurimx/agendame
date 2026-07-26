@@ -25,6 +25,16 @@ interface AptHistory {
   pricePaid:    string | null;
   service:      { name: string } | null;
   professional: { name: string } | null;
+  history?: Array<{
+    id: string;
+    eventType: string;
+    reason: string;
+    fromDate: string | null;
+    fromStartTime: string | null;
+    toDate: string | null;
+    toStartTime: string | null;
+    createdAt: string | null;
+  }>;
 }
 
 interface ClientPhotoItem {
@@ -47,6 +57,11 @@ const STATUS_COLORS: Record<string, string> = {
   completed: "#3E7C74",
   cancelled: "#9ca3af",
   no_show:   "#9ca3af",
+};
+
+const EVENT_LABELS: Record<string, string> = {
+  moved: "Movida",
+  cancelled: "Cancelada",
 };
 
 function PhotoUploader({ clientId, onSaved }: { clientId: string; onSaved: (p: ClientPhotoItem) => void }) {
@@ -156,6 +171,18 @@ function ClientDetail({ client, onClose }: { client: ClientItem; onClose: () => 
                   <Calendar size={11} /> {apt.date} · {formatTime(apt.startTime)}
                 </span>
                 {apt.professional && <span className="cl-hist-pro">Con {apt.professional.name}</span>}
+                {apt.history && apt.history.length > 0 && (
+                  <div style={{ marginTop: ".45rem", display: "grid", gap: ".35rem" }}>
+                    {apt.history.map((event) => (
+                      <div key={event.id} style={{ fontSize: ".76rem", color: "var(--fg-muted)", lineHeight: 1.35 }}>
+                        <strong style={{ color: "var(--fg)" }}>{EVENT_LABELS[event.eventType] ?? event.eventType}:</strong> {event.reason}
+                        {event.eventType === "moved" && event.fromDate && event.fromStartTime && event.toDate && event.toStartTime && (
+                          <span>{` · ${event.fromDate} ${formatTime(event.fromStartTime)} -> ${event.toDate} ${formatTime(event.toStartTime)}`}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div style={{ textAlign: "right", flexShrink: 0 }}>
                 <span

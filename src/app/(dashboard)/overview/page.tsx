@@ -30,13 +30,6 @@ export default async function OverviewPage() {
 
   return (
     <div className="dash-page" style={{ maxWidth: "100%" }}>
-      <div className="dash-page-header">
-        <div>
-          <p className="dash-page-eyebrow">Agenda</p>
-          <h1 className="dash-page-title">Mi Agenda</h1>
-        </div>
-      </div>
-
       {!hasTeam && (
         <Link href="/settings" className="dash-alert-banner">
           <AlertTriangle size={18} style={{ flexShrink: 0 }} />

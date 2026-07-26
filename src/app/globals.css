@@ -1524,7 +1524,8 @@ body {
 }
 .ag-toggle-btn,
 .ag-filter-chip,
-.ag-select {
+.ag-select,
+.ag-icon-select {
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--fg);
@@ -1552,8 +1553,39 @@ body {
   min-width: 220px;
   padding: .55rem .8rem;
 }
+.ag-icon-select {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-muted);
+  overflow: hidden;
+}
+.ag-icon-select--active {
+  color: var(--l-berry);
+  border-color: var(--l-berry);
+  background: rgba(110,42,150,.08);
+}
+.ag-icon-select-native {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
 .ag-filter-chip {
   padding: .55rem .85rem;
+}
+.ag-filter-chip--icon {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .ag-filter-chip--active {
   background: var(--l-berry);
@@ -1638,7 +1670,30 @@ body {
   gap: .15rem;
 }
 .ag-day-header:last-child { border-right: none; }
+.ag-day-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .2rem;
+  min-height: 18px;
+}
 .ag-day-name { font-size: .68rem; font-weight: 600; color: var(--fg-muted); text-transform: uppercase; }
+.ag-day-nav-btn {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--l-berry);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.ag-day-nav-btn:hover {
+  background: rgba(110,42,150,.08);
+}
 .ag-day-num  { font-size: 1rem; font-weight: 800; color: var(--fg); line-height: 1; }
 .ag-day-header--today .ag-day-num {
   background: var(--l-berry); color: #fff;
@@ -1926,7 +1981,13 @@ body {
   }
   .ag-toggle-group,
   .ag-select,
-  .ag-filter-chip {
+  .ag-filter-chip,
+  .ag-icon-select {
+    width: 100%;
+  }
+  .ag-icon-select,
+  .ag-filter-chip--icon {
+    justify-self: stretch;
     width: 100%;
   }
   .ag-available-wrap {

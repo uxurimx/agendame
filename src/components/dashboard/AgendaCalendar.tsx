@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import {
   ChevronLeft, ChevronRight, X, CheckCircle, XCircle,
   User, Scissors, Loader2, Ban, Calendar, CreditCard, RefreshCw, Plus,
-  CalendarDays, Columns3, Grid2x2, LockKeyhole,
+  CalendarDays, Columns3, Grid2x2, LockKeyhole, Users, BadgeCheck,
 } from "lucide-react";
 import { formatTime, timeToMinutes, addMinutes, generateSlots } from "@/lib/time";
 
@@ -1010,14 +1010,6 @@ export function AgendaCalendar({ businessId, professionals, services }: AgendaPr
     else setMonthCursor((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1));
   }
 
-  function goToday() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    setDayCursor(today);
-    setWeekStart(getMonday(today));
-    setMonthCursor(startOfMonth(new Date()));
-  }
-
   function openWeekFromMonth(date: Date) {
     setDayCursor(date);
     setWeekStart(getMonday(date));
@@ -1073,17 +1065,20 @@ export function AgendaCalendar({ businessId, professionals, services }: AgendaPr
 
       <div className="ag-header">
         <div className="ag-header-left">
-          <button type="button" onClick={prevPeriod} className="cal-nav-btn"><ChevronLeft size={16} /></button>
           <div>
             <p className="ag-week-label">{formatRangeLabel(viewMode, timelineDays, monthCursor)}</p>
             <p className="ag-week-sub">
               {availableOnly ? `${totalAvailable} horarios libres` : `${totalThisWeek} citas visibles`}
             </p>
           </div>
-          <button type="button" onClick={nextPeriod} className="cal-nav-btn"><ChevronRight size={16} /></button>
+          {viewMode !== "week" && (
+            <>
+              <button type="button" onClick={prevPeriod} className="cal-nav-btn"><ChevronLeft size={16} /></button>
+              <button type="button" onClick={nextPeriod} className="cal-nav-btn"><ChevronRight size={16} /></button>
+            </>
+          )}
         </div>
         <div className="ag-header-right">
-          <button type="button" onClick={goToday} className="ag-today-btn">Hoy</button>
           <button
             type="button"
             onClick={() => { setActionTab("agendar"); setActionDate(toISO(new Date())); setActionTime(undefined); }}
@@ -1139,19 +1134,29 @@ export function AgendaCalendar({ businessId, professionals, services }: AgendaPr
           </button>
         </div>
 
-        <select className="ag-select" value={selectedProId} onChange={(e) => setSelectedProId(e.target.value)}>
-          <option value="">Todos los trabajadores</option>
-          {professionals.map((professional) => (
-            <option key={professional.id} value={professional.id}>{professional.name}</option>
-          ))}
-        </select>
+        <div className={`ag-icon-select${selectedProId ? " ag-icon-select--active" : ""}`} title="Filtrar por trabajador">
+          <Users size={18} />
+          <select
+            className="ag-icon-select-native"
+            value={selectedProId}
+            onChange={(e) => setSelectedProId(e.target.value)}
+            aria-label="Filtrar por trabajador"
+          >
+            <option value="">Todos los trabajadores</option>
+            {professionals.map((professional) => (
+              <option key={professional.id} value={professional.id}>{professional.name}</option>
+            ))}
+          </select>
+        </div>
 
         <button
           type="button"
           onClick={() => setAvailableOnly((current) => !current)}
-          className={`ag-filter-chip${availableOnly ? " ag-filter-chip--active" : ""}`}
+          className={`ag-filter-chip ag-filter-chip--icon${availableOnly ? " ag-filter-chip--active" : ""}`}
+          title="Solo disponibles"
+          aria-label="Solo disponibles"
         >
-          Solo disponibles
+          <BadgeCheck size={18} />
         </button>
       </div>
 
@@ -1208,7 +1213,31 @@ export function AgendaCalendar({ businessId, professionals, services }: AgendaPr
             <div className="ag-time-gutter" />
             {timelineDays.map((day, index) => (
               <div key={toISO(day)} className={`ag-day-header${isToday(toISO(day)) ? " ag-day-header--today" : ""}`}>
-                <span className="ag-day-name">{viewMode === "day" ? getDayName(toISO(day)) : DAY_NAMES[index]}</span>
+                <div className="ag-day-name-row">
+                  {viewMode === "week" && index === 0 && (
+                    <button
+                      type="button"
+                      onClick={prevPeriod}
+                      className="ag-day-nav-btn"
+                      title="Ver semana anterior"
+                      aria-label="Ver semana anterior"
+                    >
+                      <ChevronLeft size={13} />
+                    </button>
+                  )}
+                  <span className="ag-day-name">{viewMode === "day" ? getDayName(toISO(day)) : DAY_NAMES[index]}</span>
+                  {viewMode === "week" && index === timelineDays.length - 1 && (
+                    <button
+                      type="button"
+                      onClick={nextPeriod}
+                      className="ag-day-nav-btn"
+                      title="Ver semana siguiente"
+                      aria-label="Ver semana siguiente"
+                    >
+                      <ChevronRight size={13} />
+                    </button>
+                  )}
+                </div>
                 <span className="ag-day-num">{day.getDate()}</span>
               </div>
             ))}

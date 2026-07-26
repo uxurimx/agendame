@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
-import { appointments, timeBlocks, businesses } from "@/db/schema";
-import { eq, and, gte, lte } from "drizzle-orm";
+import { appointments, timeBlocks, businesses, clientPhotos } from "@/db/schema";
+import { eq, and, gte, lte, inArray, desc } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   const { userId } = await auth();
@@ -35,8 +35,25 @@ export async function GET(req: NextRequest) {
     }),
   ]);
 
+  const appointmentIds = apts.map((appointment) => appointment.id);
+  const photos = appointmentIds.length > 0
+    ? await db.query.clientPhotos.findMany({
+      where: inArray(clientPhotos.appointmentId, appointmentIds),
+      orderBy: [desc(clientPhotos.createdAt)],
+    })
+    : [];
+  const latestPhotoByAppointment = new Map<string, string>();
+  for (const photo of photos) {
+    if (photo.appointmentId && !latestPhotoByAppointment.has(photo.appointmentId)) {
+      latestPhotoByAppointment.set(photo.appointmentId, photo.url);
+    }
+  }
+
   return NextResponse.json({
-    appointments: apts,
+    appointments: apts.map((appointment) => ({
+      ...appointment,
+      latestReferenceImageUrl: latestPhotoByAppointment.get(appointment.id) ?? null,
+    })),
     blocks,
     schedule: biz.schedule,
   });

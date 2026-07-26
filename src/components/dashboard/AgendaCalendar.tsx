@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import {
   ChevronLeft, ChevronRight, X, CheckCircle, XCircle,
   User, Scissors, Loader2, Ban, Calendar, CreditCard, RefreshCw, Plus,
-  CalendarDays, Columns3, Grid2x2, LockKeyhole, Users, BadgeCheck,
+  CalendarDays, Columns3, Grid2x2, LockKeyhole, Users, BadgeCheck, Image as ImageIcon,
 } from "lucide-react";
 import { formatTime, timeToMinutes, addMinutes, generateSlots, getMinBookableMinutes } from "@/lib/time";
 
@@ -57,6 +57,7 @@ interface AptItem {
   paymentStatus: string;
   paymentMethod: string | null;
   notes: string | null;
+  latestReferenceImageUrl?: string | null;
   service: { id: string; name: string; price: string; durationMin: number } | null;
   professional: { id: string; name: string } | null;
   client: { name: string; phone: string } | null;
@@ -391,6 +392,7 @@ function AptModal({
           {apt.service && <div className="ag-modal-row"><Scissors size={14} /> {apt.service.name} · ${Number(apt.pricePaid ?? apt.service.price).toLocaleString("es-MX")} MXN</div>}
           {apt.professional && <div className="ag-modal-row"><User size={14} /> {apt.professional.name}</div>}
           {apt.paymentMethod && <div className="ag-modal-row"><CreditCard size={14} /> {PAY_LABELS[apt.paymentMethod] ?? apt.paymentMethod}</div>}
+          {apt.latestReferenceImageUrl && <div className="ag-modal-row"><ImageIcon size={14} /> Tiene foto de referencia</div>}
           {apt.notes && <p className="ag-modal-notes">&quot;{apt.notes}&quot;</p>}
         </div>
 

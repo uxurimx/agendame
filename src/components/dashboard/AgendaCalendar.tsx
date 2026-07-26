@@ -6,7 +6,7 @@ import {
   User, Scissors, Loader2, Ban, Calendar, CreditCard, RefreshCw, Plus,
   CalendarDays, Columns3, Grid2x2, LockKeyhole, Users, BadgeCheck,
 } from "lucide-react";
-import { formatTime, timeToMinutes, addMinutes, generateSlots } from "@/lib/time";
+import { formatTime, timeToMinutes, addMinutes, generateSlots, getMinBookableMinutes } from "@/lib/time";
 
 const SLOT_H = 40;
 const DEFAULT_START_HOUR = 7;
@@ -280,6 +280,8 @@ function getAvailableSlotsForDay(
 ) {
   const daySchedule = schedule?.[getDayKey(iso)];
   if (!daySchedule || daySchedule.closed) return [];
+  const minBookableMinutes = getMinBookableMinutes(iso);
+  if (minBookableMinutes === Number.POSITIVE_INFINITY) return [];
 
   const candidatePros = selectedProId
     ? professionals.filter((pro) => pro.id === selectedProId)
@@ -288,7 +290,8 @@ function getAvailableSlotsForDay(
   const slots = new Set<string>();
   for (const professional of candidatePros) {
     const booked = getBookedRanges(iso, professional.id, appointments, blocks);
-    const freeSlots = generateSlots(daySchedule.open, daySchedule.close, 30, booked);
+    const freeSlots = generateSlots(daySchedule.open, daySchedule.close, 30, booked)
+      .filter((slot) => minBookableMinutes === null || timeToMinutes(slot) >= minBookableMinutes);
     for (const slot of freeSlots) slots.add(slot);
   }
 
@@ -983,6 +986,7 @@ function DayColumn({
   const daySchedule = schedule?.[getDayKey(iso)];
   const visibleStart = daySchedule && !daySchedule.closed ? timeToMinutes(daySchedule.open) : null;
   const visibleEnd = daySchedule && !daySchedule.closed ? timeToMinutes(daySchedule.close) : null;
+  const minBookableMinutes = getMinBookableMinutes(iso);
 
   return (
     <div className="ag-day-col" style={{ minHeight: totalSlots * SLOT_H }}>
@@ -1028,8 +1032,10 @@ function DayColumn({
         const isVisibleSlot = visibleStart !== null && visibleEnd !== null
           ? totalMinutes >= visibleStart && totalMinutes < visibleEnd
           : false;
+        const isBookableSlot = minBookableMinutes !== Number.POSITIVE_INFINITY
+          && (minBookableMinutes === null || totalMinutes >= minBookableMinutes);
 
-        if (!isVisibleSlot) {
+        if (!isVisibleSlot || !isBookableSlot) {
           return (
             <div
               key={time}

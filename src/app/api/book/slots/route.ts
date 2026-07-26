@@ -3,7 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
 import { businesses, professionals, appointments, services, timeBlocks, serviceProfessionals } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
-import { generateSlots } from "@/lib/time";
+import { generateSlots, getMinBookableMinutes, timeToMinutes } from "@/lib/time";
 
 type DayKey = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 const DAY_KEYS: DayKey[] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
@@ -47,6 +47,11 @@ export async function GET(req: NextRequest) {
 
   if (!daySchedule || daySchedule.closed) {
     return NextResponse.json({ slots: [], closed: true });
+  }
+
+  const minBookableMinutes = getMinBookableMinutes(date);
+  if (minBookableMinutes === Number.POSITIVE_INFINITY) {
+    return NextResponse.json({ slots: [], open: daySchedule.open, close: daySchedule.close });
   }
 
   const serviceProRows = await db.query.serviceProfessionals.findMany({
@@ -113,7 +118,8 @@ export async function GET(req: NextRequest) {
       ...proBlocks,
     ];
 
-    const available = generateSlots(daySchedule.open, daySchedule.close, durationMin, bookedSlots);
+    const available = generateSlots(daySchedule.open, daySchedule.close, durationMin, bookedSlots)
+      .filter((slot) => minBookableMinutes === null || timeToMinutes(slot) >= minBookableMinutes);
 
     for (const slot of available) {
       if (!slotAvailability.has(slot)) slotAvailability.set(slot, []);

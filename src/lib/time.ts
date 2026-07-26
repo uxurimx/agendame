@@ -3,6 +3,23 @@ export function timeToMinutes(t: string): number {
   return h * 60 + m;
 }
 
+export function toLocalISODate(date = new Date()): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+export function getMinBookableMinutes(
+  isoDate: string,
+  now = new Date(),
+  intervalMin = 30,
+): number | null {
+  const todayIso = toLocalISODate(now);
+  if (isoDate < todayIso) return Number.POSITIVE_INFINITY;
+  if (isoDate > todayIso) return null;
+
+  const currentMinutes = (now.getHours() * 60) + now.getMinutes();
+  return Math.ceil(currentMinutes / intervalMin) * intervalMin;
+}
+
 export function minutesToTime(mins: number): string {
   const h = Math.floor(mins / 60);
   const m = mins % 60;

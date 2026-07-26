@@ -12,10 +12,9 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
   // Cierra el menú al navegar
   useEffect(() => {
-    if (!mobileOpen) return;
     const timer = window.setTimeout(() => setMobileOpen(false), 0);
     return () => window.clearTimeout(timer);
-  }, [mobileOpen, pathname]);
+  }, [pathname]);
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: "var(--bg)" }}>
@@ -47,7 +46,9 @@ export default function DashboardShell({ children }: { children: React.ReactNode
           >
             <Menu className="w-5 h-5" style={{ color: "var(--fg)" }} />
           </button>
-          <BrandLogo compact />
+          <div className="min-w-0 flex-1">
+            <BrandLogo compact align="left" />
+          </div>
         </header>
 
         {/* Glow ambiental */}

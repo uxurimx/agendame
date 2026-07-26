@@ -132,8 +132,8 @@ export default function SideNav({ isOpen = false, onClose }: SideNavProps) {
       >
         {/* Brand + botón cerrar en móvil */}
         <div className="relative px-2 mb-8 mt-2">
-          <div className="flex justify-center">
-            <BrandLogo />
+          <div className="flex justify-start">
+            <BrandLogo align="left" />
           </div>
           <button
             onClick={onClose}

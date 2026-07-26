@@ -1536,6 +1536,14 @@ body {
   padding: .45rem .8rem;
   border-color: transparent;
 }
+.ag-toggle-btn--icon {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 .ag-toggle-btn--active {
   background: var(--l-berry);
   color: #fff;
@@ -1572,6 +1580,32 @@ body {
   transition: all .15s;
 }
 .ag-today-btn:hover { border-color: var(--l-berry); color: var(--l-berry); }
+.ag-icon-btn {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all .15s;
+}
+.ag-icon-btn--berry {
+  color: var(--l-berry);
+}
+.ag-icon-btn--berry:hover {
+  border-color: var(--l-berry);
+  background: rgba(110,42,150,.08);
+}
+.ag-icon-btn--slate {
+  color: #4b5563;
+}
+.ag-icon-btn--slate:hover {
+  border-color: #4b5563;
+  background: rgba(75,85,99,.08);
+}
 .ag-block-btn {
   display: flex; align-items: center; gap: .375rem;
   padding: .45rem .875rem; border-radius: 8px;
@@ -1905,7 +1939,6 @@ body {
   .ag-month-kpi {
     font-size: .64rem;
   }
-  .ag-header-row { grid-template-columns: 40px repeat(7, 1fr); }
   .ag-body       { grid-template-columns: 40px 1fr; }
   .ag-time-gutter { width: 40px; }
   .ag-day-name { font-size: .6rem; }
@@ -1913,6 +1946,10 @@ body {
   .ag-apt-name { font-size: .65rem; }
   .ag-apt-svc  { display: none; }
   .ag-body     { max-height: 60vh; }
+  .ag-header-right {
+    width: 100%;
+    justify-content: flex-end;
+  }
   .ag-legend {
     gap: .55rem;
   }

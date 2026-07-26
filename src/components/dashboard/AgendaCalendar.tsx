@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import {
   ChevronLeft, ChevronRight, X, CheckCircle, XCircle,
   User, Scissors, Loader2, Ban, Calendar, CreditCard, RefreshCw, Plus,
+  CalendarDays, Columns3, Grid2x2, LockKeyhole,
 } from "lucide-react";
 import { formatTime, timeToMinutes, addMinutes, generateSlots } from "@/lib/time";
 
@@ -19,7 +20,7 @@ const COMPLETED_BG = "#3E7C74";
 const DEFAULT_PASTELS = ["#F7C8D0", "#F9DCC4", "#FAEDCB", "#C9E4DE", "#CDE7F0", "#E4C1F9"];
 
 type DayKey = typeof DAY_KEYS[number];
-type ViewMode = "week" | "month";
+type ViewMode = "day" | "week" | "month";
 
 interface ScheduleDay {
   open: string;
@@ -123,6 +124,10 @@ function isToday(iso: string): boolean {
   return toISO(new Date()) === iso;
 }
 
+function getDayName(iso: string) {
+  return DAY_NAMES[(new Date(`${iso}T12:00:00`).getDay() + 6) % 7];
+}
+
 function getDayKey(iso: string): DayKey {
   return DAY_KEYS[new Date(`${iso}T12:00:00`).getDay()];
 }
@@ -196,6 +201,12 @@ function getVisibleHours(days: string[], schedule: BusinessSchedule | null) {
 function formatRangeLabel(viewMode: ViewMode, weekDays: Date[], monthCursor: Date) {
   if (viewMode === "month") {
     return `${MONTH_SHORT[monthCursor.getMonth()]} ${monthCursor.getFullYear()}`;
+  }
+
+  if (viewMode === "day") {
+    const iso = toISO(weekDays[0]);
+    const day = weekDays[0];
+    return `${getDayName(iso)} ${day.getDate()} ${MONTH_SHORT[day.getMonth()]} ${day.getFullYear()}`;
   }
 
   const s = weekDays[0];
@@ -937,6 +948,11 @@ function DayColumn({
 export function AgendaCalendar({ businessId, professionals, services }: AgendaProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("week");
   const [weekStart, setWeekStart] = useState(() => getMonday(new Date()));
+  const [dayCursor, setDayCursor] = useState(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  });
   const [monthCursor, setMonthCursor] = useState(() => startOfMonth(new Date()));
   const [data, setData] = useState<AgendaData>({ appointments: [], blocks: [], schedule: null });
   const [loading, setLoading] = useState(true);
@@ -949,10 +965,17 @@ export function AgendaCalendar({ businessId, professionals, services }: AgendaPr
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-  const visibleDays = viewMode === "week" ? weekDays : getMonthGridDays(monthCursor);
+  const dayViewDays = [dayCursor];
+  const visibleDays = viewMode === "month"
+    ? getMonthGridDays(monthCursor)
+    : viewMode === "day"
+      ? dayViewDays
+      : weekDays;
   const visibleIsoDays = visibleDays.map(toISO);
   const rangeFrom = visibleIsoDays[0];
   const rangeTo = visibleIsoDays[visibleIsoDays.length - 1];
+  const timelineDays = viewMode === "day" ? dayViewDays : weekDays;
+  const timelineIsoDays = timelineDays.map(toISO);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -970,27 +993,33 @@ export function AgendaCalendar({ businessId, professionals, services }: AgendaPr
   }, [fetchData]);
 
   useEffect(() => {
-    if (scrollRef.current && viewMode === "week" && !availableOnly) {
+    if (scrollRef.current && viewMode !== "month" && !availableOnly) {
       scrollRef.current.scrollTop = SLOT_H;
     }
   }, [viewMode, availableOnly, rangeFrom]);
 
   function prevPeriod() {
-    if (viewMode === "week") setWeekStart((current) => addDays(current, -7));
+    if (viewMode === "day") setDayCursor((current) => addDays(current, -1));
+    else if (viewMode === "week") setWeekStart((current) => addDays(current, -7));
     else setMonthCursor((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1));
   }
 
   function nextPeriod() {
-    if (viewMode === "week") setWeekStart((current) => addDays(current, 7));
+    if (viewMode === "day") setDayCursor((current) => addDays(current, 1));
+    else if (viewMode === "week") setWeekStart((current) => addDays(current, 7));
     else setMonthCursor((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1));
   }
 
   function goToday() {
-    setWeekStart(getMonday(new Date()));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    setDayCursor(today);
+    setWeekStart(getMonday(today));
     setMonthCursor(startOfMonth(new Date()));
   }
 
   function openWeekFromMonth(date: Date) {
+    setDayCursor(date);
     setWeekStart(getMonday(date));
     setViewMode("week");
   }
@@ -1001,14 +1030,19 @@ export function AgendaCalendar({ businessId, professionals, services }: AgendaPr
 
   const visibleBlocks = data.blocks.filter((block) => !selectedProId || !block.professional?.id || block.professional.id === selectedProId);
 
-  const { startHour, endHour } = getVisibleHours(viewMode === "week" ? visibleIsoDays : visibleIsoDays.filter((iso) => new Date(`${iso}T12:00:00`).getMonth() === monthCursor.getMonth()), data.schedule);
+  const { startHour, endHour } = getVisibleHours(
+    viewMode === "month"
+      ? visibleIsoDays.filter((iso) => new Date(`${iso}T12:00:00`).getMonth() === monthCursor.getMonth())
+      : visibleIsoDays,
+    data.schedule,
+  );
   const totalSlots = (endHour - startHour) * 2;
 
-  const totalThisWeek = viewMode === "week"
+  const totalThisWeek = viewMode !== "month"
     ? visibleAppointments.length
     : visibleAppointments.filter((apt) => apt.date >= rangeFrom && apt.date <= rangeTo).length;
 
-  const totalAvailable = viewMode === "week"
+  const totalAvailable = viewMode !== "month"
     ? visibleIsoDays.reduce((acc, iso) => acc + getAvailableSlotsForDay(iso, selectedProId, data.appointments, data.blocks, professionals, data.schedule).length, 0)
     : visibleIsoDays
       .filter((iso) => new Date(`${iso}T12:00:00`).getMonth() === monthCursor.getMonth())
@@ -1041,7 +1075,7 @@ export function AgendaCalendar({ businessId, professionals, services }: AgendaPr
         <div className="ag-header-left">
           <button type="button" onClick={prevPeriod} className="cal-nav-btn"><ChevronLeft size={16} /></button>
           <div>
-            <p className="ag-week-label">{formatRangeLabel(viewMode, weekDays, monthCursor)}</p>
+            <p className="ag-week-label">{formatRangeLabel(viewMode, timelineDays, monthCursor)}</p>
             <p className="ag-week-sub">
               {availableOnly ? `${totalAvailable} horarios libres` : `${totalThisWeek} citas visibles`}
             </p>
@@ -1050,19 +1084,59 @@ export function AgendaCalendar({ businessId, professionals, services }: AgendaPr
         </div>
         <div className="ag-header-right">
           <button type="button" onClick={goToday} className="ag-today-btn">Hoy</button>
-          <button type="button" onClick={() => { setActionTab("agendar"); setActionDate(toISO(new Date())); setActionTime(undefined); }} className="ag-today-btn">
-            <Plus size={14} /> Agendar
+          <button
+            type="button"
+            onClick={() => { setActionTab("agendar"); setActionDate(toISO(new Date())); setActionTime(undefined); }}
+            className="ag-icon-btn ag-icon-btn--berry"
+            title="Agendar"
+            aria-label="Agendar"
+          >
+            <Plus size={16} />
           </button>
-          <button type="button" onClick={() => { setActionTab("bloqueo"); setActionDate(toISO(new Date())); setActionTime(undefined); }} className="ag-block-btn">
-            <Ban size={14} /> Bloquear tiempo
+          <button
+            type="button"
+            onClick={() => { setActionTab("bloqueo"); setActionDate(toISO(new Date())); setActionTime(undefined); }}
+            className="ag-icon-btn ag-icon-btn--slate"
+            title="Bloquear tiempo"
+            aria-label="Bloquear tiempo"
+          >
+            <LockKeyhole size={16} />
           </button>
         </div>
       </div>
 
       <div className="ag-filters">
         <div className="ag-toggle-group">
-          <button type="button" onClick={() => setViewMode("week")} className={`ag-toggle-btn${viewMode === "week" ? " ag-toggle-btn--active" : ""}`}>Semanal</button>
-          <button type="button" onClick={() => setViewMode("month")} className={`ag-toggle-btn${viewMode === "month" ? " ag-toggle-btn--active" : ""}`}>Mensual</button>
+          <button
+            type="button"
+            onClick={() => {
+              setDayCursor(viewMode === "week" ? weekStart : dayCursor);
+              setViewMode("day");
+            }}
+            className={`ag-toggle-btn ag-toggle-btn--icon${viewMode === "day" ? " ag-toggle-btn--active" : ""}`}
+            title="Vista día"
+            aria-label="Vista día"
+          >
+            <CalendarDays size={16} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("week")}
+            className={`ag-toggle-btn ag-toggle-btn--icon${viewMode === "week" ? " ag-toggle-btn--active" : ""}`}
+            title="Vista semanal"
+            aria-label="Vista semanal"
+          >
+            <Columns3 size={16} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("month")}
+            className={`ag-toggle-btn ag-toggle-btn--icon${viewMode === "month" ? " ag-toggle-btn--active" : ""}`}
+            title="Vista mensual"
+            aria-label="Vista mensual"
+          >
+            <Grid2x2 size={16} />
+          </button>
         </div>
 
         <select className="ag-select" value={selectedProId} onChange={(e) => setSelectedProId(e.target.value)}>
@@ -1110,10 +1184,11 @@ export function AgendaCalendar({ businessId, professionals, services }: AgendaPr
         <div className="ag-available-wrap">
           {visibleIsoDays.map((iso, index) => {
             const slots = getAvailableSlotsForDay(iso, selectedProId, data.appointments, data.blocks, professionals, data.schedule);
+            const dayLabel = getDayName(iso);
             return (
               <div key={iso} className={`ag-available-card${isToday(iso) ? " ag-available-card--today" : ""}`}>
                 <div className="ag-available-head">
-                  <span>{DAY_NAMES[index]}</span>
+                  <span>{viewMode === "day" ? dayLabel : DAY_NAMES[index]}</span>
                   <strong>{new Date(`${iso}T12:00:00`).getDate()}</strong>
                 </div>
                 {slots.length === 0 ? (
@@ -1129,11 +1204,11 @@ export function AgendaCalendar({ businessId, professionals, services }: AgendaPr
         </div>
       ) : (
         <div className="ag-calendar">
-          <div className="ag-header-row">
+          <div className="ag-header-row" style={{ gridTemplateColumns: `52px repeat(${timelineDays.length}, 1fr)` }}>
             <div className="ag-time-gutter" />
-            {weekDays.map((day, index) => (
+            {timelineDays.map((day, index) => (
               <div key={toISO(day)} className={`ag-day-header${isToday(toISO(day)) ? " ag-day-header--today" : ""}`}>
-                <span className="ag-day-name">{DAY_NAMES[index]}</span>
+                <span className="ag-day-name">{viewMode === "day" ? getDayName(toISO(day)) : DAY_NAMES[index]}</span>
                 <span className="ag-day-num">{day.getDate()}</span>
               </div>
             ))}
@@ -1152,8 +1227,8 @@ export function AgendaCalendar({ businessId, professionals, services }: AgendaPr
                 <div key={i} className={`ag-grid-line${i % 2 === 0 ? " ag-grid-line--hour" : ""}`} style={{ top: i * SLOT_H }} />
               ))}
             </div>
-            <div className="ag-cols">
-              {visibleIsoDays.map((iso) => (
+            <div className="ag-cols" style={{ gridTemplateColumns: `repeat(${timelineIsoDays.length}, 1fr)` }}>
+              {timelineIsoDays.map((iso) => (
                 <DayColumn
                   key={iso}
                   iso={iso}

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { UserButton, useUser } from "@clerk/nextjs";
 import ThemeToggle from "@/components/ThemeToggle";
+import BrandLogo from "@/components/BrandLogo";
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -131,12 +132,7 @@ export default function SideNav({ isOpen = false, onClose }: SideNavProps) {
       >
         {/* Brand + botón cerrar en móvil */}
         <div className="flex items-center justify-between px-2 mb-8 mt-2">
-          <span
-            className="text-xl font-medium italic"
-            style={{ fontFamily: "var(--font-fraunces), Georgia, serif", color: "var(--fg)" }}
-          >
-            agénda<span style={{ color: "#E8631F" }}>me</span>
-          </span>
+          <BrandLogo />
           <button
             onClick={onClose}
             className="md:hidden p-1.5 rounded-lg transition-colors hover:bg-[var(--surface-2)]"

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import SideNav from "@/components/SideNav";
+import BrandLogo from "@/components/BrandLogo";
 
 export default function DashboardShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -11,8 +12,10 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
   // Cierra el menú al navegar
   useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
+    if (!mobileOpen) return;
+    const timer = window.setTimeout(() => setMobileOpen(false), 0);
+    return () => window.clearTimeout(timer);
+  }, [mobileOpen, pathname]);
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: "var(--bg)" }}>
@@ -44,12 +47,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
           >
             <Menu className="w-5 h-5" style={{ color: "var(--fg)" }} />
           </button>
-          <span
-            className="text-lg font-medium italic"
-            style={{ fontFamily: "var(--font-fraunces), Georgia, serif", color: "var(--fg)" }}
-          >
-            agénda<span style={{ color: "#E8631F" }}>me</span>
-          </span>
+          <BrandLogo compact />
         </header>
 
         {/* Glow ambiental */}

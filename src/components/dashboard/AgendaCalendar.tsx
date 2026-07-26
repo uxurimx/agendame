@@ -21,6 +21,7 @@ const DEFAULT_PASTELS = ["#F7C8D0", "#F9DCC4", "#FAEDCB", "#C9E4DE", "#CDE7F0", 
 
 type DayKey = typeof DAY_KEYS[number];
 type ViewMode = "day" | "week" | "month";
+type BlockScope = "dia" | "dias" | "mes" | "fijo";
 
 interface ScheduleDay {
   open: string;
@@ -116,8 +117,42 @@ function addDays(d: Date, n: number): Date {
   return r;
 }
 
+function fromISO(iso: string): Date {
+  const [year, month, day] = iso.split("-").map(Number);
+  return new Date(year, (month ?? 1) - 1, day ?? 1);
+}
+
 function toISO(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function endOfMonth(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth() + 1, 0);
+}
+
+function buildBlockDates(scope: BlockScope, startDate: string, untilDate?: string): string[] {
+  const dates: string[] = [];
+  const start = fromISO(startDate);
+
+  if (scope === "dia") return [startDate];
+
+  const end = scope === "mes"
+    ? endOfMonth(start)
+    : untilDate
+      ? fromISO(untilDate)
+      : start;
+
+  if (scope === "fijo") {
+    for (let current = start; current <= end; current = addDays(current, 7)) {
+      dates.push(toISO(current));
+    }
+    return dates;
+  }
+
+  for (let current = start; current <= end; current = addDays(current, 1)) {
+    dates.push(toISO(current));
+  }
+  return dates;
 }
 
 function isToday(iso: string): boolean {
@@ -524,15 +559,29 @@ function ActionModal({
   const [start, setStart] = useState(defaultStart ?? "09:00");
   const [end, setEnd] = useState(defaultStart ? addMinutes(defaultStart, 60) : "10:00");
   const [reason, setReason] = useState("");
+  const [customReason, setCustomReason] = useState("");
+  const [blockScope, setBlockScope] = useState<BlockScope>("dia");
+  const [untilDate, setUntilDate] = useState(defaultDate ?? toISO(new Date()));
   const [proId, setProId] = useState(defaultProfessionalId ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const reasons = ["Descanso", "Vacaciones", "Cita personal", "Sin personal", "Mantenimiento"];
+  const reasons = ["Descanso", "Vacaciones", "Otro"];
   const selectedService = services.find((service) => service.id === serviceId) ?? null;
   const selectedSlot = slots.find((entry) => entry.time === slot) ?? null;
   const availableProfessionals = selectedSlot
     ? professionals.filter((professional) => selectedSlot.professionalIds.includes(professional.id))
     : [];
+  const activeTime = tab === "bloqueo" ? start : slot;
+
+  useEffect(() => {
+    setUntilDate(date);
+  }, [date]);
+
+  useEffect(() => {
+    if (reason !== "Otro") {
+      setCustomReason("");
+    }
+  }, [reason]);
 
   useEffect(() => {
     if (!serviceId || !date) {
@@ -646,16 +695,34 @@ function ActionModal({
   }, [clientPhone]);
 
   async function save() {
+    const effectiveReason = reason === "Otro"
+      ? customReason.trim() || "Otro"
+      : reason.trim();
+    const blockDates = buildBlockDates(blockScope, date, untilDate);
+
+    if (blockDates.length === 0) {
+      setError("No encontré fechas válidas para el bloqueo.");
+      return;
+    }
+
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/blocks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date, startTime: start, endTime: end, reason: reason || undefined, professionalId: proId || undefined }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      for (const blockDate of blockDates) {
+        const res = await fetch("/api/blocks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            date: blockDate,
+            startTime: start,
+            endTime: end,
+            reason: effectiveReason || undefined,
+            professionalId: proId || undefined,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+      }
       onRefresh();
       onClose();
     } catch (e: unknown) {
@@ -703,7 +770,7 @@ function ActionModal({
           <div>
             <h3 className="ag-modal-title" style={{ marginBottom: 0 }}>Acción sobre horario</h3>
             <p style={{ fontSize: ".8rem", color: "var(--fg-muted)", marginTop: ".2rem" }}>
-              {date}{slot ? ` · ${formatTime(slot)}` : ""}
+              {date}{activeTime ? ` · ${formatTime(activeTime)}` : ""}
             </p>
           </div>
           <button type="button" onClick={onClose} className="svc-icon-btn"><X size={18} /></button>
@@ -806,6 +873,32 @@ function ActionModal({
                 Fecha
                 <input type="date" className="svc-input" value={date} onChange={(e) => setDate(e.target.value)} />
               </label>
+              <label className="svc-label">
+                Alcance
+                <select className="svc-input" value={blockScope} onChange={(e) => setBlockScope(e.target.value as BlockScope)}>
+                  <option value="dia">Solo este día</option>
+                  <option value="dias">Más días</option>
+                  <option value="mes">Resto del mes</option>
+                  <option value="fijo">Fijo semanal</option>
+                </select>
+              </label>
+              {blockScope === "dias" && (
+                <label className="svc-label">
+                  Hasta
+                  <input type="date" className="svc-input" min={date} value={untilDate} onChange={(e) => setUntilDate(e.target.value)} />
+                </label>
+              )}
+              {blockScope === "fijo" && (
+                <label className="svc-label">
+                  Repetir hasta
+                  <input type="date" className="svc-input" min={date} value={untilDate} onChange={(e) => setUntilDate(e.target.value)} />
+                </label>
+              )}
+              {blockScope === "mes" && (
+                <p style={{ fontSize: ".78rem", color: "var(--fg-muted)", marginTop: "-.25rem" }}>
+                  Se bloqueará desde {date} hasta el fin del mes.
+                </p>
+              )}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".75rem" }}>
                 <label className="svc-label">
                   Desde
@@ -825,7 +918,15 @@ function ActionModal({
                     </button>
                   ))}
                 </div>
-                <input className="svc-input" style={{ marginTop: ".5rem" }} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="O escribe el motivo..." />
+                {reason === "Otro" && (
+                  <input
+                    className="svc-input"
+                    style={{ marginTop: ".5rem" }}
+                    value={customReason}
+                    onChange={(e) => setCustomReason(e.target.value)}
+                    placeholder="Escribe el motivo..."
+                  />
+                )}
               </label>
               {professionals.length > 1 && (
                 <label className="svc-label">
@@ -840,7 +941,13 @@ function ActionModal({
             </div>
             <div className="apt-modal-actions">
               <button type="button" onClick={onClose} className="apt-btn-ghost">Cancelar</button>
-              <button type="button" onClick={save} disabled={loading} className="apt-btn-confirm" style={{ background: "#374151" }}>
+              <button
+                type="button"
+                onClick={save}
+                disabled={loading || !reason || (reason === "Otro" && customReason.trim().length < 2)}
+                className="apt-btn-confirm"
+                style={{ background: "#374151" }}
+              >
                 {loading && <Loader2 size={14} className="spin" />}
                 <Ban size={14} /> Bloquear
               </button>

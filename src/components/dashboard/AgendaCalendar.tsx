@@ -850,6 +850,7 @@ function DayColumn({
   startHour,
   totalSlots,
   professionals,
+  schedule,
 }: {
   iso: string;
   dayAppointments: AptItem[];
@@ -859,7 +860,12 @@ function DayColumn({
   startHour: number;
   totalSlots: number;
   professionals: ProInfo[];
+  schedule: BusinessSchedule | null;
 }) {
+  const daySchedule = schedule?.[getDayKey(iso)];
+  const visibleStart = daySchedule && !daySchedule.closed ? timeToMinutes(daySchedule.open) : null;
+  const visibleEnd = daySchedule && !daySchedule.closed ? timeToMinutes(daySchedule.close) : null;
+
   return (
     <div className="ag-day-col" style={{ minHeight: totalSlots * SLOT_H }}>
       {dayBlocks.map((block) => {
@@ -901,6 +907,20 @@ function DayColumn({
         const hour = Math.floor(totalMinutes / 60);
         const min = totalMinutes % 60;
         const time = `${String(hour).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+        const isVisibleSlot = visibleStart !== null && visibleEnd !== null
+          ? totalMinutes >= visibleStart && totalMinutes < visibleEnd
+          : false;
+
+        if (!isVisibleSlot) {
+          return (
+            <div
+              key={time}
+              className="ag-empty-slot"
+              style={{ top: i * SLOT_H, height: SLOT_H, background: "transparent", pointerEvents: "none" }}
+            />
+          );
+        }
+
         return (
           <div
             key={time}
@@ -1144,6 +1164,7 @@ export function AgendaCalendar({ businessId, professionals, services }: AgendaPr
                   startHour={startHour}
                   totalSlots={totalSlots}
                   professionals={professionals}
+                  schedule={data.schedule}
                 />
               ))}
             </div>

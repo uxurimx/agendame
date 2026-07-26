@@ -10,6 +10,8 @@ import { BusinessSettingsCard } from "@/components/dashboard/BusinessSettingsCar
 import type { ProItem } from "@/components/dashboard/TeamManager";
 import { siteConfig } from "@/config/site";
 
+type BusinessSchedule = Record<string, { open: string; close: string; closed: boolean }>;
+
 export default async function SettingsPage() {
   const user = await currentUser();
   const biz  = await getBusiness();
@@ -33,14 +35,6 @@ export default async function SettingsPage() {
 
   return (
     <div className="dash-page">
-      <div className="dash-page-header">
-        <div>
-          <p className="dash-page-eyebrow">Configuración</p>
-          <h1 className="dash-page-title">Ajustes</h1>
-        </div>
-      </div>
-
-      {/* Negocio info */}
       <BusinessSettingsCard
         businessName={biz.name}
         businessType={biz.type}
@@ -49,6 +43,7 @@ export default async function SettingsPage() {
         trialEndsAt={biz.trialEndsAt?.toISOString() ?? null}
         logoUrl={biz.logoUrl ?? null}
         bookingUrl={`${siteConfig.url}/book/${biz.slug}`}
+        schedule={(biz.schedule as BusinessSchedule | null) ?? null}
       />
 
       {/* Equipo */}

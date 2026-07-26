@@ -72,7 +72,7 @@ function ProModal({ pro, onClose }: { pro?: ProItem; onClose: () => void }) {
             Nombre <span style={{ color: "var(--l-gold)" }}>*</span>
             <input className="svc-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej: María García" />
           </label>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".75rem" }}>
+          <div className="svc-form-grid">
             <label className="svc-label">
               Teléfono
               <input className="svc-input" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="5512345678" />

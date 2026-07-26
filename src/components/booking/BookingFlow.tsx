@@ -5,7 +5,7 @@ import { formatTime, addMinutes } from "@/lib/time";
 import { normalizeReferenceImageDataUrl } from "@/lib/reference-image";
 import {
   Calendar, Clock, ChevronLeft, ChevronRight,
-  CheckCircle, User, Scissors, Phone, Loader2,
+  CheckCircle, User, Scissors, Phone, Loader2, Camera,
 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────
@@ -539,26 +539,30 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
                   className="bk-input"
                 />
               </label>
-              <label className="bk-label">
-                Notas <span className="bk-optional">(opcional)</span>
+              <div className="bk-label">
+                <span className="bk-label-row">
+                  <label htmlFor="booking-notes">
+                    Notas <span className="bk-optional">(opcional)</span>
+                  </label>
+                  <label className="bk-icon-upload" aria-label="Subir imagen de referencia">
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={handleReferenceImageChange}
+                      className="bk-file-input"
+                    />
+                    <Camera size={16} />
+                  </label>
+                </span>
                 <textarea
+                  id="booking-notes"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Referencias, alergias, preferencias…"
                   className="bk-textarea"
                   rows={3}
                 />
-              </label>
-              <label className="bk-label">
-                Imagen de referencia <span className="bk-optional">(opcional)</span>
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  onChange={handleReferenceImageChange}
-                  className="bk-input"
-                />
-                <span className="bk-upload-hint">JPG, PNG o WEBP. Máximo 900 KB.</span>
-              </label>
+              </div>
               {referenceImageDataUrl && (
                 <div className="bk-image-preview-card">
                   <img src={referenceImageDataUrl} alt="Referencia" className="bk-image-preview" />

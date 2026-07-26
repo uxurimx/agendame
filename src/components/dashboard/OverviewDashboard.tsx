@@ -6,7 +6,6 @@ import {
   Bell,
   Check,
   CreditCard,
-  ExternalLink,
   Image,
   Loader2,
   Users,
@@ -34,7 +33,6 @@ interface AppointmentItem {
 
 interface OverviewDashboardProps {
   businessName: string;
-  bookingUrl: string;
   newClientsMonth: number;
   todayAppointments: AppointmentItem[];
   recentAppointments: AppointmentItem[];
@@ -62,7 +60,6 @@ function nowMinutesInMexico() {
 
 export function OverviewDashboard({
   businessName,
-  bookingUrl,
   newClientsMonth,
   todayAppointments,
   recentAppointments,
@@ -181,15 +178,6 @@ export function OverviewDashboard({
           </p>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <a
-            href={bookingUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="dash-btn-secondary"
-            style={{ fontSize: "13px" }}
-          >
-            <ExternalLink size={14} /> Ver mi página
-          </a>
           <button
             type="button"
             className="ov-notify-pill ov-icon-button"

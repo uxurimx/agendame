@@ -5,7 +5,6 @@ import { eq, and, asc, desc, gte, count, inArray } from "drizzle-orm";
 import { OverviewDashboard } from "@/components/dashboard/OverviewDashboard";
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
-import { siteConfig } from "@/config/site";
 
 function mexicoISODate() {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -50,7 +49,6 @@ export default async function DashboardPage() {
   ]);
   const hasTeam = pros.length > 0;
   const newClientsMonth = newClientsRow[0]?.value ?? 0;
-  const bookingUrl = `${siteConfig.url}/book/${biz.slug}`;
   const appointmentIds = [...new Set([...todayApts, ...recentApts].map((appointment) => appointment.id))];
   const photos = appointmentIds.length > 0
     ? await db.query.clientPhotos.findMany({
@@ -111,7 +109,6 @@ export default async function DashboardPage() {
 
       <OverviewDashboard
         businessName={biz.name}
-        bookingUrl={bookingUrl}
         newClientsMonth={newClientsMonth}
         todayAppointments={todayAppointments}
         recentAppointments={recentAppointments}

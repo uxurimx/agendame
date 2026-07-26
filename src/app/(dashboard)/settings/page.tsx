@@ -6,7 +6,9 @@ import { db } from "@/db";
 import { professionals } from "@/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { TeamManager } from "@/components/dashboard/TeamManager";
+import { BusinessSettingsCard } from "@/components/dashboard/BusinessSettingsCard";
 import type { ProItem } from "@/components/dashboard/TeamManager";
+import { siteConfig } from "@/config/site";
 
 export default async function SettingsPage() {
   const user = await currentUser();
@@ -39,34 +41,15 @@ export default async function SettingsPage() {
       </div>
 
       {/* Negocio info */}
-      <div className="settings-card" style={{ marginBottom: "1.5rem" }}>
-        <h3 className="settings-section-label">Tu negocio</h3>
-        <div className="settings-row">
-          <span className="settings-key">Nombre</span>
-          <span className="settings-val">{biz.name}</span>
-        </div>
-        <div className="settings-row">
-          <span className="settings-key">Tipo</span>
-          <span className="settings-val" style={{ textTransform: "capitalize" }}>{biz.type}</span>
-        </div>
-        <div className="settings-row">
-          <span className="settings-key">Slug</span>
-          <span className="settings-val" style={{ fontFamily: "monospace", color: "var(--l-berry)" }}>
-            agendame.mx/book/{biz.slug}
-          </span>
-        </div>
-        <div className="settings-row" style={{ border: "none" }}>
-          <span className="settings-key">Plan</span>
-          <span className="settings-val" style={{ textTransform: "capitalize" }}>
-            {biz.plan} · {biz.planStatus}
-            {biz.trialEndsAt && biz.planStatus === "trial" && (
-              <span style={{ color: "#E8631F", marginLeft: ".5rem", fontSize: ".75rem" }}>
-                (trial hasta {new Date(biz.trialEndsAt).toLocaleDateString("es-MX")})
-              </span>
-            )}
-          </span>
-        </div>
-      </div>
+      <BusinessSettingsCard
+        businessName={biz.name}
+        businessType={biz.type}
+        plan={biz.plan}
+        planStatus={biz.planStatus}
+        trialEndsAt={biz.trialEndsAt?.toISOString() ?? null}
+        logoUrl={biz.logoUrl ?? null}
+        bookingUrl={`${siteConfig.url}/book/${biz.slug}`}
+      />
 
       {/* Equipo */}
       <div className="settings-card" style={{ marginBottom: "1.5rem" }}>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import TicketCarousel from "@/components/landing/TicketCarousel";
 import { siteConfig } from "@/config/site";
 
@@ -41,11 +42,25 @@ export default function LandingPage() {
         {/* ── Nav ── */}
         <nav className="l-nav">
           <div className="l-wrap">
-            <span className="logo-mark">
-              <span className="logo-text">agénda<span>me</span></span>
+            <span
+              className="logo-mark"
+              style={{
+                width: "100%",
+                maxWidth: 188,
+                height: 64,
+                position: "relative",
+              }}
+            >
+              <Image
+                src="/agendame-logo.png"
+                alt="Agendame"
+                fill
+                priority
+                style={{ objectFit: "contain", objectPosition: "left center" }}
+              />
             </span>
-            <Link href="/sign-up?plan=basico" className="btn-landing btn-primary-l">
-              Prueba gratis 3 días
+            <Link href="/sign-in" className="btn-landing btn-primary-l" style={{ padding: "14px 22px" }}>
+              Acceder
             </Link>
           </div>
         </nav>
@@ -268,8 +283,21 @@ export default function LandingPage() {
         {/* ── Footer ── */}
         <footer className="l-footer">
           <div className="l-wrap">
-            <span className="logo-mark">
-              <span className="logo-text">agénda<span>me</span></span>
+            <span
+              className="logo-mark"
+              style={{
+                width: "100%",
+                maxWidth: 176,
+                height: 58,
+                position: "relative",
+              }}
+            >
+              <Image
+                src="/agendame-logo.png"
+                alt="Agendame"
+                fill
+                style={{ objectFit: "contain", objectPosition: "left center" }}
+              />
             </span>
             <p>
               Síguenos en Instagram —{" "}

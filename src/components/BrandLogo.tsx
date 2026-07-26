@@ -7,26 +7,22 @@ interface BrandLogoProps {
 }
 
 export default function BrandLogo({ compact = false }: BrandLogoProps) {
-  const width = compact ? 124 : 152;
-  const height = compact ? 42 : 52;
+  const width = compact ? 168 : 208;
+  const height = compact ? 76 : 94;
 
   return (
-    <div
-      className="inline-flex items-center justify-center rounded-2xl border shadow-sm"
-      style={{
-        background: "rgba(255,255,255,0.96)",
-        borderColor: "rgba(255,255,255,0.18)",
-        boxShadow: "0 10px 28px rgba(15,15,26,0.08)",
-        padding: compact ? "0.35rem 0.7rem" : "0.45rem 0.85rem",
-      }}
-    >
+    <div className="inline-flex items-center justify-center w-full">
       <Image
         src="/agendame-logo.png"
         alt="Agendame"
         width={width}
         height={height}
         priority
-        style={{ width: "auto", height: compact ? "1.9rem" : "2.35rem" }}
+        style={{
+          width: "auto",
+          height: compact ? "3rem" : "4.1rem",
+          maxWidth: compact ? "10.5rem" : "13rem",
+        }}
       />
     </div>
   );

@@ -131,11 +131,13 @@ export default function SideNav({ isOpen = false, onClose }: SideNavProps) {
         style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
       >
         {/* Brand + botón cerrar en móvil */}
-        <div className="flex items-center justify-between px-2 mb-8 mt-2">
-          <BrandLogo />
+        <div className="relative px-2 mb-8 mt-2">
+          <div className="flex justify-center">
+            <BrandLogo />
+          </div>
           <button
             onClick={onClose}
-            className="md:hidden p-1.5 rounded-lg transition-colors hover:bg-[var(--surface-2)]"
+            className="md:hidden absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-colors hover:bg-[var(--surface-2)]"
             aria-label="Cerrar menú"
           >
             <X className="w-4 h-4" style={{ color: "var(--fg-muted)" }} />

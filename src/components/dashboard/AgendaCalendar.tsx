@@ -1067,14 +1067,18 @@ export function AgendaCalendar({ businessId, professionals, services }: AgendaPr
         <div className="ag-header-top">
           <div className="ag-header-left">
             <div className="ag-header-copy">
-            <p className="ag-week-label">{formatRangeLabel(viewMode, timelineDays, monthCursor)}</p>
-            <p className="ag-week-sub">
-              {availableOnly ? `${totalAvailable} horarios libres` : `${totalThisWeek} citas visibles`}
-            </p>
-            </div>
-            <div className="ag-header-nav">
-              <button type="button" onClick={prevPeriod} className="cal-nav-btn"><ChevronLeft size={16} /></button>
-              <button type="button" onClick={nextPeriod} className="cal-nav-btn"><ChevronRight size={16} /></button>
+              <div className="ag-week-row">
+                <button type="button" onClick={prevPeriod} className="cal-nav-btn" aria-label="Periodo anterior">
+                  <ChevronLeft size={16} />
+                </button>
+                <p className="ag-week-label">{formatRangeLabel(viewMode, timelineDays, monthCursor)}</p>
+                <button type="button" onClick={nextPeriod} className="cal-nav-btn" aria-label="Periodo siguiente">
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+              <p className="ag-week-sub">
+                {availableOnly ? `${totalAvailable} horarios libres` : `${totalThisWeek} citas visibles`}
+              </p>
             </div>
           </div>
           <div className="ag-header-right">
@@ -1209,7 +1213,7 @@ export function AgendaCalendar({ businessId, professionals, services }: AgendaPr
         </div>
       ) : (
         <div className="ag-calendar">
-          <div className="ag-header-row" style={{ gridTemplateColumns: `52px repeat(${timelineDays.length}, 1fr)` }}>
+          <div className="ag-header-row" style={{ gridTemplateColumns: `var(--ag-gutter-width, 52px) repeat(${timelineDays.length}, 1fr)` }}>
             <div className="ag-time-gutter" />
             {timelineDays.map((day, index) => (
               <div key={toISO(day)} className={`ag-day-header${isToday(toISO(day)) ? " ag-day-header--today" : ""}`}>

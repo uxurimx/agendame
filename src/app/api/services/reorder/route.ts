@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/db";
 import { businesses, services } from "@/db/schema";
@@ -40,6 +41,8 @@ export async function PATCH(req: NextRequest) {
           .where(and(eq(services.id, id), eq(services.businessId, biz.id)));
       }
     });
+
+    revalidatePath("/services");
 
     return NextResponse.json({ ok: true });
   } catch (error) {

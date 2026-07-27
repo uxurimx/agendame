@@ -2,12 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Clock, User, Scissors, CheckCircle, XCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Clock, User, Scissors, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { formatTime } from "@/lib/time";
+import { CompletePaymentModal } from "@/components/dashboard/CompletePaymentModal";
 
 type Status = "pending" | "confirmed" | "completed" | "cancelled" | "no_show";
-type PayMethod = "cash" | "card" | "transfer";
-
 export interface AptItem {
   id:            string;
   startTime:     string;
@@ -36,56 +35,11 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: "apt-badge--cancelled",
   no_show:   "apt-badge--noshow",
 };
-const PAY_LABELS: Record<PayMethod, string> = {
+const PAY_LABELS: Record<"cash" | "card" | "transfer", string> = {
   cash:     "Efectivo",
   card:     "Tarjeta",
   transfer: "Transferencia",
 };
-
-function CompleteModal({ id, price, onClose }: { id: string; price: string; onClose: () => void }) {
-  const [method, setMethod] = useState<PayMethod>("cash");
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
-
-  async function confirm() {
-    setLoading(true);
-    await fetch(`/api/appointments/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "completed", paymentStatus: "paid", paymentMethod: method }),
-    });
-    router.refresh();
-    onClose();
-  }
-
-  return (
-    <div className="apt-modal-backdrop" onClick={onClose}>
-      <div className="apt-modal" onClick={(e) => e.stopPropagation()}>
-        <h3 className="apt-modal-title">Registrar pago</h3>
-        <p className="apt-modal-price">${Number(price).toLocaleString("es-MX")} MXN</p>
-        <div className="apt-pay-options">
-          {(["cash", "card", "transfer"] as PayMethod[]).map((m) => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => setMethod(m)}
-              className={`apt-pay-opt${method === m ? " apt-pay-opt--selected" : ""}`}
-            >
-              {PAY_LABELS[m]}
-            </button>
-          ))}
-        </div>
-        <div className="apt-modal-actions">
-          <button type="button" onClick={onClose} className="apt-btn-ghost">Cancelar</button>
-          <button type="button" onClick={confirm} disabled={loading} className="apt-btn-confirm">
-            {loading ? <Loader2 size={14} className="spin" /> : <CheckCircle size={14} />}
-            Confirmar
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export function AppointmentList({ appointments }: { appointments: AptItem[] }) {
   const [completing, setCompleting] = useState<string | null>(null);
@@ -113,10 +67,11 @@ export function AppointmentList({ appointments }: { appointments: AptItem[] }) {
   return (
     <div className="apt-list">
       {completing && (
-        <CompleteModal
-          id={completing}
-          price={appointments.find((a) => a.id === completing)?.pricePaid ?? appointments.find((a) => a.id === completing)?.service?.price ?? "0"}
+        <CompletePaymentModal
+          appointmentId={completing}
+          defaultAmount={appointments.find((a) => a.id === completing)?.pricePaid ?? appointments.find((a) => a.id === completing)?.service?.price ?? "0"}
           onClose={() => setCompleting(null)}
+          onSuccess={() => startTransition(() => router.refresh())}
         />
       )}
       {appointments.map((apt) => (
@@ -143,7 +98,7 @@ export function AppointmentList({ appointments }: { appointments: AptItem[] }) {
               </div>
             )}
             {apt.paymentMethod && apt.status === "completed" && (
-              <span className="apt-pay-badge">{PAY_LABELS[apt.paymentMethod as PayMethod] ?? apt.paymentMethod}</span>
+              <span className="apt-pay-badge">{PAY_LABELS[apt.paymentMethod as keyof typeof PAY_LABELS] ?? apt.paymentMethod}</span>
             )}
           </div>
           <div className="apt-actions-col">

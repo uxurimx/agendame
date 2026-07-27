@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Loader2, TrendingUp, CreditCard, Users, Calendar } from "lucide-react";
 import { formatTime } from "@/lib/time";
+import { CompletePaymentModal } from "@/components/dashboard/CompletePaymentModal";
 
 interface AptItem {
   id:              string;
@@ -43,6 +45,8 @@ export function DailyReport() {
   const [date,    setDate]    = useState(() => toISO(new Date()));
   const [apts,    setApts]    = useState<AptItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [completingId, setCompletingId] = useState<string | null>(null);
+  const router = useRouter();
 
   const load = useCallback(async (d: string) => {
     setLoading(true);
@@ -76,6 +80,18 @@ export function DailyReport() {
 
   return (
     <div>
+      {completingId && (
+        <CompletePaymentModal
+          appointmentId={completingId}
+          defaultAmount={apts.find((a) => a.id === completingId)?.pricePaid ?? apts.find((a) => a.id === completingId)?.service?.price ?? "0"}
+          onClose={() => setCompletingId(null)}
+          onSuccess={() => {
+            void load(date);
+            router.refresh();
+          }}
+        />
+      )}
+
       {/* Date nav */}
       <div className="rpt-date-nav">
         <button type="button" onClick={prevDay} className="cal-nav-btn"><ChevronLeft size={16} /></button>
@@ -158,7 +174,16 @@ export function DailyReport() {
             ) : (
               <div className="rpt-apt-list">
                 {apts.map((a) => (
-                  <div key={a.id} className="rpt-apt-row">
+                  <button
+                    key={a.id}
+                    type="button"
+                    className={`rpt-apt-row${a.status === "pending" || a.status === "confirmed" ? " rpt-apt-row--actionable" : ""}`}
+                    onClick={() => {
+                      if (a.status === "pending" || a.status === "confirmed") {
+                        setCompletingId(a.id);
+                      }
+                    }}
+                  >
                     <span className="rpt-apt-time">{formatTime(a.startTime)}</span>
                     <div className="rpt-apt-info">
                       <span className="rpt-apt-client">{a.client?.name ?? "—"}</span>
@@ -173,7 +198,7 @@ export function DailyReport() {
                     <span className={`apt-badge apt-badge--${a.status}`} style={{ minWidth: 80, textAlign: "center" }}>
                       {STATUS_LABELS[a.status] ?? a.status}
                     </span>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}

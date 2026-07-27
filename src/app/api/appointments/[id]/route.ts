@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { db } from "@/db";
-import { appointmentEvents, appointments, businesses, timeBlocks } from "@/db/schema";
+import { appointmentEvents, appointments, businesses, professionals, timeBlocks } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { timeToMinutes } from "@/lib/time";
 
@@ -10,6 +10,7 @@ const schema = z.object({
   status:        z.enum(["pending", "confirmed", "completed", "cancelled", "no_show"]).optional(),
   paymentStatus: z.enum(["pending", "paid", "online"]).optional(),
   paymentMethod: z.enum(["cash", "card", "transfer", "online"]).optional(),
+  pricePaid:     z.coerce.number().min(0).optional(),
   notes:         z.string().max(500).optional(),
   // Reprogramar
   date:          z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -73,7 +74,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     const body = await req.json();
     const data = schema.parse(body);
-    const updateData = { ...data };
+    const updateData: Record<string, unknown> = { ...data };
     delete updateData.historyReason;
     const historyReason = data.historyReason?.trim();
     const nextDate = data.date ?? apt.date;
@@ -101,6 +102,24 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       );
       if (!available) {
         return NextResponse.json({ error: "El nuevo horario no está disponible" }, { status: 409 });
+      }
+    }
+
+    if (typeof data.pricePaid === "number") {
+      updateData.pricePaid = data.pricePaid.toFixed(2);
+
+      const professional = await db.query.professionals.findFirst({
+        where: and(
+          eq(professionals.id, apt.professionalId),
+          eq(professionals.businessId, biz.id),
+        ),
+      });
+
+      if (professional) {
+        const commissionAmount = professional.commissionType === "percentage"
+          ? (data.pricePaid * Number(professional.commissionValue)) / 100
+          : Number(professional.commissionValue);
+        updateData.commissionAmount = commissionAmount.toFixed(2);
       }
     }
 

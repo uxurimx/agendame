@@ -86,6 +86,7 @@ export default async function DashboardPage() {
       client: appointment.client ? {
         name: appointment.client.name,
         phone: appointment.client.phone,
+        isPreferred: appointment.client.isPreferred,
       } : null,
       latestReferenceImageUrl: latestPhotoByAppointment.get(appointment.id) ?? null,
     };

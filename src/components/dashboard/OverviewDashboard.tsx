@@ -8,6 +8,7 @@ import {
   CreditCard,
   Image,
   Loader2,
+  Star,
   Users,
   X,
 } from "lucide-react";
@@ -27,7 +28,7 @@ interface AppointmentItem {
   createdAt: string | null;
   service: { name: string; price: string } | null;
   professional: { id: string; name: string } | null;
-  client: { name: string; phone: string | null } | null;
+  client: { name: string; phone: string | null; isPreferred: boolean } | null;
   latestReferenceImageUrl: string | null;
 }
 
@@ -56,6 +57,11 @@ function nowMinutesInMexico() {
   const hour = Number(parts.find((part) => part.type === "hour")?.value ?? "0");
   const minute = Number(parts.find((part) => part.type === "minute")?.value ?? "0");
   return (hour * 60) + minute;
+}
+
+function PreferredMark({ active }: { active: boolean | undefined }) {
+  if (!active) return null;
+  return <Star size={13} fill="currentColor" className="ov-preferred-star" />;
 }
 
 export function OverviewDashboard({
@@ -147,6 +153,7 @@ export function OverviewDashboard({
         {appointment ? (
           <div className="ov-kpi-inline-wrap">
             <strong className="ov-kpi-inline">{`${appointment.client?.name ?? "—"} · ${formatTime(appointment.startTime)}`}</strong>
+            <PreferredMark active={appointment.client?.isPreferred} />
             {appointment.latestReferenceImageUrl && (
               <button
                 type="button"
@@ -225,7 +232,10 @@ export function OverviewDashboard({
                     {(appointment.client?.name ?? "?").slice(0, 2).toUpperCase()}
                   </div>
                   <div className="ov-check-copy">
-                    <strong>{appointment.client?.name ?? "Sin nombre"}</strong>
+                    <strong style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                      {appointment.client?.name ?? "Sin nombre"}
+                      <PreferredMark active={appointment.client?.isPreferred} />
+                    </strong>
                     <span>{appointment.service?.name ?? "Servicio"} · {formatTime(appointment.startTime)}</span>
                   </div>
                   <div className="ov-check-price">
@@ -286,7 +296,10 @@ export function OverviewDashboard({
                 <article key={appointment.id} className="ov-notice-row">
                   <div className="ov-notice-dot" />
                   <div className="ov-notice-copy">
-                    <strong>{appointment.client?.name ?? "Cliente"} agendó {appointment.service?.name ?? "servicio"}</strong>
+                    <strong style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                      <span>{appointment.client?.name ?? "Cliente"} agendó {appointment.service?.name ?? "servicio"}</span>
+                      <PreferredMark active={appointment.client?.isPreferred} />
+                    </strong>
                     <span>{formatNotificationDate(appointment.date)} · {formatTime(appointment.startTime)} · {appointment.professional?.name ?? "Sin asignar"}</span>
                   </div>
                 </article>
@@ -321,7 +334,10 @@ export function OverviewDashboard({
                   <article key={appointment.id} className="ov-notice-row">
                     <div className="ov-notice-dot" />
                     <div className="ov-notice-copy">
-                      <strong>{appointment.client?.name ?? "Cliente"} agendó {appointment.service?.name ?? "servicio"}</strong>
+                      <strong style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                        <span>{appointment.client?.name ?? "Cliente"} agendó {appointment.service?.name ?? "servicio"}</span>
+                        <PreferredMark active={appointment.client?.isPreferred} />
+                      </strong>
                       <span>{formatNotificationDate(appointment.date)} · {formatTime(appointment.startTime)} · {appointment.professional?.name ?? "Sin asignar"}</span>
                     </div>
                   </article>

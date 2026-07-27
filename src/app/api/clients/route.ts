@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
 import { clients, appointments, businesses } from "@/db/schema";
-import { eq, ilike, or, sql, desc, getTableColumns } from "drizzle-orm";
+import { asc, eq, getTableColumns, sql } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   const { userId } = await auth();
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
 
   const cols = getTableColumns(clients);
 
-  let query = db
+  const query = db
     .select({
       ...cols,
       totalAppointments: sql<number>`count(${appointments.id})::int`,
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
         : eq(clients.businessId, biz.id)
     )
     .groupBy(clients.id)
-    .orderBy(desc(sql`max(${appointments.date})`));
+    .orderBy(asc(clients.name));
 
   const result = await query;
   return NextResponse.json(result);

@@ -90,6 +90,7 @@ export const clients = pgTable('clients', {
   phone:          varchar('phone', { length: 20 }).notNull(),
   email:          text('email'),
   notes:          text('notes'),
+  isPreferred:    boolean('is_preferred').notNull().default(false),
   loyaltyPoints:  integer('loyalty_points').notNull().default(0),
   createdAt:      timestamp('created_at').defaultNow(),
 }, (t) => [

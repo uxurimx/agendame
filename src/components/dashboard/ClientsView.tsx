@@ -11,6 +11,8 @@ export interface ClientItem {
   name:              string;
   phone:             string;
   email:             string | null;
+  notes:             string | null;
+  isPreferred:       boolean;
   loyaltyPoints:     number;
   createdAt:         string | null;
   totalAppointments: number;
@@ -108,12 +110,24 @@ function PhotoUploader({ clientId, onSaved }: { clientId: string; onSaved: (p: C
   );
 }
 
-function ClientDetail({ client, onClose }: { client: ClientItem; onClose: () => void }) {
+function ClientDetail({
+  client,
+  onClose,
+  onSaved,
+}: {
+  client: ClientItem;
+  onClose: () => void;
+  onSaved: (client: ClientItem) => void;
+}) {
   const [history, setHistory] = useState<AptHistory[]>([]);
   const [photos, setPhotos] = useState<ClientPhotoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [photosLoading, setPhotosLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<ClientPhotoItem | null>(null);
+  const [notes, setNotes] = useState(client.notes ?? "");
+  const [isPreferred, setIsPreferred] = useState(client.isPreferred);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileMessage, setProfileMessage] = useState("");
 
   useEffect(() => {
     fetch(`/api/appointments?clientId=${client.id}`)
@@ -124,6 +138,43 @@ function ClientDetail({ client, onClose }: { client: ClientItem; onClose: () => 
       .then((r) => r.json())
       .then((d) => { setPhotos(Array.isArray(d) ? d : []); setPhotosLoading(false); });
   }, [client.id]);
+
+  useEffect(() => {
+    setNotes(client.notes ?? "");
+    setIsPreferred(client.isPreferred);
+    setProfileMessage("");
+  }, [client.id, client.notes, client.isPreferred]);
+
+  const trimmedNotes = notes.trim();
+  const initialNotes = client.notes ?? "";
+  const isDirty = trimmedNotes !== initialNotes || isPreferred !== client.isPreferred;
+
+  async function saveProfile() {
+    setSavingProfile(true);
+    setProfileMessage("");
+    try {
+      const res = await fetch(`/api/clients/${client.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          notes: trimmedNotes,
+          isPreferred,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "No pude guardar el perfil");
+      onSaved({
+        ...client,
+        notes: data.client.notes,
+        isPreferred: data.client.isPreferred,
+      });
+      setProfileMessage("Guardado");
+    } catch (error: unknown) {
+      setProfileMessage(error instanceof Error ? error.message : "No pude guardar el perfil");
+    } finally {
+      setSavingProfile(false);
+    }
+  }
 
   return (
     <div className="cl-detail-backdrop" onClick={onClose}>
@@ -141,6 +192,7 @@ function ClientDetail({ client, onClose }: { client: ClientItem; onClose: () => 
             <div className="cl-detail-meta">
               <span><Phone size={12} /> {client.phone}</span>
               {client.email && <span><Mail size={12} /> {client.email}</span>}
+              {isPreferred && <span><Star size={12} fill="currentColor" /> Preferencial</span>}
             </div>
           </div>
           <button type="button" onClick={onClose} className="svc-icon-btn"><X size={18} /></button>
@@ -159,6 +211,41 @@ function ClientDetail({ client, onClose }: { client: ClientItem; onClose: () => 
             <span className="cl-stat-label">Última visita</span>
           </div>
         </div>
+        <div className="cl-pref-row">
+          <button
+            type="button"
+            onClick={() => setIsPreferred((current) => !current)}
+            className={`cl-pref-toggle${isPreferred ? " cl-pref-toggle--active" : ""}`}
+          >
+            <Star size={14} fill={isPreferred ? "currentColor" : "none"} />
+            Cliente especial
+          </button>
+          <button
+            type="button"
+            onClick={saveProfile}
+            disabled={!isDirty || savingProfile}
+            className="cl-save-btn"
+          >
+            {savingProfile && <Loader2 size={13} className="spin" />}
+            Guardar
+          </button>
+        </div>
+        <label className="svc-label" style={{ marginBottom: "1rem" }}>
+          Notas
+          <textarea
+            className="svc-input"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Preferencias de atención o información relevante"
+            rows={4}
+            maxLength={500}
+          />
+        </label>
+        {profileMessage && (
+          <p className={`cl-profile-msg${profileMessage === "Guardado" ? " cl-profile-msg--ok" : ""}`}>
+            {profileMessage}
+          </p>
+        )}
         <h4 className="cl-hist-title">Historial de citas</h4>
         {loading && <div className="bk-slots-loading"><Loader2 size={16} className="spin" /> Cargando…</div>}
         {!loading && history.length === 0 && <p className="apt-empty">Sin citas registradas</p>}
@@ -221,44 +308,88 @@ function ClientDetail({ client, onClose }: { client: ClientItem; onClose: () => 
   );
 }
 
-export function ClientsView({ clients }: { clients: ClientItem[] }) {
-  const [search,   setSearch]   = useState("");
+export function ClientsView({
+  clients,
+  todayClientsCount,
+}: {
+  clients: ClientItem[];
+  todayClientsCount: number;
+}) {
+  const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<ClientItem | null>(null);
+  const [sortMode, setSortMode] = useState<"alphabetical" | "latest">("alphabetical");
+  const [items, setItems] = useState<ClientItem[]>(clients);
 
-  const filtered = clients.filter((c) => {
+  useEffect(() => {
+    setItems(clients);
+  }, [clients]);
+
+  const filtered = items.filter((c) => {
     const q = search.toLowerCase();
     return c.name.toLowerCase().includes(q) || c.phone.includes(q);
   });
 
+  const ordered = [...filtered].sort((a, b) => {
+    if (sortMode === "latest") {
+      const aTime = a.lastVisit ? new Date(`${a.lastVisit}T12:00:00`).getTime() : 0;
+      const bTime = b.lastVisit ? new Date(`${b.lastVisit}T12:00:00`).getTime() : 0;
+      if (bTime !== aTime) return bTime - aTime;
+    }
+    return a.name.localeCompare(b.name, "es-MX", { sensitivity: "base" });
+  });
+
+  function handleSavedClient(nextClient: ClientItem) {
+    setItems((current) => current.map((item) => item.id === nextClient.id ? nextClient : item));
+    setSelected(nextClient);
+  }
+
   return (
     <div>
-      {selected && <ClientDetail client={selected} onClose={() => setSelected(null)} />}
+      {selected && <ClientDetail client={selected} onClose={() => setSelected(null)} onSaved={handleSavedClient} />}
 
-      <div className="svc-header">
-        <h2 className="dash-section-title">Clientes ({clients.length})</h2>
+      <div className="cl-summary">
+        <div className="cl-kpi">
+          <span className="cl-kpi-label">Clientes</span>
+          <strong className="cl-kpi-value">{items.length}</strong>
+        </div>
+        <div className="cl-kpi">
+          <span className="cl-kpi-label">Hoy</span>
+          <strong className="cl-kpi-value">{todayClientsCount}</strong>
+        </div>
       </div>
 
-      <div className="cl-search-wrap">
-        <Search size={16} className="cl-search-icon" />
-        <input
-          type="text"
-          placeholder="Buscar por nombre o teléfono…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="cl-search"
-        />
-        {search && (
-          <button type="button" onClick={() => setSearch("")} className="cl-search-clear">
-            <X size={14} />
-          </button>
-        )}
+      <div className="cl-toolbar">
+        <div className="cl-search-wrap">
+          <Search size={16} className="cl-search-icon" />
+          <input
+            type="text"
+            placeholder="Buscar por nombre o teléfono…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="cl-search"
+          />
+          {search && (
+            <button type="button" onClick={() => setSearch("")} className="cl-search-clear">
+              <X size={14} />
+            </button>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => setSortMode((current) => current === "alphabetical" ? "latest" : "alphabetical")}
+          className={`cl-filter-btn${sortMode === "latest" ? " cl-filter-btn--active" : ""}`}
+          title={sortMode === "latest" ? "Ordenado por última cita" : "Ordenado de A-Z"}
+        >
+          <Calendar size={16} />
+          <span>{sortMode === "latest" ? "Última cita" : "A-Z"}</span>
+        </button>
       </div>
 
-      {filtered.length === 0 ? (
+      {ordered.length === 0 ? (
         <div className="apt-empty"><p>Sin resultados</p></div>
       ) : (
         <div className="cl-list">
-          {filtered.map((c) => (
+          {ordered.map((c) => (
             <button
               key={c.id}
               type="button"
@@ -274,10 +405,10 @@ export function ClientsView({ clients }: { clients: ClientItem[] }) {
                 </span>
               </div>
               <div className="cl-item-right">
-                <span className="cl-item-count">{c.totalAppointments} citas</span>
-                {c.loyaltyPoints > 0 && (
-                  <span className="cl-pts"><Star size={11} /> {c.loyaltyPoints}</span>
-                )}
+                <div className="cl-item-topline">
+                  <span className="cl-item-count">{c.totalAppointments} citas</span>
+                  {c.isPreferred && <Star size={13} className="cl-item-star" fill="currentColor" />}
+                </div>
                 <ChevronRight size={16} style={{ color: "var(--fg-muted)" }} />
               </div>
             </button>

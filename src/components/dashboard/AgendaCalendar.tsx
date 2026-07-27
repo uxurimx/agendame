@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import {
   ChevronLeft, ChevronRight, X, CheckCircle, XCircle,
   User, Scissors, Loader2, Ban, Calendar, CreditCard, RefreshCw, Plus,
-  CalendarDays, Columns3, Grid2x2, LockKeyhole, Users, BadgeCheck, Image as ImageIcon,
+  CalendarDays, Columns3, Grid2x2, LockKeyhole, Users, BadgeCheck, Image as ImageIcon, Star,
 } from "lucide-react";
 import { formatTime, timeToMinutes, addMinutes, generateSlots, getMinBookableMinutes } from "@/lib/time";
 
@@ -60,7 +60,7 @@ interface AptItem {
   latestReferenceImageUrl?: string | null;
   service: { id: string; name: string; price: string; durationMin: number } | null;
   professional: { id: string; name: string } | null;
-  client: { name: string; phone: string } | null;
+  client: { name: string; phone: string; isPreferred?: boolean } | null;
 }
 
 interface ActionReasonPanelProps {
@@ -389,7 +389,10 @@ function AptModal({
             <span className="apt-badge" style={{ background: apt.status === "completed" ? "#3E7C7422" : "#6E2A9614", color: apt.status === "completed" ? COMPLETED_BG : "#6E2A96" }}>
               {apt.status === "completed" ? "Completada" : "Agendada"}
             </span>
-            <h3 className="ag-modal-title">{apt.client?.name ?? "Cliente"}</h3>
+            <h3 className="ag-modal-title ag-client-title">
+              {apt.client?.name ?? "Cliente"}
+              {apt.client?.isPreferred && <Star size={14} fill="currentColor" className="ag-client-star" />}
+            </h3>
             <p className="ag-modal-sub">{apt.client?.phone}</p>
           </div>
           <button type="button" onClick={onClose} className="svc-icon-btn"><X size={18} /></button>
@@ -1079,7 +1082,10 @@ function DayColumn({
             style={{ top, height, borderColor: color, background, color: isCompleted ? "#fff" : "var(--fg)" }}
           >
             <span className="ag-apt-time" style={{ color: isCompleted ? "rgba(255,255,255,.84)" : "var(--fg-muted)" }}>{formatTime(apt.startTime)}</span>
-            <span className="ag-apt-name" style={{ color: isCompleted ? "#fff" : "var(--fg)" }}>{apt.client?.name ?? "-"}</span>
+            <span className="ag-apt-name" style={{ color: isCompleted ? "#fff" : "var(--fg)" }}>
+              <span>{apt.client?.name ?? "-"}</span>
+              {apt.client?.isPreferred && <Star size={11} fill="currentColor" className="ag-client-star" />}
+            </span>
             <span className="ag-apt-svc" style={{ color: isCompleted ? "rgba(255,255,255,.9)" : "var(--fg-muted)" }}>{apt.service?.name ?? ""}</span>
             {height > 62 && apt.professional && (
               <span className="ag-apt-pro" style={{ color: isCompleted ? "rgba(255,255,255,.82)" : "var(--fg-muted)" }}>{apt.professional.name}</span>

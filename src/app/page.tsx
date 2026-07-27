@@ -42,7 +42,9 @@ export default function LandingPage() {
         {/* ── Nav ── */}
         <nav className="l-nav">
           <div className="l-wrap">
-            <span
+            <Link
+              href="/"
+              aria-label="Ir al inicio"
               className="logo-mark"
               style={{
                 width: "100%",
@@ -59,7 +61,7 @@ export default function LandingPage() {
                 priority
                 style={{ objectFit: "contain", objectPosition: "left top" }}
               />
-            </span>
+            </Link>
             <Link href="/sign-in" className="btn-landing btn-primary-l" style={{ padding: "14px 22px" }}>
               Acceder
             </Link>

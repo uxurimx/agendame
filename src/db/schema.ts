@@ -68,6 +68,7 @@ export const services = pgTable('services', {
   price:       numeric('price', { precision: 10, scale: 2 }).notNull(),
   durationMin: integer('duration_min').notNull(), // duración en minutos
   category:    varchar('category', { length: 100 }),
+  sortOrder:   integer('sort_order').notNull().default(0),
   isActive:    boolean('is_active').notNull().default(true),
   createdAt:   timestamp('created_at').defaultNow(),
 }, (t) => [

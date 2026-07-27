@@ -1331,6 +1331,15 @@ body {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: .75rem;
 }
+.svc-price-row {
+  display: grid;
+  grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+  gap: .75rem;
+  align-items: end;
+}
+.svc-label--price {
+  max-width: 180px;
+}
 .svc-label {
   display: flex;
   flex-direction: column;
@@ -1356,10 +1365,28 @@ body {
   display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
   padding: .875rem 1rem;
   background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-  transition: border-color .15s;
+  transition: border-color .15s, box-shadow .15s, opacity .15s;
 }
 .svc-item:hover { border-color: var(--l-berry); }
 .svc-item--inactive { opacity: .5; }
+.svc-item--dragging {
+  opacity: .7;
+  border-color: var(--l-berry);
+  box-shadow: 0 10px 24px rgba(110,42,150,.12);
+}
+.svc-drag-handle {
+  width: 32px;
+  height: 32px;
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--fg-muted);
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  cursor: grab;
+  flex-shrink: 0;
+  margin-top: .1rem;
+}
 .svc-item-info  { flex: 1; }
 .svc-item-name  { display: block; font-size: .9rem; font-weight: 700; color: var(--fg); }
 .svc-item-cat   { display: inline-block; font-size: .68rem; font-weight: 600; background: #6E2A9615; color: #6E2A96; padding: .1rem .45rem; border-radius: 6px; margin-top: .25rem; }
@@ -1378,6 +1405,15 @@ body {
 @media (max-width: 560px) {
   .svc-form-grid {
     grid-template-columns: 1fr;
+  }
+  .svc-price-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .svc-label--price {
+    max-width: none;
+  }
+  .svc-item {
+    gap: .75rem;
   }
 }
 

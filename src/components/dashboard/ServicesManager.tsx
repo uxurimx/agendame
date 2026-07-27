@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, ToggleLeft, ToggleRight, X, Loader2, Clock, DollarSign } from "lucide-react";
+import { Plus, Pencil, ToggleLeft, ToggleRight, X, Loader2, Clock, DollarSign, GripVertical } from "lucide-react";
 
 export interface ServiceItem {
   id:          string;
@@ -25,7 +25,7 @@ function ServiceModal({
 }) {
   const [name,        setName]        = useState(svc?.name        ?? "");
   const [description, setDescription] = useState(svc?.description ?? "");
-  const [price,       setPrice]       = useState(svc ? Number(svc.price) : 0);
+  const [price,       setPrice]       = useState(svc?.price ?? "");
   const [duration,    setDuration]    = useState(svc?.durationMin ?? 60);
   const [category,    setCategory]    = useState(svc?.category    ?? "");
   const [loading,     setLoading]     = useState(false);
@@ -34,13 +34,18 @@ function ServiceModal({
 
   async function save() {
     if (!name.trim()) { setError("El nombre es obligatorio"); return; }
+    const parsedPrice = Number.parseFloat(price.replace(",", "."));
+    if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
+      setError("El precio debe ser un número válido");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
       const res = await fetch(svc ? `/api/services/${svc.id}` : "/api/services", {
         method:  svc ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), description: description.trim() || undefined, price, durationMin: duration, category: category.trim() || undefined }),
+        body: JSON.stringify({ name: name.trim(), description: description.trim() || undefined, price: parsedPrice, durationMin: duration, category: category.trim() || undefined }),
       });
       if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
       router.refresh();
@@ -68,10 +73,17 @@ function ServiceModal({
             Descripción
             <input className="svc-input" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Opcional" />
           </label>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".75rem" }}>
-            <label className="svc-label">
+          <div className="svc-price-row">
+            <label className="svc-label svc-label--price">
               Precio (MXN) <span style={{ color: "var(--l-gold)" }}>*</span>
-              <input className="svc-input" type="number" min={0} value={price} onChange={(e) => setPrice(Number(e.target.value))} />
+              <input
+                className="svc-input"
+                type="text"
+                inputMode="decimal"
+                value={price}
+                onChange={(e) => setPrice(e.target.value.replace(/[^\d.,]/g, ""))}
+                placeholder="700"
+              />
             </label>
             <label className="svc-label">
               Duración
@@ -101,9 +113,16 @@ function ServiceModal({
 }
 
 export function ServicesManager({ services }: { services: ServiceItem[] }) {
-  const [editing,   setEditing]   = useState<ServiceItem | null | "new">(null);
-  const [, startTransition]       = useTransition();
+  const [editing, setEditing] = useState<ServiceItem | null | "new">(null);
+  const [items, setItems] = useState<ServiceItem[]>(services);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const [, startTransition] = useTransition();
   const router = useRouter();
+
+  useEffect(() => {
+    setItems(services);
+  }, [services]);
 
   async function toggleActive(svc: ServiceItem) {
     await fetch(`/api/services/${svc.id}`, {
@@ -112,6 +131,47 @@ export function ServicesManager({ services }: { services: ServiceItem[] }) {
       body: JSON.stringify({ isActive: !svc.isActive }),
     });
     startTransition(() => router.refresh());
+  }
+
+  async function persistOrder(nextItems: ServiceItem[]) {
+    setSavingOrder(true);
+    try {
+      const res = await fetch("/api/services/reorder", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderedIds: nextItems.map((item) => item.id) }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? "No pude reordenar servicios");
+      }
+      startTransition(() => router.refresh());
+    } catch (error) {
+      console.error("[services reorder]", error);
+      setItems(services);
+    } finally {
+      setSavingOrder(false);
+      setDraggingId(null);
+    }
+  }
+
+  function moveItem(sourceId: string, targetId: string) {
+    if (sourceId === targetId) return null;
+    const sourceIndex = items.findIndex((item) => item.id === sourceId);
+    const targetIndex = items.findIndex((item) => item.id === targetId);
+    if (sourceIndex === -1 || targetIndex === -1) return null;
+    const next = [...items];
+    const [moved] = next.splice(sourceIndex, 1);
+    next.splice(targetIndex, 0, moved);
+    setItems(next);
+    return next;
+  }
+
+  function handleDrop(targetId: string) {
+    if (!draggingId) return;
+    const next = moveItem(draggingId, targetId);
+    if (next) void persistOrder(next);
+    else setDraggingId(null);
   }
 
   function fmtDuration(min: number) {
@@ -134,20 +194,31 @@ export function ServicesManager({ services }: { services: ServiceItem[] }) {
         </button>
       </div>
 
-      {services.length === 0 ? (
+      {items.length === 0 ? (
         <div className="apt-empty">
           <p>Sin servicios. Crea el primero.</p>
         </div>
       ) : (
         <div className="svc-list">
-          {services.map((svc) => (
-            <div key={svc.id} className={`svc-item${!svc.isActive ? " svc-item--inactive" : ""}`}>
+          {items.map((svc) => (
+            <div
+              key={svc.id}
+              draggable={!savingOrder}
+              onDragStart={() => setDraggingId(svc.id)}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={() => handleDrop(svc.id)}
+              onDragEnd={() => setDraggingId(null)}
+              className={`svc-item${!svc.isActive ? " svc-item--inactive" : ""}${draggingId === svc.id ? " svc-item--dragging" : ""}`}
+            >
+              <button type="button" className="svc-drag-handle" title="Arrastrar para reordenar" aria-label="Arrastrar para reordenar">
+                <GripVertical size={16} />
+              </button>
               <div className="svc-item-info">
                 <span className="svc-item-name">{svc.name}</span>
                 {svc.category && <span className="svc-item-cat">{svc.category}</span>}
                 {svc.description && <span className="svc-item-desc">{svc.description}</span>}
                 <div className="svc-item-meta">
-                  <span><DollarSign size={12} /> ${Number(svc.price).toLocaleString("es-MX")}</span>
+                  <span><DollarSign size={12} /> {Number(svc.price).toLocaleString("es-MX")}</span>
                   <span><Clock size={12} /> {fmtDuration(svc.durationMin)}</span>
                 </div>
               </div>

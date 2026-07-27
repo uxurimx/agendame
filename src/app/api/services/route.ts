@@ -3,7 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { services, businesses } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 
 const schema = z.object({
   name:        z.string().min(1).max(100),
@@ -23,6 +23,10 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const data = schema.parse(body);
+    const lastService = await db.query.services.findFirst({
+      where: eq(services.businessId, biz.id),
+      orderBy: [desc(services.sortOrder)],
+    });
 
     const [svc] = await db
       .insert(services)
@@ -33,6 +37,7 @@ export async function POST(req: NextRequest) {
         price:       String(data.price),
         durationMin: data.durationMin,
         category:    data.category ?? null,
+        sortOrder:   (lastService?.sortOrder ?? -1) + 1,
       })
       .returning();
 

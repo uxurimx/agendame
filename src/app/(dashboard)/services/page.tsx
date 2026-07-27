@@ -10,7 +10,7 @@ export default async function ServicesPage() {
 
   const svcs = await db.query.services.findMany({
     where:   eq(services.businessId, biz.id),
-    orderBy: [asc(services.isActive), asc(services.category), asc(services.name)],
+    orderBy: [asc(services.sortOrder), asc(services.name)],
   });
 
   const data = svcs.map((s) => ({
@@ -25,12 +25,6 @@ export default async function ServicesPage() {
 
   return (
     <div className="dash-page">
-      <div className="dash-page-header">
-        <div>
-          <p className="dash-page-eyebrow">Catálogo</p>
-          <h1 className="dash-page-title">Servicios</h1>
-        </div>
-      </div>
       <ServicesManager services={data} />
     </div>
   );

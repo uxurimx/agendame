@@ -1570,15 +1570,49 @@ body {
 .cl-upload-btn:disabled { opacity: .55; cursor: not-allowed; }
 
 @media (max-width: 560px) {
-  .cl-toolbar,
+  .cl-toolbar {
+    align-items: stretch;
+    gap: .5rem;
+  }
+  .cl-search-wrap {
+    min-width: 0;
+  }
+  .cl-filter-btn {
+    height: 42px;
+    padding: 0 .7rem;
+    gap: .3rem;
+    font-size: .74rem;
+    flex-shrink: 0;
+    justify-content: center;
+    align-self: stretch;
+  }
+  .cl-filter-btn svg {
+    width: 14px;
+    height: 14px;
+  }
   .cl-pref-row,
   .cl-photos-header {
     flex-direction: column;
     align-items: stretch;
   }
-  .cl-filter-btn,
   .cl-save-btn {
     justify-content: center;
+  }
+}
+
+@media (max-width: 420px) {
+  .cl-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+  .cl-filter-btn span {
+    display: none;
+  }
+  .cl-filter-btn {
+    width: 42px;
+    min-width: 42px;
+    padding: 0;
   }
 }
 

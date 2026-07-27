@@ -46,9 +46,10 @@ export default function LandingPage() {
               className="logo-mark"
               style={{
                 width: "100%",
-                maxWidth: 188,
-                height: 64,
+                maxWidth: 228,
+                height: 92,
                 position: "relative",
+                flex: "0 1 228px",
               }}
             >
               <Image
@@ -56,7 +57,7 @@ export default function LandingPage() {
                 alt="Agendame"
                 fill
                 priority
-                style={{ objectFit: "contain", objectPosition: "left center" }}
+                style={{ objectFit: "contain", objectPosition: "left top" }}
               />
             </span>
             <Link href="/sign-in" className="btn-landing btn-primary-l" style={{ padding: "14px 22px" }}>

@@ -12,7 +12,7 @@ const schema = z.object({
   bio:             z.string().max(500).optional(),
   colorHex:        z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
   commissionType:  z.enum(["percentage", "fixed"]).optional(),
-  commissionValue: z.number().min(0).max(100).optional(),
+  commissionValue: z.number().min(0).optional(),
   isActive:        z.boolean().optional(),
 });
 
@@ -32,6 +32,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     const body = await req.json();
     const data = schema.parse(body);
+    const nextCommissionType = data.commissionType ?? pro.commissionType;
+    const nextCommissionValue = data.commissionValue ?? Number(pro.commissionValue);
+
+    if (nextCommissionType === "percentage" && nextCommissionValue > 100) {
+      return NextResponse.json(
+        { error: "La comisión porcentual no puede ser mayor a 100." },
+        { status: 400 },
+      );
+    }
 
     const updateData: Record<string, unknown> = { ...data };
     if (data.commissionValue !== undefined) updateData.commissionValue = String(data.commissionValue);

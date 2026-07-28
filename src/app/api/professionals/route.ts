@@ -12,7 +12,15 @@ const schema = z.object({
   bio:             z.string().max(500).optional(),
   colorHex:        z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
   commissionType:  z.enum(["percentage", "fixed"]).default("percentage"),
-  commissionValue: z.number().min(0).max(100).default(0),
+  commissionValue: z.number().min(0).default(0),
+}).superRefine((data, ctx) => {
+  if (data.commissionType === "percentage" && data.commissionValue > 100) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["commissionValue"],
+      message: "La comisión porcentual no puede ser mayor a 100.",
+    });
+  }
 });
 
 async function getBiz(userId: string) {

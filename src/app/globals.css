@@ -933,11 +933,20 @@ body {
 .ov-icon-button:hover {
   transform: translateY(-1px);
 }
+.ov-top-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, .95fr);
+  gap: .85rem;
+  margin-top: .85rem;
+}
 .ov-kpi-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: .7rem;
   margin-top: .8rem;
+}
+.ov-kpi-grid--four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 .ov-kpi-card {
   background: var(--surface);
@@ -959,11 +968,17 @@ body {
   font-weight: 700;
   margin-bottom: .4rem;
 }
+.ov-kpi-label--light { color: rgba(255,255,255,.7); }
 .ov-kpi-value {
   font-size: 1.9rem;
   line-height: 1;
   font-weight: 800;
   color: var(--l-berry);
+}
+.ov-kpi-sub {
+  margin-top: .45rem;
+  color: var(--fg-muted);
+  font-size: .8rem;
 }
 .ov-kpi-inline {
   font-size: .98rem;
@@ -991,6 +1006,13 @@ body {
   display: grid;
   gap: 1rem;
 }
+.ov-spotlight-grid,
+.ov-bottom-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .95rem;
+  padding-top: .95rem;
+}
 .ov-panel,
 .ov-income-card {
   background: var(--surface);
@@ -1007,6 +1029,10 @@ body {
   margin-bottom: .9rem;
   color: var(--fg);
 }
+.ov-panel-head--tight {
+  align-items: flex-start;
+  margin-bottom: .8rem;
+}
 .ov-panel-head h3 {
   font-size: .78rem;
   letter-spacing: .08em;
@@ -1016,6 +1042,11 @@ body {
 }
 .ov-panel-head span {
   font-size: .8rem;
+  color: var(--fg-muted);
+}
+.ov-panel-sub {
+  margin-top: .22rem;
+  font-size: .82rem;
   color: var(--fg-muted);
 }
 .ov-empty {
@@ -1118,6 +1149,18 @@ body {
   max-width: 26rem;
   font-size: .9rem;
 }
+.ov-trend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  border-radius: 999px;
+  padding: .42rem .7rem;
+  margin-top: .35rem;
+  font-size: .78rem;
+  font-weight: 700;
+}
+.ov-trend-chip--up { background: rgba(255,255,255,.16); color: #fff; }
+.ov-trend-chip--down { background: rgba(255,255,255,.16); color: #ffe3e3; }
 .ov-income-icon {
   width: 46px;
   height: 46px;
@@ -1129,6 +1172,170 @@ body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+.ov-occupancy-card {
+  min-height: 100%;
+}
+.ov-occupancy-body {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.ov-occupancy-ring {
+  --ov-progress: 0%;
+  width: 118px;
+  height: 118px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at center, var(--surface) 57%, transparent 58%),
+    conic-gradient(var(--l-berry) 0 var(--ov-progress), color-mix(in srgb, var(--l-berry) 14%, transparent) var(--ov-progress) 100%);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.ov-occupancy-ring-inner {
+  width: 78px;
+  height: 78px;
+  border-radius: 999px;
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.ov-occupancy-ring-inner strong {
+  font-size: 1.35rem;
+  color: var(--l-berry);
+}
+.ov-occupancy-copy {
+  min-width: 0;
+}
+.ov-occupancy-copy strong {
+  display: block;
+  color: var(--fg);
+  font-size: .95rem;
+  line-height: 1.25;
+}
+.ov-occupancy-copy span {
+  display: block;
+  margin-top: .3rem;
+  color: var(--fg-muted);
+  font-size: .84rem;
+}
+.ov-occupancy-bar {
+  height: 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--l-berry) 10%, transparent);
+  overflow: hidden;
+  margin-top: .85rem;
+}
+.ov-occupancy-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--l-berry), #b56aff);
+}
+.ov-spotlight-list {
+  display: grid;
+  gap: .75rem;
+}
+.ov-spotlight-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: .8rem;
+  align-items: center;
+  padding: .85rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+.ov-spotlight-copy {
+  min-width: 0;
+}
+.ov-spotlight-title {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  flex-wrap: wrap;
+}
+.ov-spotlight-title strong {
+  color: var(--fg);
+  font-size: .95rem;
+  line-height: 1.2;
+}
+.ov-spotlight-copy span {
+  display: block;
+  margin-top: .22rem;
+  color: var(--fg-muted);
+  font-size: .82rem;
+  line-height: 1.25;
+}
+.ov-spotlight-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: .45rem;
+}
+.ov-pay-btn {
+  border: 1px solid color-mix(in srgb, var(--l-berry) 30%, transparent);
+  background: var(--surface);
+  color: var(--l-berry);
+  padding: .45rem .72rem;
+  border-radius: 10px;
+  font-size: .76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .15s ease, background .15s ease, border-color .15s ease;
+}
+.ov-pay-btn:hover {
+  transform: translateY(-1px);
+  background: var(--ov-accent-soft);
+  border-color: var(--l-berry);
+}
+.ov-paid-badge {
+  color: #3E7C74;
+  background: rgba(62,124,116,.12);
+  border: 1px solid rgba(62,124,116,.18);
+  padding: .35rem .6rem;
+  border-radius: 999px;
+  font-size: .72rem;
+  font-weight: 700;
+}
+.ov-overflow-note {
+  margin-top: .55rem;
+  color: var(--fg-muted);
+  font-size: .78rem;
+  padding-left: .2rem;
+}
+.ov-service-list {
+  display: grid;
+  gap: .85rem;
+}
+.ov-service-row {
+  display: grid;
+  grid-template-columns: minmax(0, 108px) 1fr auto;
+  gap: .75rem;
+  align-items: center;
+}
+.ov-service-name {
+  color: var(--fg);
+  font-size: .84rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.ov-service-bar-track {
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--l-berry) 10%, transparent);
+}
+.ov-service-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--l-berry), #b56aff);
+}
+.ov-service-total {
+  color: var(--fg);
+  font-size: .8rem;
+  font-weight: 700;
 }
 .ov-notice-row {
   grid-template-columns: auto 1fr;
@@ -1190,12 +1397,15 @@ body {
     padding: 1rem;
     border-radius: 18px;
   }
+  .ov-top-grid,
+  .ov-kpi-grid--four,
+  .ov-spotlight-grid,
+  .ov-bottom-grid {
+    grid-template-columns: 1fr;
+  }
   .ov-kpi-grid {
     gap: .6rem;
     margin-top: .75rem;
-  }
-  .ov-grid {
-    padding-top: .85rem;
   }
   .ov-check-row,
   .ov-notice-row {
@@ -1208,6 +1418,22 @@ body {
   }
   .ov-income-card {
     align-items: flex-start;
+  }
+  .ov-occupancy-body,
+  .ov-spotlight-row {
+    grid-template-columns: 1fr;
+  }
+  .ov-occupancy-ring {
+    margin-inline: auto;
+  }
+  .ov-spotlight-side {
+    align-items: flex-start;
+  }
+  .ov-service-row {
+    grid-template-columns: 1fr auto;
+  }
+  .ov-service-bar-track {
+    grid-column: 1 / -1;
   }
   .ov-notifications-modal {
     width: min(100%, 100vw - 1.5rem);

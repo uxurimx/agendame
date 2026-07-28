@@ -4,16 +4,19 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   Bell,
+  CalendarClock,
+  Camera,
   Check,
   CreditCard,
-  Image,
   Loader2,
   Star,
-  Users,
+  TrendingDown,
+  TrendingUp,
   X,
 } from "lucide-react";
-import { formatTime } from "@/lib/time";
+import { formatTime, timeToMinutes } from "@/lib/time";
 import { ReferenceImageModal } from "@/components/dashboard/ReferenceImageModal";
+import { CompletePaymentModal } from "@/components/dashboard/CompletePaymentModal";
 
 interface AppointmentItem {
   id: string;
@@ -32,11 +35,20 @@ interface AppointmentItem {
   latestReferenceImageUrl: string | null;
 }
 
+interface TopServiceItem {
+  id: string;
+  name: string;
+  total: number;
+}
+
 interface OverviewDashboardProps {
   businessName: string;
   newClientsMonth: number;
   todayAppointments: AppointmentItem[];
   recentAppointments: AppointmentItem[];
+  dailyCapacityMinutes: number;
+  previousWeekRevenue: number;
+  topServices: TopServiceItem[];
 }
 
 function formatNotificationDate(iso: string) {
@@ -59,9 +71,114 @@ function nowMinutesInMexico() {
   return (hour * 60) + minute;
 }
 
+function formatHours(minutes: number) {
+  const hours = minutes / 60;
+  return Number.isInteger(hours) ? `${hours}h` : `${hours.toFixed(1)}h`;
+}
+
 function PreferredMark({ active }: { active: boolean | undefined }) {
   if (!active) return null;
   return <Star size={13} fill="currentColor" className="ov-preferred-star" />;
+}
+
+function ServiceBars({ services }: { services: TopServiceItem[] }) {
+  const max = services[0]?.total ?? 1;
+
+  if (services.length === 0) {
+    return <p className="ov-empty">Aún no hay suficientes citas para calcular servicios más pedidos.</p>;
+  }
+
+  return (
+    <div className="ov-service-list">
+      {services.map((service) => (
+        <div key={service.id} className="ov-service-row">
+          <span className="ov-service-name">{service.name}</span>
+          <div className="ov-service-bar-track">
+            <div className="ov-service-bar-fill" style={{ width: `${(service.total / max) * 100}%` }} />
+          </div>
+          <span className="ov-service-total">{service.total}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+interface AppointmentStackProps {
+  title: string;
+  subtitle: string;
+  appointments: AppointmentItem[];
+  empty: string;
+  actionLabel: string;
+  onOpenPhoto: (appointment: AppointmentItem) => void;
+  onOpenPayment: (appointment: AppointmentItem) => void;
+}
+
+function AppointmentStack({
+  title,
+  subtitle,
+  appointments,
+  empty,
+  actionLabel,
+  onOpenPhoto,
+  onOpenPayment,
+}: AppointmentStackProps) {
+  return (
+    <section className="ov-panel">
+      <div className="ov-panel-head ov-panel-head--tight">
+        <div>
+          <h3>{title}</h3>
+          <p className="ov-panel-sub">{subtitle}</p>
+        </div>
+        <span>{appointments.length}</span>
+      </div>
+      {appointments.length === 0 ? (
+        <p className="ov-empty">{empty}</p>
+      ) : (
+        <div className="ov-spotlight-list">
+          {appointments.map((appointment) => (
+            <article key={appointment.id} className="ov-spotlight-row">
+              <div className="ov-avatar">
+                {(appointment.client?.name ?? "?").slice(0, 2).toUpperCase()}
+              </div>
+              <div className="ov-spotlight-copy">
+                <div className="ov-spotlight-title">
+                  <strong>{appointment.client?.name ?? "Sin nombre"}</strong>
+                  <PreferredMark active={appointment.client?.isPreferred} />
+                  {appointment.latestReferenceImageUrl && (
+                    <button
+                      type="button"
+                      className="ov-photo-trigger"
+                      onClick={() => onOpenPhoto(appointment)}
+                      title="Ver foto de referencia"
+                    >
+                      <Camera size={14} />
+                    </button>
+                  )}
+                </div>
+                <span>
+                  {formatTime(appointment.startTime)} · {appointment.service?.name ?? "Servicio"} · {appointment.professional?.name ?? "Sin asignar"}
+                </span>
+              </div>
+              <div className="ov-spotlight-side">
+                <span className="ov-check-price">${Number(appointment.pricePaid ?? appointment.service?.price ?? 0).toLocaleString("es-MX")}</span>
+                {(appointment.status === "pending" || appointment.status === "confirmed") ? (
+                  <button
+                    type="button"
+                    className="ov-pay-btn"
+                    onClick={() => onOpenPayment(appointment)}
+                  >
+                    {actionLabel}
+                  </button>
+                ) : (
+                  <span className="ov-paid-badge">Pagada</span>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
 }
 
 export function OverviewDashboard({
@@ -69,49 +186,68 @@ export function OverviewDashboard({
   newClientsMonth,
   todayAppointments,
   recentAppointments,
+  dailyCapacityMinutes,
+  previousWeekRevenue,
+  topServices,
 }: OverviewDashboardProps) {
   const router = useRouter();
-  const [checkingId, setCheckingId] = useState<string | null>(null);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [referenceImageOpen, setReferenceImageOpen] = useState<{ url: string; title: string } | null>(null);
+  const [completingAppointment, setCompletingAppointment] = useState<AppointmentItem | null>(null);
   const [, startTransition] = useTransition();
 
   const activeToday = useMemo(
     () => todayAppointments.filter((appointment) => appointment.status !== "cancelled" && appointment.status !== "no_show"),
     [todayAppointments],
   );
-
-  const pendingToday = useMemo(
-    () => activeToday.filter((appointment) => appointment.status === "pending"),
-    [activeToday],
+  const cancelledToday = useMemo(
+    () => todayAppointments.filter((appointment) => appointment.status === "cancelled").length,
+    [todayAppointments],
   );
-
   const completedToday = useMemo(
     () => activeToday.filter((appointment) => appointment.status === "completed"),
     [activeToday],
   );
-
   const nowMinutes = nowMinutesInMexico();
-  const currentAppointment = activeToday.find((appointment) => {
-    const start = Number(appointment.startTime.slice(0, 2)) * 60 + Number(appointment.startTime.slice(3, 5));
-    const end = Number(appointment.endTime.slice(0, 2)) * 60 + Number(appointment.endTime.slice(3, 5));
-    return appointment.status !== "completed" && start <= nowMinutes && end > nowMinutes;
-  }) ?? null;
 
-  const nextAppointments = activeToday
-    .filter((appointment) => {
-      const start = Number(appointment.startTime.slice(0, 2)) * 60 + Number(appointment.startTime.slice(3, 5));
-      return appointment.status !== "completed" && start > nowMinutes;
-    })
-    .sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const currentAppointments = useMemo(
+    () => activeToday.filter((appointment) => {
+      const start = timeToMinutes(appointment.startTime);
+      const end = timeToMinutes(appointment.endTime);
+      return appointment.status !== "completed" && start <= nowMinutes && end > nowMinutes;
+    }),
+    [activeToday, nowMinutes],
+  );
 
-  const nextAppointment = nextAppointments[0] ?? null;
+  const nextAppointments = useMemo(
+    () => activeToday
+      .filter((appointment) => {
+        const start = timeToMinutes(appointment.startTime);
+        return appointment.status !== "completed" && start > nowMinutes;
+      })
+      .sort((a, b) => a.startTime.localeCompare(b.startTime)),
+    [activeToday, nowMinutes],
+  );
+
+  const currentSpotlight = currentAppointments.slice(0, 2);
+  const nextSpotlight = nextAppointments.slice(0, 2);
+  const currentOverflow = Math.max(0, currentAppointments.length - currentSpotlight.length);
+  const nextOverflow = Math.max(0, nextAppointments.length - nextSpotlight.length);
 
   const confirmedIncome = completedToday.reduce(
     (sum, appointment) => sum + Number(appointment.pricePaid ?? appointment.service?.price ?? 0),
     0,
   );
-
+  const ticketAverage = completedToday.length > 0 ? confirmedIncome / completedToday.length : 0;
+  const occupancyMinutes = activeToday.reduce(
+    (sum, appointment) => sum + Math.max(0, timeToMinutes(appointment.endTime) - timeToMinutes(appointment.startTime)),
+    0,
+  );
+  const occupancyRate = dailyCapacityMinutes > 0 ? Math.min(100, Math.round((occupancyMinutes / dailyCapacityMinutes) * 100)) : 0;
+  const revenueDelta = previousWeekRevenue > 0
+    ? ((confirmedIncome - previousWeekRevenue) / previousWeekRevenue) * 100
+    : null;
+  const cancellationRate = todayAppointments.length > 0 ? Math.round((cancelledToday / todayAppointments.length) * 100) : 0;
   const notifications = useMemo(() => recentAppointments.slice(0, 5), [recentAppointments]);
 
   useEffect(() => {
@@ -124,59 +260,26 @@ export function OverviewDashboard({
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
   }, [notificationsOpen]);
-  async function markArrived(id: string) {
-    setCheckingId(id);
-    try {
-      await fetch(`/api/appointments/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "completed" }),
-      });
-      startTransition(() => router.refresh());
-    } finally {
-      setCheckingId(null);
-    }
-  }
 
-  function AppointmentHighlight({
-    label,
-    appointment,
-    empty,
-  }: {
-    label: string;
-    appointment: AppointmentItem | null;
-    empty: string;
-  }) {
-    return (
-      <article className="ov-kpi-card ov-kpi-card--wide">
-        <span className="ov-kpi-label">{label}</span>
-        {appointment ? (
-          <div className="ov-kpi-inline-wrap">
-            <strong className="ov-kpi-inline">{`${appointment.client?.name ?? "—"} · ${formatTime(appointment.startTime)}`}</strong>
-            <PreferredMark active={appointment.client?.isPreferred} />
-            {appointment.latestReferenceImageUrl && (
-              <button
-                type="button"
-                className="ov-photo-trigger"
-                onClick={() => setReferenceImageOpen({
-                  url: appointment.latestReferenceImageUrl!,
-                  title: `Referencia de ${appointment.client?.name ?? "clienta"}`,
-                })}
-                title="Ver imagen de referencia"
-              >
-                <Image size={14} />
-              </button>
-            )}
-          </div>
-        ) : (
-          <strong className="ov-kpi-inline">{empty}</strong>
-        )}
-      </article>
-    );
+  function openPhoto(appointment: AppointmentItem) {
+    if (!appointment.latestReferenceImageUrl) return;
+    setReferenceImageOpen({
+      url: appointment.latestReferenceImageUrl,
+      title: `Referencia de ${appointment.client?.name ?? "clienta"}`,
+    });
   }
 
   return (
     <section className="ov-root">
+      {completingAppointment && (
+        <CompletePaymentModal
+          appointmentId={completingAppointment.id}
+          defaultAmount={completingAppointment.pricePaid ?? completingAppointment.service?.price ?? "0"}
+          onClose={() => setCompletingAppointment(null)}
+          onSuccess={() => startTransition(() => router.refresh())}
+        />
+      )}
+
       <div className="ov-hero">
         <div className="ov-hero-copy">
           <h2 className="ov-title">Hola, {businessName}</h2>
@@ -184,88 +287,30 @@ export function OverviewDashboard({
             {new Date().toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" })}
           </p>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <button
-            type="button"
-            className="ov-notify-pill ov-icon-button"
-            onClick={() => setNotificationsOpen(true)}
-            title="Ver notificaciones"
-          >
-            <Bell size={14} />
-            <span>{notifications.length}</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          className="ov-notify-pill ov-icon-button"
+          onClick={() => setNotificationsOpen(true)}
+          title="Ver notificaciones"
+        >
+          <Bell size={14} />
+          <span>{notifications.length}</span>
+        </button>
       </div>
 
-      <div className="ov-kpi-grid">
-        <article className="ov-kpi-card">
-          <span className="ov-kpi-label">Citas hoy</span>
-          <strong className="ov-kpi-value">{activeToday.length}</strong>
-        </article>
-        <article className="ov-kpi-card">
-          <span className="ov-kpi-label">Por confirmar</span>
-          <strong className="ov-kpi-value">{pendingToday.length}</strong>
-        </article>
-        <article className="ov-kpi-card">
-          <span className="ov-kpi-label">Nuevas clientas este mes</span>
-          <strong className="ov-kpi-value" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <Users size={16} style={{ opacity: 0.6 }} />{newClientsMonth}
-          </strong>
-        </article>
-        <AppointmentHighlight label="Cliente actual" appointment={currentAppointment} empty="Sin cita en curso" />
-        <AppointmentHighlight label="Próxima cita" appointment={nextAppointment} empty="No hay más citas hoy" />
-      </div>
-
-      <div className="ov-grid">
-        <section className="ov-panel">
-          <div className="ov-panel-head">
-            <h3>Por confirmar</h3>
-            <span>{pendingToday.length}</span>
-          </div>
-          {pendingToday.length === 0 ? (
-            <p className="ov-empty">No hay clientas pendientes por confirmar hoy.</p>
-          ) : (
-            <div className="ov-check-list">
-              {pendingToday.map((appointment) => (
-                <article key={appointment.id} className="ov-check-row">
-                  <div className="ov-avatar">
-                    {(appointment.client?.name ?? "?").slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="ov-check-copy">
-                    <strong style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                      {appointment.client?.name ?? "Sin nombre"}
-                      <PreferredMark active={appointment.client?.isPreferred} />
-                    </strong>
-                    <span>{appointment.service?.name ?? "Servicio"} · {formatTime(appointment.startTime)}</span>
-                  </div>
-                  <div className="ov-check-price">
-                    ${Number(appointment.pricePaid ?? appointment.service?.price ?? 0).toLocaleString("es-MX")}
-                    {appointment.paymentMethod && (
-                      <span style={{ fontSize: "10px", opacity: 0.65, display: "block" }}>
-                        {appointment.paymentMethod}
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    className="ov-check-btn"
-                    onClick={() => markArrived(appointment.id)}
-                    disabled={checkingId === appointment.id}
-                    title="Confirmar llegada"
-                  >
-                    {checkingId === appointment.id ? <Loader2 size={16} className="spin" /> : <Check size={16} />}
-                  </button>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-
+      <div className="ov-top-grid">
         <section className="ov-income-card">
           <div className="ov-income-copy">
-            <span className="ov-kpi-label">Ingresos del día</span>
-            <strong>$</strong>
-            <p>{confirmedIncome.toLocaleString("es-MX")} confirmados hoy.</p>
+            <span className="ov-kpi-label ov-kpi-label--light">Ingresos de hoy</span>
+            <strong>${confirmedIncome.toLocaleString("es-MX")}</strong>
+            {revenueDelta === null ? (
+              <p>Sin base comparable de la semana pasada.</p>
+            ) : (
+              <div className={`ov-trend-chip ${revenueDelta >= 0 ? "ov-trend-chip--up" : "ov-trend-chip--down"}`}>
+                {revenueDelta >= 0 ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
+                <span>{`${revenueDelta >= 0 ? "+" : ""}${Math.round(revenueDelta)}% vs. semana pasada`}</span>
+              </div>
+            )}
           </div>
           <button
             type="button"
@@ -277,9 +322,101 @@ export function OverviewDashboard({
           </button>
         </section>
 
+        <section className="ov-panel ov-occupancy-card">
+          <div className="ov-panel-head ov-panel-head--tight">
+            <div>
+              <h3>Ocupación del día</h3>
+              <p className="ov-panel-sub">Capacidad real con base en horario y citas agendadas.</p>
+            </div>
+          </div>
+          <div className="ov-occupancy-body">
+            <div
+              className="ov-occupancy-ring"
+              style={{ "--ov-progress": `${occupancyRate}%` } as React.CSSProperties}
+            >
+              <div className="ov-occupancy-ring-inner">
+                <strong>{occupancyRate}%</strong>
+              </div>
+            </div>
+            <div className="ov-occupancy-copy">
+              <strong>{formatHours(occupancyMinutes)} ocupadas de {formatHours(dailyCapacityMinutes)} disponibles</strong>
+              <span>
+                {dailyCapacityMinutes > occupancyMinutes
+                  ? `Quedan ${formatHours(dailyCapacityMinutes - occupancyMinutes)} libres hoy.`
+                  : "El día ya está completamente ocupado."}
+              </span>
+              <div className="ov-occupancy-bar">
+                <div className="ov-occupancy-bar-fill" style={{ width: `${occupancyRate}%` }} />
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div className="ov-kpi-grid ov-kpi-grid--four">
+        <article className="ov-kpi-card">
+          <span className="ov-kpi-label">Citas hoy</span>
+          <strong className="ov-kpi-value">{activeToday.length}</strong>
+          <p className="ov-kpi-sub">Activas para hoy</p>
+        </article>
+        <article className="ov-kpi-card">
+          <span className="ov-kpi-label">Nuevos clientes</span>
+          <strong className="ov-kpi-value">{newClientsMonth}</strong>
+          <p className="ov-kpi-sub">Este mes</p>
+        </article>
+        <article className="ov-kpi-card">
+          <span className="ov-kpi-label">Ticket promedio</span>
+          <strong className="ov-kpi-value">${Math.round(ticketAverage).toLocaleString("es-MX")}</strong>
+          <p className="ov-kpi-sub">{completedToday.length} cobradas hoy</p>
+        </article>
+        <article className="ov-kpi-card">
+          <span className="ov-kpi-label">Cancelación</span>
+          <strong className="ov-kpi-value">{cancelledToday}</strong>
+          <p className="ov-kpi-sub">{cancellationRate}% del total del día</p>
+        </article>
+      </div>
+
+      <div className="ov-spotlight-grid">
+        <div>
+          <AppointmentStack
+            title="Atendiendo"
+            subtitle={currentOverflow > 0 ? `Mostrando 2 de ${currentAppointments.length} clientas en curso.` : "Clientas en servicio en este momento."}
+            appointments={currentSpotlight}
+            empty="Sin citas en curso ahora mismo."
+            actionLabel="Cobrar"
+            onOpenPhoto={openPhoto}
+            onOpenPayment={setCompletingAppointment}
+          />
+          {currentOverflow > 0 && <p className="ov-overflow-note">+{currentOverflow} cita(s) más en curso.</p>}
+        </div>
+        <div>
+          <AppointmentStack
+            title="Próxima cita"
+            subtitle={nextOverflow > 0 ? `Mostrando las siguientes 2 de ${nextAppointments.length}.` : "Siguientes citas programadas para hoy."}
+            appointments={nextSpotlight}
+            empty="No hay más citas programadas hoy."
+            actionLabel="Cobrar"
+            onOpenPhoto={openPhoto}
+            onOpenPayment={setCompletingAppointment}
+          />
+          {nextOverflow > 0 && <p className="ov-overflow-note">+{nextOverflow} cita(s) más en cola.</p>}
+        </div>
+      </div>
+
+      <div className="ov-bottom-grid">
         <section className="ov-panel">
           <div className="ov-panel-head">
-            <h3>Notificaciones</h3>
+            <div>
+              <h3>Servicios más pedidos</h3>
+              <p className="ov-panel-sub">Top 3 del mes actual.</p>
+            </div>
+          </div>
+          <ServiceBars services={topServices} />
+        </section>
+
+        <section className="ov-panel">
+          <div className="ov-panel-head">
+            <h3>Reservas recientes</h3>
             <button
               type="button"
               className="ov-panel-link"

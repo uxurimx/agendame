@@ -62,18 +62,25 @@ function BookingCalendar({
   schedule,
   selected,
   timeZone,
+  viewDate,
+  availability,
+  loadingAvailability,
+  onViewDateChange,
   onSelect,
 }: {
   schedule: BusinessInfo["schedule"];
   selected?: string;
   timeZone?: string;
+  viewDate: Date;
+  availability: Record<string, boolean>;
+  loadingAvailability: boolean;
+  onViewDateChange: (date: Date) => void;
   onSelect: (d: string) => void;
 }) {
   const todayIso = useMemo(
     () => toLocalISODate(new Date(), timeZone ?? DEFAULT_BUSINESS_TIMEZONE),
     [timeZone],
   );
-  const [viewDate, setViewDate] = useState(() => new Date(`${todayIso}T12:00:00`));
 
   const year  = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -86,7 +93,9 @@ function BookingCalendar({
     const d = new Date(year, month, day);
     const dayKey = DAY_KEYS[d.getDay()];
     const s = schedule?.[dayKey];
-    return !s || s.closed;
+    if (!s || s.closed) return true;
+    if (availability[iso] === false) return true;
+    return false;
   }
 
   function toISO(day: number): string {
@@ -94,10 +103,10 @@ function BookingCalendar({
   }
 
   function prevMonth() {
-    setViewDate(new Date(year, month - 1, 1));
+    onViewDateChange(new Date(year, month - 1, 1));
   }
   function nextMonth() {
-    setViewDate(new Date(year, month + 1, 1));
+    onViewDateChange(new Date(year, month + 1, 1));
   }
 
   return (
@@ -130,6 +139,7 @@ function BookingCalendar({
           );
         })}
       </div>
+      {loadingAvailability && <p className="bk-slots-empty" style={{ padding: ".75rem 0 0" }}>Validando disponibilidad…</p>}
     </div>
   );
 }
@@ -202,6 +212,9 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
   const [selectedSlot,    setSelectedSlot]    = useState<string>("");
   const [slots,           setSlots]           = useState<SlotItem[]>([]);
   const [loadingSlots,    setLoadingSlots]    = useState(false);
+  const [calendarViewDate, setCalendarViewDate] = useState(() => new Date(`${toLocalISODate(new Date(), business.timezone ?? DEFAULT_BUSINESS_TIMEZONE)}T12:00:00`));
+  const [availableDates, setAvailableDates] = useState<Record<string, boolean>>({});
+  const [loadingAvailability, setLoadingAvailability] = useState(false);
   const [slotsClosed,     setSlotsClosed]     = useState(false);
   const [confirmed,       setConfirmed]       = useState(false);
   const [confirmedPro,    setConfirmedPro]    = useState<ProInfo | null>(null);
@@ -236,6 +249,46 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
       return current && eligibleProfessionals.some((pro) => pro.id === current.id) ? current : null;
     });
   }, [hasSingleProfessional, eligibleProfessionals, dateStep, detailsStep]);
+
+  useEffect(() => {
+    if (!selectedDate) return;
+    if (availableDates[selectedDate] !== false) return;
+    setSelectedDate("");
+    setSelectedSlot("");
+    setSlots([]);
+    setSlotsClosed(false);
+  }, [availableDates, selectedDate]);
+
+  const loadMonthAvailability = useCallback(async () => {
+    if (!selectedService) return;
+    setLoadingAvailability(true);
+    try {
+      const month = `${calendarViewDate.getFullYear()}-${String(calendarViewDate.getMonth() + 1).padStart(2, "0")}`;
+      const proParam = selectedPro === "any" || selectedPro === null ? "any" : selectedPro.id;
+      const res = await fetch(
+        `/api/book/availability-month?businessId=${business.id}&serviceId=${selectedService.id}&professionalId=${proParam}&month=${month}`,
+        { cache: "no-store" },
+      );
+      const data = await res.json();
+      const nextAvailability: Record<string, boolean> = {};
+      const days = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth() + 1, 0).getDate();
+      for (let day = 1; day <= days; day += 1) {
+        const iso = `${calendarViewDate.getFullYear()}-${String(calendarViewDate.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        nextAvailability[iso] = false;
+      }
+      for (const iso of (data.availableDates ?? []) as string[]) {
+        nextAvailability[iso] = true;
+      }
+      setAvailableDates(nextAvailability);
+    } finally {
+      setLoadingAvailability(false);
+    }
+  }, [business.id, calendarViewDate, selectedPro, selectedService]);
+
+  useEffect(() => {
+    if (step !== dateStep || !selectedService) return;
+    void loadMonthAvailability();
+  }, [dateStep, loadMonthAvailability, selectedService, step]);
 
   // Cargar slots cuando fecha / profesional cambian
   const loadSlots = useCallback(async () => {
@@ -470,6 +523,10 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
               schedule={business.schedule}
               selected={selectedDate}
               timeZone={business.timezone}
+              viewDate={calendarViewDate}
+              availability={availableDates}
+              loadingAvailability={loadingAvailability}
+              onViewDateChange={setCalendarViewDate}
               onSelect={(d) => { setSelectedDate(d); setSelectedSlot(""); }}
             />
 

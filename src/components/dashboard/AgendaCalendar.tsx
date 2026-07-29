@@ -1280,6 +1280,13 @@ export function AgendaCalendar({ businessId, businessTimezone, professionals, se
     setViewMode("week");
   }
 
+  function resolveDayCursorFromWeek() {
+    const weekEnd = addDays(weekStart, 6);
+    if (todayDate >= weekStart && todayDate <= weekEnd) return todayDate;
+    if (dayCursor >= weekStart && dayCursor <= weekEnd) return dayCursor;
+    return weekStart;
+  }
+
   const visibleAppointments = data.appointments
     .filter((apt) => apt.status !== "cancelled" && apt.status !== "no_show")
     .filter((apt) => !selectedProId || apt.professional?.id === selectedProId);
@@ -1382,7 +1389,9 @@ export function AgendaCalendar({ businessId, businessTimezone, professionals, se
           <button
             type="button"
             onClick={() => {
-              setDayCursor(viewMode === "week" ? weekStart : dayCursor);
+              if (viewMode === "week") {
+                setDayCursor(resolveDayCursorFromWeek());
+              }
               setViewMode("day");
             }}
             className={`ag-toggle-btn ag-toggle-btn--icon${viewMode === "day" ? " ag-toggle-btn--active" : ""}`}

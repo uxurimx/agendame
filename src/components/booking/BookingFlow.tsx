@@ -74,7 +74,6 @@ function BookingCalendar({
     [timeZone],
   );
   const [viewDate, setViewDate] = useState(() => new Date(`${todayIso}T12:00:00`));
-  const today = useMemo(() => new Date(`${todayIso}T12:00:00`), [todayIso]);
 
   const year  = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -82,8 +81,9 @@ function BookingCalendar({
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
   function isDisabled(day: number): boolean {
+    const iso = toISO(day);
+    if (iso < todayIso) return true;
     const d = new Date(year, month, day);
-    if (d < today) return true;
     const dayKey = DAY_KEYS[d.getDay()];
     const s = schedule?.[dayKey];
     return !s || s.closed;

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, type ChangeEvent } from "rea
 import { DEFAULT_BUSINESS_TIMEZONE, formatTime, addMinutes, toLocalISODate } from "@/lib/time";
 import { normalizeReferenceImageDataUrl } from "@/lib/reference-image";
 import {
-  Calendar, Clock, ChevronLeft, ChevronRight,
+  Calendar, Clock, ChevronLeft, ChevronRight, ChevronsLeft,
   CheckCircle, User, Scissors, Phone, Loader2, Camera, X,
 } from "lucide-react";
 
@@ -412,11 +412,6 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
     );
   }
 
-  const canNext =
-    (!hasSingleProfessional && step === 1 && selectedPro !== null) ||
-    (step === dateStep && !!selectedSlot) ||
-    step === detailsStep;
-
   return (
     <div className="bk-root">
       {/* Header */}
@@ -444,16 +439,6 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
 
       {/* Content */}
       <div className="bk-card">
-        {step > 0 && (
-          <button
-            type="button"
-            onClick={() => setStep(step - 1)}
-            className="bk-inline-back"
-          >
-            <ChevronLeft size={16} /> Atrás
-          </button>
-        )}
-
         {/* Step 0: Servicios */}
         {step === 0 && (
           <div>
@@ -495,7 +480,10 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
             <div className="bk-pro-list">
               <button
                 type="button"
-                onClick={() => setSelectedPro("any")}
+                onClick={() => {
+                  setSelectedPro("any");
+                  setStep(dateStep);
+                }}
                 className={`bk-pro-item${selectedPro === "any" ? " bk-pro-item--selected" : ""}`}
               >
                 <div className="bk-pro-avatar bk-pro-avatar--any">✨</div>
@@ -508,7 +496,10 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
                 <button
                   key={pro.id}
                   type="button"
-                  onClick={() => setSelectedPro(pro)}
+                  onClick={() => {
+                    setSelectedPro(pro);
+                    setStep(dateStep);
+                  }}
                   className={`bk-pro-item${
                     (selectedPro as ProInfo)?.id === pro.id ? " bk-pro-item--selected" : ""
                   }`}
@@ -560,7 +551,10 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
                       <button
                         key={time}
                         type="button"
-                        onClick={() => setSelectedSlot(time)}
+                        onClick={() => {
+                          setSelectedSlot(time);
+                          setStep(detailsStep);
+                        }}
                         className={`bk-slot${selectedSlot === time ? " bk-slot--selected" : ""}`}
                       >
                         {formatTime(time)}
@@ -664,25 +658,25 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
       </div>
 
       {/* Navigation */}
-      <div className="bk-nav">
-        <div style={{ flex: 1 }} />
-        {step > 0 && step < detailsStep ? (
+      <div className="bk-actions">
+        {step > 0 && (
           <button
             type="button"
-            disabled={!canNext}
-            onClick={() => setStep(step + 1)}
-            className="bk-btn-next"
+            onClick={() => setStep(step - 1)}
+            className="bk-icon-back"
+            aria-label="Volver al paso anterior"
           >
-            Siguiente <ChevronRight size={18} />
+            <ChevronsLeft size={18} />
           </button>
-        ) : step === detailsStep ? (
+        )}
+        {step === detailsStep ? (
           <button
             type="button"
             disabled={submitting || !clientName.trim() || !clientPhone.trim()}
             onClick={handleSubmit}
             className="bk-btn-confirm"
           >
-            {submitting ? <><Loader2 size={16} className="spin" /> Confirmando…</> : "Confirmar cita"}
+            {submitting ? <><Loader2 size={16} className="spin" /> Confirmando…</> : "Confirmar"}
           </button>
         ) : null}
       </div>

@@ -669,20 +669,6 @@ body {
   box-shadow: 0 0 0 3px rgba(110, 42, 150, .12);
 }
 .bk-upload-hint { display: block; font-size: .72rem; color: var(--l-ink-soft); margin-top: .35rem; }
-.bk-inline-back {
-  display: inline-flex;
-  align-items: center;
-  gap: .3rem;
-  margin-bottom: .9rem;
-  padding: .35rem .1rem;
-  border: 0;
-  background: transparent;
-  color: var(--l-berry);
-  font-size: .92rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-.bk-inline-back:hover { color: var(--l-berry-dark); }
 .bk-image-preview-card { display: flex; flex-direction: column; gap: .6rem; padding: .8rem; border: 1px solid var(--border); border-radius: 14px; background: #fff; }
 .bk-image-preview-wrap { position: relative; }
 .bk-image-preview { width: 100%; max-height: 220px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border); }
@@ -706,39 +692,52 @@ body {
 .bk-error { color: #e53e3e; font-size: .82rem; margin-top: .5rem; }
 
 /* Navigation */
-.bk-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+.bk-actions {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: .875rem 1rem;
-  background: rgba(255,255,255,.92);
-  backdrop-filter: blur(10px);
-  border-top: 1px solid var(--l-line);
-  z-index: 50;
+  gap: .85rem;
+  padding: 1rem 1rem 6.5rem;
 }
-.bk-btn-next, .bk-btn-confirm {
+.bk-icon-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.65rem;
+  height: 2.65rem;
+  border: 1px solid rgba(110, 42, 150, .18);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--l-berry);
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(110, 42, 150, .08);
+  transition: transform .15s, box-shadow .15s, color .15s, border-color .15s;
+}
+.bk-icon-back:hover {
+  transform: translateY(-1px);
+  border-color: rgba(110, 42, 150, .34);
+  box-shadow: 0 12px 34px rgba(110, 42, 150, .14);
+  color: var(--l-berry-dark);
+}
+.bk-btn-confirm {
   display: flex;
   align-items: center;
-  gap: .375rem;
+  justify-content: center;
+  min-width: 11rem;
   padding: .75rem 1.5rem;
   border-radius: 12px;
   border: none;
-  background: var(--l-berry);
+  background: var(--l-gold);
   color: #fff;
   font-size: .9rem;
   font-weight: 700;
   cursor: pointer;
   transition: background .15s, opacity .15s;
 }
-.bk-btn-next:disabled, .bk-btn-confirm:disabled {
+.bk-btn-confirm:disabled {
   opacity: .45;
   cursor: not-allowed;
 }
-.bk-btn-next:hover:not(:disabled)    { background: var(--l-berry-dark); }
-.bk-btn-confirm                       { background: var(--l-gold); }
 .bk-btn-confirm:hover:not(:disabled)  { background: #c5511a; }
 
 /* Confirmation ticket */

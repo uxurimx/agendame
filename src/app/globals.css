@@ -1347,6 +1347,18 @@ body {
   background: var(--l-gold);
   box-shadow: 0 0 0 4px var(--ov-gold-soft);
 }
+.ov-notification-group + .ov-notification-group {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--ov-line);
+}
+.ov-notice-row--fresh {
+  border-color: color-mix(in srgb, var(--l-berry) 18%, var(--border));
+  background: color-mix(in srgb, var(--l-berry) 4%, var(--bg));
+}
+.ov-notice-meta {
+  font-size: .75rem;
+}
 .ov-panel-link {
   border: 0;
   background: transparent;
@@ -1398,10 +1410,12 @@ body {
     border-radius: 18px;
   }
   .ov-top-grid,
-  .ov-kpi-grid--four,
   .ov-spotlight-grid,
   .ov-bottom-grid {
     grid-template-columns: 1fr;
+  }
+  .ov-kpi-grid--four {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .ov-kpi-grid {
     gap: .6rem;

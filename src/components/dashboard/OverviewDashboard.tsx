@@ -35,6 +35,20 @@ interface AppointmentItem {
   latestReferenceImageUrl: string | null;
 }
 
+interface NotificationItem {
+  id: string;
+  kind: "booking" | "moved" | "cancelled";
+  createdAt: string;
+  appointmentId: string;
+  appointmentDate: string;
+  startTime: string;
+  clientName: string;
+  professionalName: string;
+  serviceName: string;
+  isPreferred: boolean;
+  reason?: string;
+}
+
 interface TopServiceItem {
   id: string;
   name: string;
@@ -45,7 +59,8 @@ interface OverviewDashboardProps {
   businessName: string;
   newClientsMonth: number;
   todayAppointments: AppointmentItem[];
-  recentAppointments: AppointmentItem[];
+  notifications: NotificationItem[];
+  notificationSeenAt: string | null;
   dailyCapacityMinutes: number;
   previousWeekRevenue: number;
   topServices: TopServiceItem[];
@@ -56,6 +71,18 @@ function formatNotificationDate(iso: string) {
     day: "2-digit",
     month: "short",
   });
+}
+
+function formatNotificationCopy(item: NotificationItem) {
+  if (item.kind === "cancelled") return `${item.clientName} canceló ${item.serviceName}`;
+  if (item.kind === "moved") return `${item.clientName} movió ${item.serviceName}`;
+  return `${item.clientName} agendó ${item.serviceName}`;
+}
+
+function formatNotificationSection(item: NotificationItem) {
+  if (item.kind === "cancelled") return "Cancelaciones";
+  if (item.kind === "moved") return "Cambios de cita";
+  return "Reservas";
 }
 
 function nowMinutesInMexico() {
@@ -185,13 +212,15 @@ export function OverviewDashboard({
   businessName,
   newClientsMonth,
   todayAppointments,
-  recentAppointments,
+  notifications,
+  notificationSeenAt,
   dailyCapacityMinutes,
   previousWeekRevenue,
   topServices,
 }: OverviewDashboardProps) {
   const router = useRouter();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [lastSeenAt, setLastSeenAt] = useState<string | null>(notificationSeenAt);
   const [referenceImageOpen, setReferenceImageOpen] = useState<{ url: string; title: string } | null>(null);
   const [completingAppointment, setCompletingAppointment] = useState<AppointmentItem | null>(null);
   const [, startTransition] = useTransition();
@@ -248,7 +277,16 @@ export function OverviewDashboard({
     ? ((confirmedIncome - previousWeekRevenue) / previousWeekRevenue) * 100
     : null;
   const cancellationRate = todayAppointments.length > 0 ? Math.round((cancelledToday / todayAppointments.length) * 100) : 0;
-  const notifications = useMemo(() => recentAppointments.slice(0, 5), [recentAppointments]);
+  const unreadNotifications = useMemo(() => {
+    if (!lastSeenAt) return notifications;
+    const seenAtMs = new Date(lastSeenAt).getTime();
+    return notifications.filter((item) => new Date(item.createdAt).getTime() > seenAtMs);
+  }, [lastSeenAt, notifications]);
+  const notificationHistory = useMemo(() => {
+    if (!lastSeenAt) return [];
+    const seenAtMs = new Date(lastSeenAt).getTime();
+    return notifications.filter((item) => new Date(item.createdAt).getTime() <= seenAtMs);
+  }, [lastSeenAt, notifications]);
 
   useEffect(() => {
     if (!notificationsOpen) return undefined;
@@ -260,6 +298,23 @@ export function OverviewDashboard({
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
   }, [notificationsOpen]);
+
+  async function openNotifications() {
+    setNotificationsOpen(true);
+    if (unreadNotifications.length === 0) return;
+
+    const seenAt = new Date().toISOString();
+    setLastSeenAt(seenAt);
+
+    try {
+      const res = await fetch("/api/dashboard/notifications/seen", { method: "POST" });
+      if (!res.ok) throw new Error("No se pudo marcar como visto");
+      const data = await res.json();
+      if (typeof data.seenAt === "string") setLastSeenAt(data.seenAt);
+    } catch {
+      setLastSeenAt(notificationSeenAt);
+    }
+  }
 
   function openPhoto(appointment: AppointmentItem) {
     if (!appointment.latestReferenceImageUrl) return;
@@ -290,11 +345,11 @@ export function OverviewDashboard({
         <button
           type="button"
           className="ov-notify-pill ov-icon-button"
-          onClick={() => setNotificationsOpen(true)}
+          onClick={openNotifications}
           title="Ver notificaciones"
         >
           <Bell size={14} />
-          <span>{notifications.length}</span>
+          <span>{unreadNotifications.length}</span>
         </button>
       </div>
 
@@ -413,37 +468,6 @@ export function OverviewDashboard({
           </div>
           <ServiceBars services={topServices} />
         </section>
-
-        <section className="ov-panel">
-          <div className="ov-panel-head">
-            <h3>Reservas recientes</h3>
-            <button
-              type="button"
-              className="ov-panel-link"
-              onClick={() => setNotificationsOpen(true)}
-            >
-              Ver todas
-            </button>
-          </div>
-          {notifications.length === 0 ? (
-            <p className="ov-empty">No hay citas nuevas registradas aún.</p>
-          ) : (
-            <div className="ov-notice-list">
-              {notifications.map((appointment) => (
-                <article key={appointment.id} className="ov-notice-row">
-                  <div className="ov-notice-dot" />
-                  <div className="ov-notice-copy">
-                    <strong style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                      <span>{appointment.client?.name ?? "Cliente"} agendó {appointment.service?.name ?? "servicio"}</span>
-                      <PreferredMark active={appointment.client?.isPreferred} />
-                    </strong>
-                    <span>{formatNotificationDate(appointment.date)} · {formatTime(appointment.startTime)} · {appointment.professional?.name ?? "Sin asignar"}</span>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
       </div>
 
       {notificationsOpen && (
@@ -452,7 +476,7 @@ export function OverviewDashboard({
             <div className="ov-modal-head">
               <div>
                 <h3>Notificaciones</h3>
-                <p>Últimas 5 citas registradas.</p>
+                <p>{unreadNotifications.length} acción(es) nueva(s) · {notificationHistory.length} en historial.</p>
               </div>
               <button
                 type="button"
@@ -466,20 +490,60 @@ export function OverviewDashboard({
             {notifications.length === 0 ? (
               <p className="ov-empty">No hay citas nuevas registradas aún.</p>
             ) : (
-              <div className="ov-notice-list">
-                {notifications.map((appointment) => (
-                  <article key={appointment.id} className="ov-notice-row">
-                    <div className="ov-notice-dot" />
-                    <div className="ov-notice-copy">
-                      <strong style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                        <span>{appointment.client?.name ?? "Cliente"} agendó {appointment.service?.name ?? "servicio"}</span>
-                        <PreferredMark active={appointment.client?.isPreferred} />
-                      </strong>
-                      <span>{formatNotificationDate(appointment.date)} · {formatTime(appointment.startTime)} · {appointment.professional?.name ?? "Sin asignar"}</span>
+              <>
+                {unreadNotifications.length > 0 && (
+                  <div className="ov-notification-group">
+                    <div className="ov-panel-head ov-panel-head--tight">
+                      <div>
+                        <h3>Nuevas</h3>
+                        <p className="ov-panel-sub">Acciones no vistas todavía.</p>
+                      </div>
+                      <span>{unreadNotifications.length}</span>
                     </div>
-                  </article>
-                ))}
-              </div>
+                    <div className="ov-notice-list">
+                      {unreadNotifications.map((item) => (
+                        <article key={item.id} className="ov-notice-row ov-notice-row--fresh">
+                          <div className="ov-notice-dot" />
+                          <div className="ov-notice-copy">
+                            <strong style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                              <span>{formatNotificationCopy(item)}</span>
+                              <PreferredMark active={item.isPreferred} />
+                            </strong>
+                            <span>{formatNotificationDate(item.appointmentDate)} · {formatTime(item.startTime)} · {item.professionalName}</span>
+                            <span className="ov-notice-meta">{formatNotificationSection(item)}{item.reason ? ` · ${item.reason}` : ""}</span>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {notificationHistory.length > 0 && (
+                  <div className="ov-notification-group">
+                    <div className="ov-panel-head ov-panel-head--tight">
+                      <div>
+                        <h3>Historial</h3>
+                        <p className="ov-panel-sub">Acciones ya revisadas.</p>
+                      </div>
+                      <span>{notificationHistory.length}</span>
+                    </div>
+                    <div className="ov-notice-list">
+                      {notificationHistory.map((item) => (
+                        <article key={item.id} className="ov-notice-row">
+                          <div className="ov-notice-dot" />
+                          <div className="ov-notice-copy">
+                            <strong style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                              <span>{formatNotificationCopy(item)}</span>
+                              <PreferredMark active={item.isPreferred} />
+                            </strong>
+                            <span>{formatNotificationDate(item.appointmentDate)} · {formatTime(item.startTime)} · {item.professionalName}</span>
+                            <span className="ov-notice-meta">{formatNotificationSection(item)}{item.reason ? ` · ${item.reason}` : ""}</span>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

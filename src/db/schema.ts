@@ -33,6 +33,7 @@ export const businesses = pgTable('businesses', {
   timezone:             varchar('timezone', { length: 50 }).notNull().default('America/Mexico_City'),
   schedule:             jsonb('schedule'),
   logoUrl:              text('logo_url'),
+  notificationSeenAt:   timestamp('notification_seen_at'),
   createdAt:            timestamp('created_at').defaultNow(),
   updatedAt:            timestamp('updated_at').defaultNow(),
 }, (t) => [

@@ -1,6 +1,6 @@
 import { getBusiness } from "@/lib/getBusiness";
 import { db } from "@/db";
-import { appointments, clientPhotos, clients, professionals, services } from "@/db/schema";
+import { appointmentEvents, appointments, clientPhotos, clients, professionals, services } from "@/db/schema";
 import { eq, and, asc, desc, gte, count, inArray, sql } from "drizzle-orm";
 import { OverviewDashboard } from "@/components/dashboard/OverviewDashboard";
 import { AlertTriangle } from "lucide-react";
@@ -26,6 +26,11 @@ function getDayKey(isoDate: string) {
   return ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][day] ?? "mon";
 }
 
+function toIsoString(value: Date | string | null | undefined) {
+  if (!value) return null;
+  return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
+}
+
 export default async function DashboardPage() {
   const biz = await getBusiness();
   const today = mexicoISODate();
@@ -41,7 +46,7 @@ export default async function DashboardPage() {
   firstOfMonth.setHours(0, 0, 0, 0);
 
   const serviceCountExpr = sql<number>`count(${appointments.id})::int`;
-  const [pros, todayApts, previousWeekApts, recentApts, newClientsRow, topServices] = await Promise.all([
+  const [pros, todayApts, previousWeekApts, recentApts, recentEvents, newClientsRow, topServices] = await Promise.all([
     db.query.professionals.findMany({
       where: and(eq(professionals.businessId, biz.id), eq(professionals.isActive, true)),
     }),
@@ -58,7 +63,21 @@ export default async function DashboardPage() {
       where: eq(appointments.businessId, biz.id),
       with: { client: true, professional: true, service: true },
       orderBy: [desc(appointments.createdAt)],
-      limit: 5,
+      limit: 20,
+    }),
+    db.query.appointmentEvents.findMany({
+      where: eq(appointmentEvents.businessId, biz.id),
+      with: {
+        appointment: {
+          with: {
+            professional: true,
+            service: true,
+            client: true,
+          },
+        },
+      },
+      orderBy: [desc(appointmentEvents.createdAt)],
+      limit: 20,
     }),
     db.select({ value: count() }).from(clients).where(
       and(eq(clients.businessId, biz.id), gte(clients.createdAt, firstOfMonth)),
@@ -82,7 +101,7 @@ export default async function DashboardPage() {
   ]);
   const hasTeam = pros.length > 0;
   const newClientsMonth = newClientsRow[0]?.value ?? 0;
-  const appointmentIds = [...new Set([...todayApts, ...recentApts].map((appointment) => appointment.id))];
+  const appointmentIds = [...new Set(todayApts.map((appointment) => appointment.id))];
   const photos = appointmentIds.length > 0
     ? await db.query.clientPhotos.findMany({
       where: inArray(clientPhotos.appointmentId, appointmentIds),
@@ -125,8 +144,45 @@ export default async function DashboardPage() {
     };
   }
 
+  const notificationItems = [
+    ...recentApts
+      .map((appointment) => ({
+        id: `booking:${appointment.id}`,
+        kind: "booking" as const,
+        createdAt: toIsoString(appointment.createdAt),
+        appointmentId: appointment.id,
+        appointmentDate: appointment.date,
+        startTime: appointment.startTime,
+        clientName: appointment.client?.name ?? "Cliente",
+        professionalName: appointment.professional?.name ?? "Sin asignar",
+        serviceName: appointment.service?.name ?? "servicio",
+        isPreferred: appointment.client?.isPreferred ?? false,
+      }))
+      .filter((item) => item.createdAt),
+    ...recentEvents
+      .map((event) => ({
+        id: `${event.eventType}:${event.id}`,
+        kind: event.eventType === "cancelled" ? "cancelled" as const : "moved" as const,
+        createdAt: toIsoString(event.createdAt),
+        appointmentId: event.appointmentId,
+        appointmentDate: event.toDate ?? event.fromDate ?? event.appointment?.date ?? today,
+        startTime: event.toStartTime ?? event.fromStartTime ?? event.appointment?.startTime ?? "00:00",
+        clientName: event.appointment?.client?.name ?? "Cliente",
+        professionalName: event.appointment?.professional?.name ?? "Sin asignar",
+        serviceName: event.appointment?.service?.name ?? "servicio",
+        isPreferred: event.appointment?.client?.isPreferred ?? false,
+        reason: event.reason,
+      }))
+      .filter((item) => item.createdAt),
+  ]
+    .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
+    .slice(0, 20)
+    .map((item) => ({
+      ...item,
+      createdAt: item.createdAt!,
+    }));
+
   const todayAppointments = todayApts.map(mapApt);
-  const recentAppointments = recentApts.map(mapApt);
   const todayOpenSchedule = (biz.schedule as Record<string, { open: string; close: string; closed: boolean }> | null)?.[getDayKey(today)] ?? null;
   const dailyCapacityMinutes = todayOpenSchedule && !todayOpenSchedule.closed
     ? Math.max(0, timeToMinutes(todayOpenSchedule.close) - timeToMinutes(todayOpenSchedule.open)) * pros.length
@@ -152,7 +208,8 @@ export default async function DashboardPage() {
         businessName={biz.name}
         newClientsMonth={newClientsMonth}
         todayAppointments={todayAppointments}
-        recentAppointments={recentAppointments}
+        notifications={notificationItems}
+        notificationSeenAt={toIsoString(biz.notificationSeenAt)}
         dailyCapacityMinutes={dailyCapacityMinutes}
         previousWeekRevenue={previousWeekRevenue}
         topServices={topServices.map((service) => ({

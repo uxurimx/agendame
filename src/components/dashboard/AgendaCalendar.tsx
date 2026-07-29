@@ -6,7 +6,7 @@ import {
   User, Scissors, Loader2, Ban, Calendar, CreditCard, RefreshCw, Plus,
   CalendarDays, Columns3, Grid2x2, LockKeyhole, Users, BadgeCheck, Image as ImageIcon, Star,
 } from "lucide-react";
-import { formatTime, timeToMinutes, addMinutes, generateSlots, getMinBookableMinutes } from "@/lib/time";
+import { DEFAULT_BUSINESS_TIMEZONE, formatTime, timeToMinutes, addMinutes, generateSlots, getMinBookableMinutes, toLocalISODate } from "@/lib/time";
 
 const SLOT_H = 40;
 const DEFAULT_START_HOUR = 7;
@@ -88,6 +88,7 @@ interface AgendaData {
 
 export interface AgendaProps {
   businessId: string;
+  businessTimezone?: string | null;
   professionals: ProInfo[];
   services: ServiceInfo[];
 }
@@ -164,8 +165,8 @@ function buildBlockDates(scope: BlockScope, startDate: string, untilDate?: strin
   return dates;
 }
 
-function isToday(iso: string): boolean {
-  return toISO(new Date()) === iso;
+function isToday(iso: string, timeZone = DEFAULT_BUSINESS_TIMEZONE): boolean {
+  return toLocalISODate(new Date(), timeZone) === iso;
 }
 
 function getDayName(iso: string) {
@@ -286,10 +287,11 @@ function getAvailableSlotsForDay(
   blocks: BlockItem[],
   professionals: ProInfo[],
   schedule: BusinessSchedule | null,
+  timeZone = DEFAULT_BUSINESS_TIMEZONE,
 ) {
   const daySchedule = schedule?.[getDayKey(iso)];
   if (!daySchedule || daySchedule.closed) return [];
-  const minBookableMinutes = getMinBookableMinutes(iso);
+  const minBookableMinutes = getMinBookableMinutes(iso, new Date(), 30, timeZone);
   if (minBookableMinutes === Number.POSITIVE_INFINITY) return [];
 
   const candidatePros = selectedProId
@@ -348,11 +350,12 @@ function MonthCell({
 }
 
 function AptModal({
-  apt, onClose, onRefresh,
+  apt, onClose, onRefresh, businessTimeZone,
 }: {
   apt: AptItem;
   onClose: () => void;
   onRefresh: () => void;
+  businessTimeZone: string;
 }) {
   const [mode, setMode] = useState<"view" | "pay" | "reschedule" | "cancel">("view");
   const [payMethod, setPayMethod] = useState<"cash" | "card" | "transfer">("cash");
@@ -431,6 +434,7 @@ function AptModal({
         {mode === "reschedule" && (
           <ReschedulePanel
             apt={apt}
+            businessTimeZone={businessTimeZone}
             onConfirm={(date, startTime, endTime, reason) => patch({ date, startTime, endTime, status: "confirmed", historyReason: reason })}
             onCancel={() => setMode("view")}
             loading={loading}
@@ -474,14 +478,78 @@ function AptModal({
   );
 }
 
+function BlockModal({
+  block,
+  onClose,
+  onRefresh,
+}: {
+  block: BlockItem;
+  onClose: () => void;
+  onRefresh: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function removeBlock() {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/blocks/${block.id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "No pude eliminar el bloqueo");
+      onRefresh();
+      onClose();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "No pude eliminar el bloqueo");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="apt-modal-backdrop" onClick={onClose}>
+      <div className="ag-apt-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="ag-modal-header">
+          <div>
+            <span className="apt-badge apt-badge--cancelled">Bloqueo</span>
+            <h3 className="ag-modal-title" style={{ marginTop: ".45rem" }}>
+              {block.reason ?? "Horario bloqueado"}
+            </h3>
+            <p className="ag-modal-sub">
+              {block.date} · {formatTime(block.startTime)} - {formatTime(block.endTime)}
+            </p>
+          </div>
+          <button type="button" onClick={onClose} className="svc-icon-btn"><X size={18} /></button>
+        </div>
+
+        <div className="ag-modal-info">
+          <div className="ag-modal-row"><Ban size={14} /> {block.reason ?? "Sin motivo capturado"}</div>
+          <div className="ag-modal-row"><User size={14} /> {block.professional?.name ?? "Bloqueo general del negocio"}</div>
+        </div>
+
+        {error && <p style={{ color: "#e53e3e", fontSize: ".8rem", margin: ".5rem 0" }}>{error}</p>}
+
+        <div className="ag-modal-actions">
+          <button type="button" onClick={onClose} className="apt-btn-ghost">Cerrar</button>
+          <button type="button" disabled={loading} onClick={removeBlock} className="ag-action-btn ag-action-btn--red">
+            {loading && <Loader2 size={14} className="spin" />} Eliminar bloqueo
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ReschedulePanel({
-  apt, onConfirm, onCancel, loading,
+  apt, onConfirm, onCancel, loading, businessTimeZone,
 }: {
   apt: AptItem;
   onConfirm: (date: string, startTime: string, endTime: string, reason: string) => void;
   onCancel: () => void;
   loading: boolean;
+  businessTimeZone: string;
 }) {
+  const todayIso = toLocalISODate(new Date(), businessTimeZone);
   const [date, setDate] = useState(apt.date);
   const [slots, setSlots] = useState<string[]>([]);
   const [slot, setSlot] = useState("");
@@ -523,7 +591,7 @@ function ReschedulePanel({
       <p style={{ fontSize: ".82rem", fontWeight: 700, marginBottom: ".5rem", color: "var(--fg)" }}>Mover cita</p>
       <label className="svc-label" style={{ marginBottom: ".75rem" }}>
         Nueva fecha
-        <input type="date" className="svc-input" value={date} min={toISO(new Date())} onChange={(e) => setDate(e.target.value)} />
+        <input type="date" className="svc-input" value={date} min={todayIso} onChange={(e) => setDate(e.target.value)} />
       </label>
       {fetching && <div className="bk-slots-loading"><Loader2 size={14} className="spin" /> Buscando horarios…</div>}
       {!fetching && slots.length === 0 && <p style={{ fontSize: ".8rem", color: "var(--fg-muted)", marginBottom: ".75rem" }}>Sin disponibilidad para este día.</p>}
@@ -595,6 +663,7 @@ function ActionModal({
   startTime: defaultStart,
   initialTab = "agendar",
   defaultProfessionalId,
+  businessTimeZone,
   professionals,
   services,
   onClose,
@@ -605,13 +674,15 @@ function ActionModal({
   startTime?: string;
   initialTab?: "agendar" | "bloqueo";
   defaultProfessionalId?: string;
+  businessTimeZone: string;
   professionals: ProInfo[];
   services: ServiceInfo[];
   onClose: () => void;
   onRefresh: () => void;
 }) {
+  const todayIso = toLocalISODate(new Date(), businessTimeZone);
   const [tab, setTab] = useState<"agendar" | "bloqueo">(initialTab);
-  const [date, setDate] = useState(defaultDate ?? toISO(new Date()));
+  const [date, setDate] = useState(defaultDate ?? todayIso);
   const [serviceId, setServiceId] = useState("");
   const [slot, setSlot] = useState(defaultStart ?? "");
   const [slots, setSlots] = useState<SlotOption[]>([]);
@@ -631,7 +702,7 @@ function ActionModal({
   const [reason, setReason] = useState("");
   const [customReason, setCustomReason] = useState("");
   const [blockScope, setBlockScope] = useState<BlockScope>("dia");
-  const [untilDate, setUntilDate] = useState(defaultDate ?? toISO(new Date()));
+  const [untilDate, setUntilDate] = useState(defaultDate ?? todayIso);
   const [proId, setProId] = useState(defaultProfessionalId ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -1034,26 +1105,30 @@ function DayColumn({
   dayAppointments,
   dayBlocks,
   onAptClick,
+  onBlockClick,
   onSlotClick,
   startHour,
   totalSlots,
   professionals,
   schedule,
+  businessTimeZone,
 }: {
   iso: string;
   dayAppointments: AptItem[];
   dayBlocks: BlockItem[];
   onAptClick: (apt: AptItem) => void;
+  onBlockClick: (block: BlockItem) => void;
   onSlotClick: (date: string, time: string) => void;
   startHour: number;
   totalSlots: number;
   professionals: ProInfo[];
   schedule: BusinessSchedule | null;
+  businessTimeZone: string;
 }) {
   const daySchedule = schedule?.[getDayKey(iso)];
   const visibleStart = daySchedule && !daySchedule.closed ? timeToMinutes(daySchedule.open) : null;
   const visibleEnd = daySchedule && !daySchedule.closed ? timeToMinutes(daySchedule.close) : null;
-  const minBookableMinutes = getMinBookableMinutes(iso);
+  const minBookableMinutes = getMinBookableMinutes(iso, new Date(), 30, businessTimeZone);
 
   return (
     <div className="ag-day-col" style={{ minHeight: totalSlots * SLOT_H }}>
@@ -1061,10 +1136,16 @@ function DayColumn({
         const top = timeToY(block.startTime, startHour);
         const height = durationToH(block.startTime, block.endTime);
         return (
-          <div key={block.id} className="ag-block" style={{ top, height, background: BLOCKED_BG }}>
+          <button
+            key={block.id}
+            type="button"
+            onClick={() => onBlockClick(block)}
+            className="ag-block"
+            style={{ top, height, background: BLOCKED_BG }}
+          >
             <Ban size={10} style={{ flexShrink: 0 }} />
             <span>{block.reason ?? "Bloqueado"}</span>
-          </div>
+          </button>
         );
       })}
       {dayAppointments.map((apt) => {
@@ -1128,18 +1209,18 @@ function DayColumn({
   );
 }
 
-export function AgendaCalendar({ businessId, professionals, services }: AgendaProps) {
+export function AgendaCalendar({ businessId, businessTimezone, professionals, services }: AgendaProps) {
+  const resolvedTimeZone = businessTimezone || DEFAULT_BUSINESS_TIMEZONE;
+  const todayIso = toLocalISODate(new Date(), resolvedTimeZone);
+  const todayDate = new Date(`${todayIso}T12:00:00`);
   const [viewMode, setViewMode] = useState<ViewMode>("week");
-  const [weekStart, setWeekStart] = useState(() => getMonday(new Date()));
-  const [dayCursor, setDayCursor] = useState(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return today;
-  });
-  const [monthCursor, setMonthCursor] = useState(() => startOfMonth(new Date()));
+  const [weekStart, setWeekStart] = useState(() => getMonday(todayDate));
+  const [dayCursor, setDayCursor] = useState(() => todayDate);
+  const [monthCursor, setMonthCursor] = useState(() => startOfMonth(todayDate));
   const [data, setData] = useState<AgendaData>({ appointments: [], blocks: [], schedule: null });
   const [loading, setLoading] = useState(true);
   const [selectedApt, setSelectedApt] = useState<AptItem | null>(null);
+  const [selectedBlock, setSelectedBlock] = useState<BlockItem | null>(null);
   const [actionDate, setActionDate] = useState<string | null>(null);
   const [actionTime, setActionTime] = useState<string | undefined>(undefined);
   const [actionTab, setActionTab] = useState<"agendar" | "bloqueo">("agendar");
@@ -1218,23 +1299,32 @@ export function AgendaCalendar({ businessId, professionals, services }: AgendaPr
     : visibleAppointments.filter((apt) => apt.date >= rangeFrom && apt.date <= rangeTo).length;
 
   const totalAvailable = viewMode !== "month"
-    ? visibleIsoDays.reduce((acc, iso) => acc + getAvailableSlotsForDay(iso, selectedProId, data.appointments, data.blocks, professionals, data.schedule).length, 0)
+    ? visibleIsoDays.reduce((acc, iso) => acc + getAvailableSlotsForDay(iso, selectedProId, data.appointments, data.blocks, professionals, data.schedule, resolvedTimeZone).length, 0)
     : visibleIsoDays
       .filter((iso) => new Date(`${iso}T12:00:00`).getMonth() === monthCursor.getMonth())
-      .reduce((acc, iso) => acc + getAvailableSlotsForDay(iso, selectedProId, data.appointments, data.blocks, professionals, data.schedule).length, 0);
+      .reduce((acc, iso) => acc + getAvailableSlotsForDay(iso, selectedProId, data.appointments, data.blocks, professionals, data.schedule, resolvedTimeZone).length, 0);
 
   return (
     <div className="ag-root">
       {selectedApt && (
         <AptModal
           apt={selectedApt}
+          businessTimeZone={resolvedTimeZone}
           onClose={() => setSelectedApt(null)}
           onRefresh={() => { setSelectedApt(null); fetchData(); }}
+        />
+      )}
+      {selectedBlock && (
+        <BlockModal
+          block={selectedBlock}
+          onClose={() => setSelectedBlock(null)}
+          onRefresh={() => { setSelectedBlock(null); fetchData(); }}
         />
       )}
       {actionDate !== null && (
         <ActionModal
           businessId={businessId}
+          businessTimeZone={resolvedTimeZone}
           date={actionDate}
           startTime={actionTime}
           initialTab={actionTab}
@@ -1267,7 +1357,7 @@ export function AgendaCalendar({ businessId, professionals, services }: AgendaPr
           <div className="ag-header-right">
             <button
               type="button"
-              onClick={() => { setActionTab("agendar"); setActionDate(toISO(new Date())); setActionTime(undefined); }}
+              onClick={() => { setActionTab("agendar"); setActionDate(todayIso); setActionTime(undefined); }}
               className="ag-icon-btn ag-icon-btn--berry"
               title="Agendar"
               aria-label="Agendar"
@@ -1276,7 +1366,7 @@ export function AgendaCalendar({ businessId, professionals, services }: AgendaPr
             </button>
             <button
               type="button"
-              onClick={() => { setActionTab("bloqueo"); setActionDate(toISO(new Date())); setActionTime(undefined); }}
+              onClick={() => { setActionTab("bloqueo"); setActionDate(todayIso); setActionTime(undefined); }}
               className="ag-icon-btn ag-icon-btn--slate"
               title="Bloquear tiempo"
               aria-label="Bloquear tiempo"
@@ -1356,7 +1446,7 @@ export function AgendaCalendar({ businessId, professionals, services }: AgendaPr
             {getMonthGridDays(monthCursor).map((date) => {
               const iso = toISO(date);
               const dayApts = visibleAppointments.filter((apt) => apt.date === iso);
-              const availableCount = getAvailableSlotsForDay(iso, selectedProId, data.appointments, data.blocks, professionals, data.schedule).length;
+              const availableCount = getAvailableSlotsForDay(iso, selectedProId, data.appointments, data.blocks, professionals, data.schedule, resolvedTimeZone).length;
               return (
                 <MonthCell
                   key={iso}
@@ -1375,10 +1465,10 @@ export function AgendaCalendar({ businessId, professionals, services }: AgendaPr
       ) : availableOnly ? (
         <div className="ag-available-wrap">
           {visibleIsoDays.map((iso, index) => {
-            const slots = getAvailableSlotsForDay(iso, selectedProId, data.appointments, data.blocks, professionals, data.schedule);
+            const slots = getAvailableSlotsForDay(iso, selectedProId, data.appointments, data.blocks, professionals, data.schedule, resolvedTimeZone);
             const dayLabel = getDayName(iso);
             return (
-              <div key={iso} className={`ag-available-card${isToday(iso) ? " ag-available-card--today" : ""}`}>
+              <div key={iso} className={`ag-available-card${isToday(iso, resolvedTimeZone) ? " ag-available-card--today" : ""}`}>
                 <div className="ag-available-head">
                   <span>{viewMode === "day" ? dayLabel : DAY_NAMES[index]}</span>
                   <strong>{new Date(`${iso}T12:00:00`).getDate()}</strong>
@@ -1399,7 +1489,7 @@ export function AgendaCalendar({ businessId, professionals, services }: AgendaPr
           <div className="ag-header-row" style={{ gridTemplateColumns: `var(--ag-gutter-width, 52px) repeat(${timelineDays.length}, 1fr)` }}>
             <div className="ag-time-gutter" />
             {timelineDays.map((day, index) => (
-              <div key={toISO(day)} className={`ag-day-header${isToday(toISO(day)) ? " ag-day-header--today" : ""}`}>
+              <div key={toISO(day)} className={`ag-day-header${isToday(toISO(day), resolvedTimeZone) ? " ag-day-header--today" : ""}`}>
                 <div className="ag-day-name-row">
                   <span className="ag-day-name">{viewMode === "day" ? getDayName(toISO(day)) : DAY_NAMES[index]}</span>
                 </div>
@@ -1429,11 +1519,13 @@ export function AgendaCalendar({ businessId, professionals, services }: AgendaPr
                   dayAppointments={visibleAppointments.filter((apt) => apt.date === iso)}
                   dayBlocks={visibleBlocks.filter((block) => block.date === iso)}
                   onAptClick={setSelectedApt}
+                  onBlockClick={setSelectedBlock}
                   onSlotClick={(date, time) => { setActionTab("agendar"); setActionDate(date); setActionTime(time); }}
                   startHour={startHour}
                   totalSlots={totalSlots}
                   professionals={professionals}
                   schedule={data.schedule}
+                  businessTimeZone={resolvedTimeZone}
                 />
               ))}
             </div>

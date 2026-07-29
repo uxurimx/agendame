@@ -1369,11 +1369,14 @@ body {
 }
 .ov-notifications-modal {
   width: min(100%, 32rem);
+  max-height: min(82vh, 42rem);
   border-radius: 18px;
   background: var(--surface);
   border: 1px solid var(--ov-line);
   box-shadow: 0 24px 48px rgba(15, 15, 26, .16);
   padding: 1rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .ov-modal-head {
   display: flex;
@@ -1451,6 +1454,7 @@ body {
   }
   .ov-notifications-modal {
     width: min(100%, 100vw - 1.5rem);
+    max-height: calc(100vh - 1.5rem);
     padding: .95rem;
   }
 }
@@ -1511,6 +1515,7 @@ body {
   display: grid; place-items: center;
   z-index: 200;
   padding: 1rem;
+  overflow-y: auto;
 }
 .apt-modal {
   background: var(--bg);
@@ -2253,6 +2258,7 @@ body {
   left: 2px; right: 2px;
   border-radius: 6px;
   border: 1px solid #d1d5db;
+  appearance: none;
   display: flex;
   align-items: flex-start;
   gap: 4px;
@@ -2262,7 +2268,11 @@ body {
   font-weight: 600;
   z-index: 3;
   overflow: hidden;
+  text-align: left;
+  cursor: pointer;
+  transition: filter .15s, transform .15s, border-color .15s;
 }
+.ag-block:hover { filter: brightness(0.97); transform: scale(1.01); border-color: #9ca3af; z-index: 4; }
 
 .ag-available-wrap {
   display: grid;

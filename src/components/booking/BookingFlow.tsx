@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, type ChangeEvent } from "react";
-import { formatTime, addMinutes } from "@/lib/time";
+import { useState, useEffect, useCallback, useMemo, type ChangeEvent } from "react";
+import { DEFAULT_BUSINESS_TIMEZONE, formatTime, addMinutes, toLocalISODate } from "@/lib/time";
 import { normalizeReferenceImageDataUrl } from "@/lib/reference-image";
 import {
   Calendar, Clock, ChevronLeft, ChevronRight,
@@ -30,6 +30,7 @@ interface BusinessInfo {
   type:     string;
   phone?:   string;
   logoUrl?: string;
+  timezone?: string;
   schedule: Record<string, { open: string; close: string; closed: boolean }> | null;
 }
 interface SlotItem {
@@ -60,15 +61,20 @@ function formatDateDisplay(dateStr: string): string {
 function BookingCalendar({
   schedule,
   selected,
+  timeZone,
   onSelect,
 }: {
   schedule: BusinessInfo["schedule"];
   selected?: string;
+  timeZone?: string;
   onSelect: (d: string) => void;
 }) {
-  const [viewDate, setViewDate] = useState(() => new Date());
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const todayIso = useMemo(
+    () => toLocalISODate(new Date(), timeZone ?? DEFAULT_BUSINESS_TIMEZONE),
+    [timeZone],
+  );
+  const [viewDate, setViewDate] = useState(() => new Date(`${todayIso}T12:00:00`));
+  const today = useMemo(() => new Date(`${todayIso}T12:00:00`), [todayIso]);
 
   const year  = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -463,6 +469,7 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
             <BookingCalendar
               schedule={business.schedule}
               selected={selectedDate}
+              timeZone={business.timezone}
               onSelect={(d) => { setSelectedDate(d); setSelectedSlot(""); }}
             />
 

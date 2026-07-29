@@ -62,6 +62,7 @@ export default async function BookPage({ params }: Props) {
           type:     biz.type,
           phone:    biz.phone ?? undefined,
           logoUrl:  biz.logoUrl ?? undefined,
+          timezone: biz.timezone,
           schedule: biz.schedule as Record<string, { open: string; close: string; closed: boolean }> | null,
         }}
         professionals={pros.map((p) => ({ id: p.id, name: p.name, avatarUrl: p.avatarUrl ?? undefined }))}

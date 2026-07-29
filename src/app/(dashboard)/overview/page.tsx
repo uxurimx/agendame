@@ -41,7 +41,12 @@ export default async function OverviewPage() {
         </Link>
       )}
 
-      <AgendaCalendar businessId={biz.id} professionals={proList} services={serviceList} />
+      <AgendaCalendar
+        businessId={biz.id}
+        businessTimezone={biz.timezone}
+        professionals={proList}
+        services={serviceList}
+      />
     </div>
   );
 }

@@ -49,7 +49,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ slots: [], closed: true });
   }
 
-  const minBookableMinutes = getMinBookableMinutes(date);
+  const businessTimeZone = business.timezone || "America/Mexico_City";
+  const minBookableMinutes = getMinBookableMinutes(date, new Date(), 30, businessTimeZone);
   if (minBookableMinutes === Number.POSITIVE_INFINITY) {
     return NextResponse.json({ slots: [], open: daySchedule.open, close: daySchedule.close });
   }

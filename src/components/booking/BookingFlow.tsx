@@ -5,7 +5,7 @@ import { DEFAULT_BUSINESS_TIMEZONE, formatTime, addMinutes, toLocalISODate } fro
 import { normalizeReferenceImageDataUrl } from "@/lib/reference-image";
 import {
   Calendar, Clock, ChevronLeft, ChevronRight,
-  CheckCircle, User, Scissors, Phone, Loader2, Camera,
+  CheckCircle, User, Scissors, Phone, Loader2, Camera, X,
 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────
@@ -413,7 +413,6 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
   }
 
   const canNext =
-    (step === 0 && !!selectedService) ||
     (!hasSingleProfessional && step === 1 && selectedPro !== null) ||
     (step === dateStep && !!selectedSlot) ||
     step === detailsStep;
@@ -445,6 +444,16 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
 
       {/* Content */}
       <div className="bk-card">
+        {step > 0 && (
+          <button
+            type="button"
+            onClick={() => setStep(step - 1)}
+            className="bk-inline-back"
+          >
+            <ChevronLeft size={16} /> Atrás
+          </button>
+        )}
+
         {/* Step 0: Servicios */}
         {step === 0 && (
           <div>
@@ -461,6 +470,7 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
                     setSelectedSlot("");
                     setSlots([]);
                     setSlotsClosed(false);
+                    setStep(1);
                   }}
                   className={`bk-service-item${selectedService?.id === svc.id ? " bk-service-item--selected" : ""}`}
                 >
@@ -629,10 +639,17 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
               </div>
               {referenceImageDataUrl && (
                 <div className="bk-image-preview-card">
-                  <img src={referenceImageDataUrl} alt="Referencia" className="bk-image-preview" />
-                  <button type="button" className="bk-btn-back" onClick={() => setReferenceImageDataUrl(null)}>
-                    Quitar imagen
-                  </button>
+                  <div className="bk-image-preview-wrap">
+                    <img src={referenceImageDataUrl} alt="Referencia" className="bk-image-preview" />
+                    <button
+                      type="button"
+                      className="bk-image-remove"
+                      onClick={() => setReferenceImageDataUrl(null)}
+                      aria-label="Quitar imagen"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
                 </div>
               )}
               {referenceImageError && <p className="bk-error">{referenceImageError}</p>}
@@ -648,13 +665,8 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
 
       {/* Navigation */}
       <div className="bk-nav">
-        {step > 0 && (
-          <button type="button" onClick={() => setStep(step - 1)} className="bk-btn-back">
-            <ChevronLeft size={18} /> Atrás
-          </button>
-        )}
         <div style={{ flex: 1 }} />
-        {step < detailsStep ? (
+        {step > 0 && step < detailsStep ? (
           <button
             type="button"
             disabled={!canNext}
@@ -663,7 +675,7 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
           >
             Siguiente <ChevronRight size={18} />
           </button>
-        ) : (
+        ) : step === detailsStep ? (
           <button
             type="button"
             disabled={submitting || !clientName.trim() || !clientPhone.trim()}
@@ -672,7 +684,7 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
           >
             {submitting ? <><Loader2 size={16} className="spin" /> Confirmando…</> : "Confirmar cita"}
           </button>
-        )}
+        ) : null}
       </div>
     </div>
   );

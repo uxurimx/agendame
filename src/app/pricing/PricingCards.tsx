@@ -34,6 +34,7 @@ const PLANS = [
       "Todo lo del plan Básico",
       "Reportes y corte de caja",
       "Bloqueo de tiempo por profesional",
+      "Anti-spam y Soporte Online",
       "Fidelización",
     ],
     highlight: true,
@@ -114,7 +115,8 @@ export default function PricingCards({
         gap: "1.5rem",
         maxWidth: "1000px",
         margin: "0 auto",
-        padding: "0 1rem",
+        padding: "1.4rem 1rem 0",
+        alignItems: "stretch",
       }}
     >
       {PLANS.map((plan) => {
@@ -136,14 +138,15 @@ export default function PricingCards({
                 : "0 14px 40px rgba(64, 36, 91, 0.10)",
               position: "relative",
               border: plan.highlight ? "1px solid rgba(139, 92, 246, 0.5)" : "1px solid rgba(118, 83, 159, 0.08)",
-              overflow: "hidden",
+              overflow: "visible",
+              display: "flex",
             }}
           >
             {plan.badge && (
               <div
                 style={{
                   position: "absolute",
-                  top: "-15px",
+                  top: "-13px",
                   left: "50%",
                   transform: "translateX(-50%)",
                   background: plan.highlight
@@ -154,13 +157,13 @@ export default function PricingCards({
                   fontWeight: 700,
                   letterSpacing: "0.08em",
                   textTransform: "uppercase",
-                  padding: "5px 15px",
+                  padding: "7px 18px",
                   borderRadius: "999px",
                   whiteSpace: "nowrap",
                   display: "flex",
                   alignItems: "center",
                   gap: "4px",
-                  zIndex: 2,
+                  zIndex: 4,
                   boxShadow: "0 8px 18px rgba(0,0,0,0.16)",
                 }}
               >
@@ -174,7 +177,11 @@ export default function PricingCards({
                   ? "radial-gradient(circle at top, rgba(126,34,206,0.16), transparent 38%), #1d0a2d"
                   : "radial-gradient(circle at top, rgba(250, 156, 83, 0.07), transparent 32%), transparent",
                 borderRadius: "calc(1.4rem - 2px)",
-                padding: "2rem 1.75rem 1.9rem",
+                padding: "2.25rem 1.75rem 1.9rem",
+                display: "flex",
+                flexDirection: "column",
+                flex: 1,
+                overflow: "hidden",
               }}
             >
               <p
@@ -219,7 +226,17 @@ export default function PricingCards({
                 {plan.description}
               </p>
 
-              <ul style={{ listStyle: "none", padding: 0, margin: "0 0 1.95rem 0", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              <ul
+                style={{
+                  listStyle: "none",
+                  padding: 0,
+                  margin: "0 0 1.95rem 0",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.75rem",
+                  flex: 1,
+                }}
+              >
                 {plan.features.map((f) => (
                   <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem" }}>
                     <Check

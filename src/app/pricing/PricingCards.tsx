@@ -20,6 +20,8 @@ const PLANS = [
       "Anti-spam y rate limit",
     ],
     highlight: false,
+    buttonLabel: "Elegir este plan",
+    buttonDisabledLabel: "Elegir este plan",
   },
   {
     id: "pro",
@@ -35,6 +37,8 @@ const PLANS = [
       "Soporte prioritario",
     ],
     highlight: true,
+    buttonLabel: "Proximamente",
+    buttonDisabledLabel: "Proximamente",
   },
   {
     id: "multisucursal",
@@ -50,6 +54,8 @@ const PLANS = [
       "Onboarding personalizado",
     ],
     highlight: false,
+    buttonLabel: "En construcción",
+    buttonDisabledLabel: "En construcción",
   },
 ] as const;
 
@@ -111,25 +117,30 @@ export default function PricingCards({
       {PLANS.map((plan) => {
         const isCurrent = isActive && currentPlan === plan.id;
         const isLoading = loading === plan.id;
+        const isLockedPlan = plan.id === "pro" || plan.id === "multisucursal";
 
         return (
           <div
             key={plan.id}
             style={{
-              background: plan.highlight ? "linear-gradient(145deg, #6E2A96 0%, #4B1D68 100%)" : "var(--l-white)",
-              borderRadius: "1.25rem",
+              background: plan.highlight
+                ? "linear-gradient(180deg, #2d0d45 0%, #190924 100%)"
+                : "linear-gradient(180deg, #ffffff 0%, #fffdfd 100%)",
+              borderRadius: "1.4rem",
               padding: plan.highlight ? "2px" : "0",
               boxShadow: plan.highlight
-                ? "0 20px 60px rgba(110,42,150,0.35)"
-                : "0 4px 24px rgba(0,0,0,0.08)",
+                ? "0 22px 58px rgba(88, 28, 135, 0.34)"
+                : "0 14px 40px rgba(64, 36, 91, 0.10)",
               position: "relative",
+              border: plan.highlight ? "1px solid rgba(139, 92, 246, 0.5)" : "1px solid rgba(118, 83, 159, 0.08)",
+              overflow: "hidden",
             }}
           >
             {plan.highlight && (
               <div
                 style={{
                   position: "absolute",
-                  top: "-14px",
+                  top: "-13px",
                   left: "50%",
                   transform: "translateX(-50%)",
                   background: "linear-gradient(90deg, #E8631F, #f59e0b)",
@@ -152,29 +163,31 @@ export default function PricingCards({
 
             <div
               style={{
-                background: plan.highlight ? "#1a0a2e" : "transparent",
-                borderRadius: "calc(1.25rem - 2px)",
-                padding: "2rem 1.75rem",
+                background: plan.highlight
+                  ? "radial-gradient(circle at top, rgba(126,34,206,0.16), transparent 38%), #1d0a2d"
+                  : "radial-gradient(circle at top, rgba(250, 156, 83, 0.07), transparent 32%), transparent",
+                borderRadius: "calc(1.4rem - 2px)",
+                padding: "2rem 1.75rem 1.9rem",
               }}
             >
               <p
                 style={{
                   fontSize: "0.75rem",
-                  fontWeight: 600,
+                  fontWeight: 700,
                   letterSpacing: "0.08em",
                   textTransform: "uppercase",
-                  color: plan.highlight ? "rgba(200,160,255,0.8)" : "var(--l-berry)",
-                  marginBottom: "0.5rem",
+                  color: plan.highlight ? "#b88af4" : "#7d34b3",
+                  marginBottom: "0.55rem",
                 }}
               >
                 {plan.name}
               </p>
-              <div style={{ display: "flex", alignItems: "baseline", gap: "4px", marginBottom: "0.35rem" }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: "4px", marginBottom: "0.4rem" }}>
                 <span
                   style={{
-                    fontSize: "2.5rem",
+                    fontSize: "3rem",
                     fontWeight: 800,
-                    color: plan.highlight ? "#fff" : "var(--l-ink)",
+                    color: plan.highlight ? "#ffffff" : "#231b2f",
                     lineHeight: 1,
                   }}
                 >
@@ -183,7 +196,7 @@ export default function PricingCards({
                 <span
                   style={{
                     fontSize: "0.85rem",
-                    color: plan.highlight ? "rgba(255,255,255,0.5)" : "var(--l-ink-soft)",
+                    color: plan.highlight ? "rgba(255,255,255,0.58)" : "#6f677a",
                   }}
                 >
                   MXN/mes
@@ -192,14 +205,14 @@ export default function PricingCards({
               <p
                 style={{
                   fontSize: "0.82rem",
-                  color: plan.highlight ? "rgba(255,255,255,0.6)" : "var(--l-ink-soft)",
-                  marginBottom: "1.5rem",
+                  color: plan.highlight ? "rgba(255,255,255,0.68)" : "#6e6678",
+                  marginBottom: "1.6rem",
                 }}
               >
                 {plan.description}
               </p>
 
-              <ul style={{ listStyle: "none", padding: 0, margin: "0 0 1.75rem 0", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+              <ul style={{ listStyle: "none", padding: 0, margin: "0 0 1.95rem 0", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                 {plan.features.map((f) => (
                   <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem" }}>
                     <Check
@@ -208,13 +221,14 @@ export default function PricingCards({
                         height: 15,
                         flexShrink: 0,
                         marginTop: 2,
-                        color: plan.highlight ? "#a78bfa" : "#6E2A96",
+                        color: plan.highlight ? "#b88af4" : "#7d34b3",
                       }}
                     />
                     <span
                       style={{
                         fontSize: "0.83rem",
-                        color: plan.highlight ? "rgba(255,255,255,0.8)" : "var(--l-ink)",
+                        color: plan.highlight ? "rgba(255,255,255,0.83)" : "#231b2f",
+                        lineHeight: 1.45,
                       }}
                     >
                       {f}
@@ -241,14 +255,14 @@ export default function PricingCards({
                 </div>
               ) : (
                 <button
-                  onClick={() => handleSelect(plan.id)}
-                  disabled={!!loading}
+                  onClick={isLockedPlan ? undefined : () => handleSelect(plan.id)}
+                  disabled={!!loading || isLockedPlan}
                   style={{
                     width: "100%",
-                    padding: "0.75rem",
-                    borderRadius: "0.75rem",
+                    padding: "0.88rem 0.95rem",
+                    borderRadius: "0.88rem",
                     border: "none",
-                    cursor: loading ? "not-allowed" : "pointer",
+                    cursor: isLockedPlan || loading ? "not-allowed" : "pointer",
                     fontWeight: 700,
                     fontSize: "0.88rem",
                     display: "flex",
@@ -256,20 +270,32 @@ export default function PricingCards({
                     justifyContent: "center",
                     gap: "0.4rem",
                     transition: "opacity 0.15s, transform 0.1s",
-                    background: plan.highlight
+                    background: isLockedPlan
+                      ? plan.highlight
+                        ? "linear-gradient(90deg, rgba(232,99,31,0.82), rgba(245,158,11,0.82))"
+                        : "linear-gradient(135deg, rgba(110,42,150,0.86), rgba(232,99,31,0.86))"
+                      : plan.highlight
                       ? "linear-gradient(90deg, #E8631F, #f59e0b)"
                       : "linear-gradient(135deg, #6E2A96, #E8631F)",
                     color: "white",
-                    opacity: loading && !isLoading ? 0.5 : 1,
+                    opacity: loading && !isLoading ? 0.5 : isLockedPlan ? 0.92 : 1,
                     boxShadow: plan.highlight
                       ? "0 4px 16px rgba(232,99,31,0.4)"
                       : "0 4px 16px rgba(110,42,150,0.3)",
+                    textTransform: isLockedPlan ? "uppercase" : "none",
+                    letterSpacing: isLockedPlan ? "0.04em" : "normal",
                   }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)"; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)"; }}
                 >
                   {isLoading && <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />}
-                  {!isAuthenticated ? "Crear cuenta gratis" : "Elegir este plan"}
+                  {isCurrent
+                    ? "Plan actual"
+                    : isLockedPlan
+                      ? plan.buttonDisabledLabel
+                      : !isAuthenticated
+                        ? "Crear cuenta gratis"
+                        : plan.buttonLabel}
                 </button>
               )}
             </div>

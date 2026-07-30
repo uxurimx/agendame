@@ -1,7 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
+import { auth } from "@clerk/nextjs/server";
+import { db } from "@/db";
+import { businesses } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import TicketCarousel from "@/components/landing/TicketCarousel";
 import { siteConfig } from "@/config/site";
+import PricingCards from "@/app/pricing/PricingCards";
 
 const jsonLdApp = {
   "@context": "https://schema.org",
@@ -31,7 +36,23 @@ const jsonLdFaq = {
   ],
 };
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const { userId } = await auth();
+
+  let currentPlan: string | null = null;
+  let currentStatus: string | null = null;
+
+  if (userId) {
+    const biz = await db.query.businesses.findFirst({
+      where: eq(businesses.ownerId, userId),
+      columns: { plan: true, planStatus: true },
+    });
+    if (biz) {
+      currentPlan = biz.plan;
+      currentStatus = biz.planStatus;
+    }
+  }
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdApp) }} />
@@ -174,85 +195,11 @@ export default function LandingPage() {
                 Sin contratos forzosos. Cancela cuando quieras, en cualquier plan.
               </p>
             </div>
-            <div className="price-grid">
-
-              <div className="ticket price-card">
-                <span className="ribbon">3 días gratis</span>
-                <div className="ticket-split">
-                  <div className="ticket-main">
-                    <span className="plan-name">Plan Básico</span>
-                    <p className="plan-price">$299<sup>/mes</sup></p>
-                    <span className="plan-cycle">Hasta 2 profesionales · sin fidelidad</span>
-                    <ul className="plan-list">
-                      <li>Hasta 2 profesionales en tu equipo</li>
-                      <li>Agenda con bloqueo automático por servicio</li>
-                      <li>Link de reservas personalizado</li>
-                      <li>Notificaciones de nuevas citas</li>
-                      <li>Historial de clientas con fotos</li>
-                      <li>Corte de caja diario, separado por profesional</li>
-                    </ul>
-                    <Link href="/sign-up?plan=basico" className="btn-landing btn-ghost-l" style={{ width: "100%", justifyContent: "center" }}>
-                      Probar 3 días gratis
-                    </Link>
-                  </div>
-                  <div className="ticket-stub">
-                    <span className="days-num">3</span>
-                    <span className="days-label">días<br />gratis</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="ticket price-card pro">
-                <span className="badge-pro">Recomendado</span>
-                <div className="ticket-split">
-                  <div className="ticket-main">
-                    <span className="plan-name">Plan Pro</span>
-                    <p className="plan-price">$399<sup>/mes</sup></p>
-                    <span className="plan-cycle">Equipo de 3+ · fidelidad y pagos en línea</span>
-                    <ul className="plan-list">
-                      <li>Equipo de 3 profesionales o más</li>
-                      <li>Todo lo del Plan Básico</li>
-                      <li>Comisión configurable por profesional</li>
-                      <li>Programa de fidelidad para tus clientas</li>
-                      <li>Pagos en línea al confirmar la cita</li>
-                    </ul>
-                    <Link href="/sign-up?plan=pro" className="btn-landing btn-primary-l" style={{ width: "100%", justifyContent: "center" }}>
-                      Probar 3 días gratis
-                    </Link>
-                  </div>
-                  <div className="ticket-stub">
-                    <span className="days-num">3</span>
-                    <span className="days-label">días<br />gratis</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="ticket price-card">
-                <span className="ribbon">3 días gratis</span>
-                <div className="ticket-split">
-                  <div className="ticket-main">
-                    <span className="plan-name">Plan Multisucursal</span>
-                    <p className="plan-price">$749<sup>/mes</sup></p>
-                    <span className="plan-cycle">Para 2 o más sucursales</span>
-                    <ul className="plan-list">
-                      <li>Profesionales y sucursales ilimitadas</li>
-                      <li>Todo lo del Plan Pro</li>
-                      <li>Pagos en línea en todas las sucursales</li>
-                      <li>Panel unificado o vistas separadas por sucursal</li>
-                      <li>Fácil de cancelar cuando quieras</li>
-                    </ul>
-                    <Link href="/sign-up?plan=multisucursal" className="btn-landing btn-ghost-l" style={{ width: "100%", justifyContent: "center" }}>
-                      Probar 3 días gratis
-                    </Link>
-                  </div>
-                  <div className="ticket-stub">
-                    <span className="days-num">3</span>
-                    <span className="days-label">días<br />gratis</span>
-                  </div>
-                </div>
-              </div>
-
-            </div>
+            <PricingCards
+              isAuthenticated={!!userId}
+              currentPlan={currentPlan}
+              currentStatus={currentStatus}
+            />
           </div>
         </section>
 

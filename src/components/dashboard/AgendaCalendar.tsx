@@ -1129,47 +1129,62 @@ function DayColumn({
   const visibleStart = daySchedule && !daySchedule.closed ? timeToMinutes(daySchedule.open) : null;
   const visibleEnd = daySchedule && !daySchedule.closed ? timeToMinutes(daySchedule.close) : null;
   const minBookableMinutes = getMinBookableMinutes(iso, new Date(), 30, businessTimeZone);
+  const layoutItems = getDayLayoutItems(dayAppointments, dayBlocks);
 
   return (
     <div className="ag-day-col" style={{ minHeight: totalSlots * SLOT_H }}>
-      {dayBlocks.map((block) => {
-        const top = timeToY(block.startTime, startHour);
-        const height = durationToH(block.startTime, block.endTime);
-        return (
-          <button
-            key={block.id}
-            type="button"
-            onClick={() => onBlockClick(block)}
-            className="ag-block"
-            style={{ top, height, background: BLOCKED_BG }}
-          >
-            <Ban size={10} style={{ flexShrink: 0 }} />
-            <span>{block.reason ?? "Bloqueado"}</span>
-          </button>
-        );
-      })}
-      {dayAppointments.map((apt) => {
-        const top = timeToY(apt.startTime, startHour);
-        const height = durationToH(apt.startTime, apt.endTime);
-        const isCompleted = apt.status === "completed";
-        const color = isCompleted ? COMPLETED_BG : getProfessionalColor(apt.professional?.id, professionals);
+      {layoutItems.map((item) => {
+        const top = timeToY(item.startTime, startHour);
+        const height = durationToH(item.startTime, item.endTime);
+        const gapPx = item.columns > 1 ? 2 : 0;
+        const widthStyle = `calc(${100 / item.columns}% - ${gapPx}px)`;
+        const leftStyle = `calc(${(100 / item.columns) * item.column}% + ${item.column * gapPx}px + 2px)`;
+        const rightStyle = "2px";
+
+        if (item.kind === "block") {
+          return (
+            <button
+              key={`block:${item.block.id}`}
+              type="button"
+              onClick={() => onBlockClick(item.block)}
+              className={`ag-block${item.columns > 1 ? " ag-block--split" : ""}`}
+              style={{ top, height, width: widthStyle, left: leftStyle, right: rightStyle, background: BLOCKED_BG }}
+            >
+              <Ban size={10} style={{ flexShrink: 0 }} />
+              <span>{item.block.reason ?? "Bloqueado"}</span>
+            </button>
+          );
+        }
+
+        const isCompleted = item.apt.status === "completed";
+        const color = isCompleted ? COMPLETED_BG : getProfessionalColor(item.apt.professional?.id, professionals);
         const background = isCompleted ? COMPLETED_BG : hexToRgba(color, 0.72);
+
         return (
           <button
-            key={apt.id}
+            key={`apt:${item.apt.id}`}
             type="button"
-            onClick={() => onAptClick(apt)}
-            className="ag-apt-block"
-            style={{ top, height, borderColor: color, background, color: isCompleted ? "#fff" : "var(--fg)" }}
+            onClick={() => onAptClick(item.apt)}
+            className={`ag-apt-block${item.columns > 1 ? " ag-apt-block--split" : ""}`}
+            style={{
+              top,
+              height,
+              width: widthStyle,
+              left: leftStyle,
+              right: rightStyle,
+              borderColor: color,
+              background,
+              color: isCompleted ? "#fff" : "var(--fg)",
+            }}
           >
-            <span className="ag-apt-time" style={{ color: isCompleted ? "rgba(255,255,255,.84)" : "var(--fg-muted)" }}>{formatTime(apt.startTime)}</span>
+            <span className="ag-apt-time" style={{ color: isCompleted ? "rgba(255,255,255,.84)" : "var(--fg-muted)" }}>{formatTime(item.apt.startTime)}</span>
             <span className="ag-apt-name" style={{ color: isCompleted ? "#fff" : "var(--fg)" }}>
-              <span>{apt.client?.name ?? "-"}</span>
-              {apt.client?.isPreferred && <Star size={11} fill="currentColor" className="ag-client-star" />}
+              <span>{item.apt.client?.name ?? "-"}</span>
+              {item.apt.client?.isPreferred && <Star size={11} fill="currentColor" className="ag-client-star" />}
             </span>
-            <span className="ag-apt-svc" style={{ color: isCompleted ? "rgba(255,255,255,.9)" : "var(--fg-muted)" }}>{apt.service?.name ?? ""}</span>
-            {height > 62 && apt.professional && (
-              <span className="ag-apt-pro" style={{ color: isCompleted ? "rgba(255,255,255,.82)" : "var(--fg-muted)" }}>{apt.professional.name}</span>
+            <span className="ag-apt-svc" style={{ color: isCompleted ? "rgba(255,255,255,.9)" : "var(--fg-muted)" }}>{item.apt.service?.name ?? ""}</span>
+            {height > 62 && item.apt.professional && (
+              <span className="ag-apt-pro" style={{ color: isCompleted ? "rgba(255,255,255,.82)" : "var(--fg-muted)" }}>{item.apt.professional.name}</span>
             )}
             <span className="ag-apt-dot" style={{ background: isCompleted ? "#fff" : color }} />
           </button>
@@ -1207,6 +1222,89 @@ function DayColumn({
       })}
     </div>
   );
+}
+
+type DayLayoutItem =
+  | {
+      kind: "apt";
+      apt: AptItem;
+      startTime: string;
+      endTime: string;
+      column: number;
+      columns: number;
+    }
+  | {
+      kind: "block";
+      block: BlockItem;
+      startTime: string;
+      endTime: string;
+      column: number;
+      columns: number;
+    };
+
+function getDayLayoutItems(appointments: AptItem[], blocks: BlockItem[]): DayLayoutItem[] {
+  const baseItems: DayLayoutItem[] = [
+    ...appointments.map((apt) => ({
+      kind: "apt" as const,
+      apt,
+      startTime: apt.startTime,
+      endTime: apt.endTime,
+      column: 0,
+      columns: 1,
+    })),
+    ...blocks.map((block) => ({
+      kind: "block" as const,
+      block,
+      startTime: block.startTime,
+      endTime: block.endTime,
+      column: 0,
+      columns: 1,
+    })),
+  ].sort((a, b) => {
+    const startDiff = timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
+    if (startDiff !== 0) return startDiff;
+    return timeToMinutes(a.endTime) - timeToMinutes(b.endTime);
+  });
+
+  const clusters: DayLayoutItem[][] = [];
+  let currentCluster: DayLayoutItem[] = [];
+  let clusterEnd = -1;
+
+  for (const item of baseItems) {
+    const itemStart = timeToMinutes(item.startTime);
+    const itemEnd = timeToMinutes(item.endTime);
+    if (currentCluster.length === 0 || itemStart < clusterEnd) {
+      currentCluster.push(item);
+      clusterEnd = Math.max(clusterEnd, itemEnd);
+      continue;
+    }
+    clusters.push(currentCluster);
+    currentCluster = [item];
+    clusterEnd = itemEnd;
+  }
+
+  if (currentCluster.length > 0) clusters.push(currentCluster);
+
+  return clusters.flatMap((cluster) => {
+    const columnEndTimes: number[] = [];
+    let maxColumns = 1;
+
+    const laidOut = cluster.map((item) => {
+      const itemStart = timeToMinutes(item.startTime);
+      const itemEnd = timeToMinutes(item.endTime);
+      let column = columnEndTimes.findIndex((endTime) => endTime <= itemStart);
+      if (column === -1) {
+        column = columnEndTimes.length;
+        columnEndTimes.push(itemEnd);
+      } else {
+        columnEndTimes[column] = itemEnd;
+      }
+      maxColumns = Math.max(maxColumns, columnEndTimes.length);
+      return { ...item, column };
+    });
+
+    return laidOut.map((item) => ({ ...item, columns: maxColumns }));
+  });
 }
 
 export function AgendaCalendar({ businessId, businessTimezone, professionals, services }: AgendaProps) {

@@ -2399,6 +2399,10 @@ body {
   gap: 1px;
 }
 .ag-apt-block:hover { filter: brightness(0.95); transform: scale(1.01); z-index: 4; }
+.ag-apt-block--split {
+  right: auto;
+  box-shadow: inset -1px 0 0 rgba(255,255,255,.55);
+}
 .ag-apt-time  { font-size: .62rem; font-weight: 700; color: var(--fg-muted); }
 .ag-apt-name  { font-size: .72rem; font-weight: 800; color: var(--fg); line-height: 1.2; display: inline-flex; align-items: center; gap: .25rem; }
 .ag-apt-svc   { font-size: .65rem; color: var(--fg-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -2429,6 +2433,10 @@ body {
   transition: filter .15s, transform .15s, border-color .15s;
 }
 .ag-block:hover { filter: brightness(0.97); transform: scale(1.01); border-color: #9ca3af; z-index: 4; }
+.ag-block--split {
+  right: auto;
+  box-shadow: inset -1px 0 0 rgba(255,255,255,.7);
+}
 
 .ag-available-wrap {
   display: grid;

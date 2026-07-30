@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { appointmentEvents, appointments, businesses, clients, professionals, services, serviceProfessionals, timeBlocks } from "@/db/schema";
 import { eq, and, asc, desc, inArray } from "drizzle-orm";
 import { z } from "zod";
-import { addMinutes, timeToMinutes } from "@/lib/time";
+import { addMinutes, DEFAULT_BUSINESS_TIMEZONE, timeToMinutes, toLocalISODate } from "@/lib/time";
 
 const createSchema = z.object({
   serviceId: z.string().uuid(),
@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
   if (!biz) return NextResponse.json({ error: "Negocio no encontrado" }, { status: 404 });
 
   const p        = req.nextUrl.searchParams;
-  const date     = p.get("date") ?? new Date().toISOString().split("T")[0];
+  const date     = p.get("date") ?? toLocalISODate(new Date(), biz.timezone || DEFAULT_BUSINESS_TIMEZONE);
   const clientId = p.get("clientId") ?? undefined;
 
   const where = clientId

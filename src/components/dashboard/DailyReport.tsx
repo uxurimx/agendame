@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Loader2, TrendingUp, CreditCard, Users, Calendar } from "lucide-react";
-import { formatTime } from "@/lib/time";
+import { DEFAULT_BUSINESS_TIMEZONE, formatTime, toLocalISODate } from "@/lib/time";
 import { CompletePaymentModal } from "@/components/dashboard/CompletePaymentModal";
 
 interface AptItem {
@@ -34,7 +34,7 @@ const PAY_LABELS: Record<string, string> = {
 };
 
 function toISO(d: Date) {
-  return d.toISOString().split("T")[0];
+  return toLocalISODate(d, DEFAULT_BUSINESS_TIMEZONE);
 }
 function fmtDate(iso: string) {
   const d = new Date(iso + "T12:00:00");
@@ -42,7 +42,7 @@ function fmtDate(iso: string) {
 }
 
 export function DailyReport() {
-  const [date,    setDate]    = useState(() => toISO(new Date()));
+  const [date,    setDate]    = useState(() => toLocalISODate(new Date(), DEFAULT_BUSINESS_TIMEZONE));
   const [apts,    setApts]    = useState<AptItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [completingId, setCompletingId] = useState<string | null>(null);

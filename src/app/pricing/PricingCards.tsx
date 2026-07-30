@@ -56,6 +56,7 @@ const PLANS = [
       "Y más...",
     ],
     highlight: false,
+    badge: "",
     buttonLabel: "En construcción",
     buttonDisabledLabel: "En construcción",
   },

@@ -10,16 +10,17 @@ const PLANS = [
     id: "basico",
     name: "Básico",
     price: 299,
-    description: "Para emprendedoras que empiezan",
+    description: "Para comenzar.",
     features: [
-      "1 profesional",
+      "2 Profesionales",
       "Agenda de citas ilimitada",
       "Página de reservas pública",
-      "Gestión de clientes",
-      "Horarios personalizados",
-      "Anti-spam y rate limit",
+      "Gestión de clientes e historial",
+      "Cortes de caja",
+      "Anti-spam y Soporte",
     ],
     highlight: false,
+    badge: "El más popular",
     buttonLabel: "Elegir este plan",
     buttonDisabledLabel: "Elegir este plan",
   },
@@ -29,14 +30,14 @@ const PLANS = [
     price: 399,
     description: "Para negocios en crecimiento",
     features: [
-      "Hasta 5 profesionales",
+      "3-5 Profesionales",
       "Todo lo del plan Básico",
-      "Fotos del historial de clientes",
       "Reportes y corte de caja",
       "Bloqueo de tiempo por profesional",
-      "Soporte prioritario",
+      "Fidelización",
     ],
     highlight: true,
+    badge: "Recomendado",
     buttonLabel: "Proximamente",
     buttonDisabledLabel: "Proximamente",
   },
@@ -44,14 +45,15 @@ const PLANS = [
     id: "multisucursal",
     name: "Multisucursal",
     price: 749,
-    description: "Para estéticas con equipo grande",
+    description: "Para equipos en expansión.",
     features: [
-      "Profesionales ilimitados",
+      "+5 Profesionales",
       "Todo lo del plan Pro",
       "Múltiples sucursales",
-      "Analytics de negocio",
+      "Analytics",
       "Comisiones por profesional",
-      "Onboarding personalizado",
+      "Pagos en línea",
+      "Y más...",
     ],
     highlight: false,
     buttonLabel: "En construcción",
@@ -136,28 +138,32 @@ export default function PricingCards({
               overflow: "hidden",
             }}
           >
-            {plan.highlight && (
+            {plan.badge && (
               <div
                 style={{
                   position: "absolute",
-                  top: "-13px",
+                  top: "-15px",
                   left: "50%",
                   transform: "translateX(-50%)",
-                  background: "linear-gradient(90deg, #E8631F, #f59e0b)",
+                  background: plan.highlight
+                    ? "linear-gradient(90deg, #E8631F, #f59e0b)"
+                    : "linear-gradient(90deg, #2f7f74, #4f9f90)",
                   color: "white",
                   fontSize: "0.7rem",
                   fontWeight: 700,
                   letterSpacing: "0.08em",
                   textTransform: "uppercase",
-                  padding: "4px 14px",
+                  padding: "5px 15px",
                   borderRadius: "999px",
                   whiteSpace: "nowrap",
                   display: "flex",
                   alignItems: "center",
                   gap: "4px",
+                  zIndex: 2,
+                  boxShadow: "0 8px 18px rgba(0,0,0,0.16)",
                 }}
               >
-                <Zap style={{ width: 11, height: 11 }} /> Más popular
+                <Zap style={{ width: 11, height: 11 }} /> {plan.badge}
               </div>
             )}
 

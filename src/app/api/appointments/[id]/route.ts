@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { appointmentEvents, appointments, businesses, professionals, timeBlocks } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { timeToMinutes } from "@/lib/time";
+import { isBusinessBlocked } from "@/lib/trial";
 
 const schema = z.object({
   status:        z.enum(["pending", "confirmed", "completed", "cancelled", "no_show"]).optional(),
@@ -65,6 +66,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params;
   const biz = await db.query.businesses.findFirst({ where: eq(businesses.ownerId, userId) });
   if (!biz) return NextResponse.json({ error: "Negocio no encontrado" }, { status: 404 });
+  if (isBusinessBlocked(biz.planStatus, biz.trialEndsAt, biz.createdAt)) {
+    return NextResponse.json({ error: "Debes elegir un plan para modificar citas." }, { status: 402 });
+  }
 
   const apt = await db.query.appointments.findFirst({ where: eq(appointments.id, id) });
   if (!apt || apt.businessId !== biz.id) {

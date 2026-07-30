@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { services, businesses } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { isBusinessBlocked } from "@/lib/trial";
 
 const updateSchema = z.object({
   name:        z.string().min(1).max(100).optional(),
@@ -27,6 +28,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const { id } = await params;
+  const biz = await db.query.businesses.findFirst({ where: eq(businesses.ownerId, userId) });
+  if (!biz) return NextResponse.json({ error: "Negocio no encontrado" }, { status: 404 });
+  if (isBusinessBlocked(biz.planStatus, biz.trialEndsAt, biz.createdAt)) {
+    return NextResponse.json({ error: "Debes elegir un plan para modificar servicios." }, { status: 402 });
+  }
   const svc = await getOwnedService(userId, id);
   if (!svc) return NextResponse.json({ error: "Servicio no encontrado" }, { status: 404 });
 

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
-import { appointments, clientPhotos, clients, professionals, services, timeBlocks, serviceProfessionals } from "@/db/schema";
+import { appointments, businesses, clientPhotos, clients, professionals, services, timeBlocks, serviceProfessionals } from "@/db/schema";
 import { eq, and, gte, count } from "drizzle-orm";
 import { addMinutes, timeToMinutes } from "@/lib/time";
 import { normalizeReferenceImageDataUrl } from "@/lib/reference-image";
+import { isBusinessBlocked } from "@/lib/trial";
 
 const schema = z.object({
   businessId:     z.string().uuid(),
@@ -68,6 +69,19 @@ export async function POST(req: NextRequest) {
 
     // Honeypot: si el campo oculto tiene contenido, es un bot — responder ok falso
     if (data._hp) return NextResponse.json({ ok: true, appointmentId: "x" });
+
+    const business = await db.query.businesses.findFirst({
+      where: eq(businesses.id, data.businessId),
+    });
+    if (!business) {
+      return NextResponse.json({ error: "Negocio no encontrado" }, { status: 404 });
+    }
+    if (isBusinessBlocked(business.planStatus, business.trialEndsAt, business.createdAt)) {
+      return NextResponse.json(
+        { error: "Las reservas están temporalmente deshabilitadas hasta reactivar el plan." },
+        { status: 402 }
+      );
+    }
 
     // Rate limit: máx 3 reservas por teléfono por negocio en 24 horas
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000);

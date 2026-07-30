@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { businesses } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getBookableSlotsForDate } from "@/lib/booking-slots";
+import { isBusinessBlocked } from "@/lib/trial";
 
 export async function GET(req: NextRequest) {
   const p = req.nextUrl.searchParams;
@@ -22,6 +23,12 @@ export async function GET(req: NextRequest) {
   }
 
   if (!businessId || !date || !serviceId) {
+    return NextResponse.json({ slots: [] });
+  }
+  const business = await db.query.businesses.findFirst({
+    where: eq(businesses.id, businessId),
+  });
+  if (!business || isBusinessBlocked(business.planStatus, business.trialEndsAt, business.createdAt)) {
     return NextResponse.json({ slots: [] });
   }
   const result = await getBookableSlotsForDate({

@@ -4,6 +4,7 @@ import { businesses, professionals, services } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { BookingFlow } from "@/components/booking/BookingFlow";
 import type { Metadata } from "next";
+import { isBusinessBlocked } from "@/lib/trial";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -26,6 +27,23 @@ export default async function BookPage({ params }: Props) {
     where: eq(businesses.slug, slug),
   });
   if (!biz) notFound();
+  if (isBusinessBlocked(biz.planStatus, biz.trialEndsAt, biz.createdAt)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6" style={{ background: "var(--l-rose, #EFE6F5)" }}>
+        <div style={{ maxWidth: 560, width: "100%", background: "white", borderRadius: "1.25rem", padding: "2rem", boxShadow: "0 20px 50px rgba(0,0,0,0.08)", textAlign: "center" }}>
+          <p style={{ fontSize: "0.78rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#dc2626", marginBottom: "0.75rem" }}>
+            Reservas inhabilitadas
+          </p>
+          <h1 style={{ fontSize: "1.8rem", fontWeight: 800, color: "var(--l-ink)", lineHeight: 1.15, marginBottom: "0.75rem" }}>
+            Esta agenda está temporalmente desactivada.
+          </h1>
+          <p style={{ fontSize: "0.96rem", color: "var(--l-ink-soft)", lineHeight: 1.6 }}>
+            El negocio debe reactivar su plan para volver a aceptar reservas en línea.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const [pros, svcs, serviceProRows] = await Promise.all([
     db.query.professionals.findMany({

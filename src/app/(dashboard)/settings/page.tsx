@@ -42,6 +42,7 @@ export default async function SettingsPage() {
         plan={biz.plan}
         planStatus={biz.planStatus}
         trialEndsAt={biz.trialEndsAt?.toISOString() ?? null}
+        createdAt={biz.createdAt?.toISOString() ?? null}
         logoUrl={biz.logoUrl ?? null}
         bookingUrl={`${siteConfig.url}/book/${biz.slug}`}
         schedule={(biz.schedule as BusinessSchedule | null) ?? null}
@@ -52,6 +53,7 @@ export default async function SettingsPage() {
         plan={biz.plan}
         planStatus={biz.planStatus}
         trialEndsAt={biz.trialEndsAt?.toISOString() ?? null}
+        createdAt={biz.createdAt?.toISOString() ?? null}
         stripeCustomerId={biz.stripeCustomerId ?? null}
       />
 

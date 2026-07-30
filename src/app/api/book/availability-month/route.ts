@@ -5,6 +5,7 @@ import { businesses } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { DEFAULT_BUSINESS_TIMEZONE, toLocalISODate } from "@/lib/time";
 import { getBookableSlotsForDate } from "@/lib/booking-slots";
+import { isBusinessBlocked } from "@/lib/trial";
 
 function daysInMonth(year: number, monthIndex: number) {
   return new Date(year, monthIndex + 1, 0).getDate();
@@ -33,6 +34,9 @@ export async function GET(req: NextRequest) {
     where: eq(businesses.id, businessId),
   });
   if (!business) return NextResponse.json({ availableDates: [] });
+  if (isBusinessBlocked(business.planStatus, business.trialEndsAt, business.createdAt)) {
+    return NextResponse.json({ availableDates: [] });
+  }
 
   const [yearText, monthText] = month.split("-");
   const year = Number(yearText);

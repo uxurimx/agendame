@@ -6,9 +6,10 @@ import { getTrialDaysRemaining } from "@/lib/trial";
 interface TrialBannerProps {
   planStatus: string;
   trialEndsAt: Date | null;
+  createdAt?: Date | null;
 }
 
-export default function TrialBanner({ planStatus, trialEndsAt }: TrialBannerProps) {
+export default function TrialBanner({ planStatus, trialEndsAt, createdAt }: TrialBannerProps) {
   if (planStatus === "active") return null;
 
   if (planStatus === "suspended") {
@@ -46,11 +47,13 @@ export default function TrialBanner({ planStatus, trialEndsAt }: TrialBannerProp
   }
 
   if (planStatus === "trial" && trialEndsAt) {
-    const days = getTrialDaysRemaining(trialEndsAt);
+    const days = getTrialDaysRemaining(trialEndsAt, createdAt);
     return (
       <div
         style={{
-          background: days <= 1
+          background: days === 0
+            ? "linear-gradient(90deg, #dc2626, #991b1b)"
+            : days <= 1
             ? "linear-gradient(90deg, #dc2626, #ea580c)"
             : "linear-gradient(90deg, #E8631F, #f59e0b)",
           color: "white",
@@ -65,7 +68,7 @@ export default function TrialBanner({ planStatus, trialEndsAt }: TrialBannerProp
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.83rem", fontWeight: 500 }}>
           <Clock style={{ width: 15, height: 15, flexShrink: 0 }} />
           {days === 0
-            ? "Tu prueba gratuita termina hoy."
+            ? "Tu prueba de 3 días finalizó. Elige tu plan."
             : `${days} ${days === 1 ? "día" : "días"} de prueba restantes.`}
         </div>
         <Link

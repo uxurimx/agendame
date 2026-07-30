@@ -26,21 +26,21 @@ const TYPE_LABELS: Record<string, string> = {
   otro:       "Otro",
 };
 
-function StatusCell({ status, trialEndsAt }: { status: string; trialEndsAt: Date | null }) {
+function StatusCell({ status, trialEndsAt, createdAt }: { status: string; trialEndsAt: Date | null; createdAt: Date | null }) {
   if (status === "active") {
     return (
       <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 999, fontSize: "0.72rem", fontWeight: 600, background: "#dcfce7", color: "#15803d" }}>
-        <CheckCircle2 style={{ width: 11, height: 11 }} /> Activo
+        <CheckCircle2 style={{ width: 11, height: 11 }} /> Pagado
       </span>
     );
   }
   if (status === "trial") {
-    const days = trialEndsAt ? getTrialDaysRemaining(trialEndsAt) : 0;
-    const expired = hasTrialExpired(trialEndsAt);
+    const days = trialEndsAt ? getTrialDaysRemaining(trialEndsAt, createdAt) : 0;
+    const expired = hasTrialExpired(trialEndsAt, createdAt);
     return (
       <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 999, fontSize: "0.72rem", fontWeight: 600, background: expired ? "#fee2e2" : "#fef3c7", color: expired ? "#991b1b" : "#92400e" }}>
         <Clock style={{ width: 11, height: 11 }} />
-        {expired ? "Trial vencido" : "Trial · 3d"}
+        {expired ? "Vencido" : `Trial · ${days}d`}
       </span>
     );
   }
@@ -82,7 +82,7 @@ export default async function SubscribersPage() {
   const total      = rows.length;
   const activos    = rows.filter((r) => r.planStatus === "active").length;
   const enTrial    = rows.filter((r) => r.planStatus === "trial").length;
-  const trialVenc  = rows.filter((r) => r.planStatus === "trial" && r.trialEndsAt && r.trialEndsAt < new Date()).length;
+  const trialVenc  = rows.filter((r) => r.planStatus === "trial" && hasTrialExpired(r.trialEndsAt, r.createdAt)).length;
   const problemas  = rows.filter((r) => r.planStatus === "suspended" || r.planStatus === "cancelled").length;
   const mrr        = rows
     .filter((r) => r.planStatus === "active")
@@ -177,7 +177,7 @@ export default async function SubscribersPage() {
 
                   {/* Estado */}
                   <td style={{ padding: "0.875rem 1rem" }}>
-                    <StatusCell status={r.planStatus} trialEndsAt={r.trialEndsAt ?? null} />
+                    <StatusCell status={r.planStatus} trialEndsAt={r.trialEndsAt ?? null} createdAt={r.createdAt ?? null} />
                   </td>
 
                   {/* Stripe */}

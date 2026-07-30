@@ -5,6 +5,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { businesses } from "@/db/schema";
 import { normalizeReferenceImageDataUrl } from "@/lib/reference-image";
+import { isBusinessBlocked } from "@/lib/trial";
 
 const daySchema = z.object({
   open: z.string().regex(/^\d{2}:\d{2}$/),
@@ -23,6 +24,9 @@ export async function PATCH(req: NextRequest) {
 
   const biz = await db.query.businesses.findFirst({ where: eq(businesses.ownerId, userId) });
   if (!biz) return NextResponse.json({ error: "Negocio no encontrado" }, { status: 404 });
+  if (isBusinessBlocked(biz.planStatus, biz.trialEndsAt, biz.createdAt)) {
+    return NextResponse.json({ error: "Debes elegir un plan para actualizar tu negocio." }, { status: 402 });
+  }
 
   try {
     const body = await req.json();

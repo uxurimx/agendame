@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { services, businesses } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
+import { isBusinessBlocked } from "@/lib/trial";
 
 const schema = z.object({
   name:        z.string().min(1).max(100),
@@ -19,6 +20,9 @@ export async function POST(req: NextRequest) {
 
   const biz = await db.query.businesses.findFirst({ where: eq(businesses.ownerId, userId) });
   if (!biz) return NextResponse.json({ error: "Negocio no encontrado" }, { status: 404 });
+  if (isBusinessBlocked(biz.planStatus, biz.trialEndsAt, biz.createdAt)) {
+    return NextResponse.json({ error: "Debes elegir un plan para crear servicios." }, { status: 402 });
+  }
 
   try {
     const body = await req.json();

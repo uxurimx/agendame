@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { timeBlocks, businesses } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { isBusinessBlocked } from "@/lib/trial";
 
 const schema = z.object({
   date:           z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -19,6 +20,9 @@ export async function POST(req: NextRequest) {
 
   const biz = await db.query.businesses.findFirst({ where: eq(businesses.ownerId, userId) });
   if (!biz) return NextResponse.json({ error: "Negocio no encontrado" }, { status: 404 });
+  if (isBusinessBlocked(biz.planStatus, biz.trialEndsAt, biz.createdAt)) {
+    return NextResponse.json({ error: "Debes elegir un plan para bloquear horarios." }, { status: 402 });
+  }
 
   try {
     const body = await req.json();

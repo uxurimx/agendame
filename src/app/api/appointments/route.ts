@@ -5,6 +5,7 @@ import { appointmentEvents, appointments, businesses, clients, professionals, se
 import { eq, and, asc, desc, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { addMinutes, DEFAULT_BUSINESS_TIMEZONE, timeToMinutes, toLocalISODate } from "@/lib/time";
+import { isBusinessBlocked } from "@/lib/trial";
 
 const createSchema = z.object({
   serviceId: z.string().uuid(),
@@ -61,6 +62,9 @@ export async function GET(req: NextRequest) {
 
   const biz = await db.query.businesses.findFirst({ where: eq(businesses.ownerId, userId) });
   if (!biz) return NextResponse.json({ error: "Negocio no encontrado" }, { status: 404 });
+  if (isBusinessBlocked(biz.planStatus, biz.trialEndsAt, biz.createdAt)) {
+    return NextResponse.json({ error: "Debes elegir un plan para crear citas." }, { status: 402 });
+  }
 
   const p        = req.nextUrl.searchParams;
   const date     = p.get("date") ?? toLocalISODate(new Date(), biz.timezone || DEFAULT_BUSINESS_TIMEZONE);

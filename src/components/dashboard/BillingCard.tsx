@@ -22,6 +22,7 @@ interface BillingCardProps {
   plan: string;
   planStatus: string;
   trialEndsAt: string | null;
+  createdAt?: string | null;
   stripeCustomerId: string | null;
 }
 
@@ -54,7 +55,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-export default function BillingCard({ plan, planStatus, trialEndsAt, stripeCustomerId }: BillingCardProps) {
+export default function BillingCard({ plan, planStatus, trialEndsAt, createdAt, stripeCustomerId }: BillingCardProps) {
   const [loading, setLoading] = useState(false);
 
   async function openPortal() {
@@ -71,7 +72,7 @@ export default function BillingCard({ plan, planStatus, trialEndsAt, stripeCusto
   const planLabel  = PLAN_LABELS[plan] ?? plan;
   const planPrice  = PLAN_PRICES[plan];
   const hasStripe  = !!stripeCustomerId;
-  const remaining  = trialEndsAt ? getTrialDaysRemaining(trialEndsAt) : null;
+  const remaining  = trialEndsAt ? getTrialDaysRemaining(trialEndsAt, createdAt) : null;
 
   return (
     <div className="settings-card" style={{ marginBottom: "1.5rem" }}>

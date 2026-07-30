@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { professionals, businesses } from "@/db/schema";
 import { eq, asc } from "drizzle-orm";
+import { isBusinessBlocked } from "@/lib/trial";
 
 const schema = z.object({
   name:            z.string().min(2).max(100),
@@ -45,6 +46,9 @@ export async function POST(req: NextRequest) {
   if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const biz = await getBiz(userId);
   if (!biz) return NextResponse.json({ error: "Negocio no encontrado" }, { status: 404 });
+  if (isBusinessBlocked(biz.planStatus, biz.trialEndsAt, biz.createdAt)) {
+    return NextResponse.json({ error: "Debes elegir un plan para agregar profesionales." }, { status: 402 });
+  }
 
   try {
     const body = await req.json();

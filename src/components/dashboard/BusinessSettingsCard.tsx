@@ -3,6 +3,7 @@
 import { useState, type ChangeEvent } from "react";
 import { Check, Copy, Image as ImageIcon, Loader2, Pencil, X } from "lucide-react";
 import { normalizeReferenceImageDataUrl } from "@/lib/reference-image";
+import { getEffectiveTrialEndsAt } from "@/lib/trial";
 
 type DayKey = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 type ScheduleDay = { open: string; close: string; closed: boolean };
@@ -34,6 +35,7 @@ interface BusinessSettingsCardProps {
   plan: string;
   planStatus: string;
   trialEndsAt: string | null;
+  createdAt?: string | null;
   logoUrl: string | null;
   bookingUrl: string;
   schedule: BusinessSchedule | null;
@@ -80,6 +82,7 @@ export function BusinessSettingsCard({
   plan,
   planStatus,
   trialEndsAt,
+  createdAt,
   logoUrl,
   bookingUrl,
   schedule,
@@ -92,6 +95,7 @@ export function BusinessSettingsCard({
   const [savedSchedule, setSavedSchedule] = useState<Record<DayKey, ScheduleDay>>(() => normalizeSchedule(schedule));
   const [scheduleDraft, setScheduleDraft] = useState<Record<DayKey, ScheduleDay>>(() => normalizeSchedule(schedule));
   const [editingSchedule, setEditingSchedule] = useState(false);
+  const effectiveTrialEndsAt = getEffectiveTrialEndsAt(createdAt, trialEndsAt);
 
   const scheduleSummary = buildScheduleSummary(scheduleDraft);
 
@@ -335,7 +339,7 @@ export function BusinessSettingsCard({
           {plan} · {planStatus}
           {trialEndsAt && planStatus === "trial" && (
             <span style={{ color: "#E8631F", marginLeft: ".5rem", fontSize: ".75rem" }}>
-              (trial hasta {new Date(trialEndsAt).toLocaleDateString("es-MX")})
+              (trial hasta {effectiveTrialEndsAt?.toLocaleDateString("es-MX")})
             </span>
           )}
         </span>

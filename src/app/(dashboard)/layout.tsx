@@ -1,11 +1,12 @@
 import { auth } from "@clerk/nextjs/server";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { businesses, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import DashboardShell from "@/components/DashboardShell";
 import TrialBanner from "@/components/TrialBanner";
-import { hasTrialExpired } from "@/lib/trial";
+import { isBusinessBlocked } from "@/lib/trial";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { userId } = await auth();
@@ -18,19 +19,63 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!business) redirect("/onboarding");
 
   const isAdmin = user?.role === "superadmin";
+  const blocked = !isAdmin && isBusinessBlocked(business.planStatus, business.trialEndsAt, business.createdAt);
 
   // Superadmin siempre pasa — no necesita suscripción
-  if (!isAdmin) {
-    const trialExpired = business.planStatus === "trial" && hasTrialExpired(business.trialEndsAt);
-    if (trialExpired || business.planStatus === "cancelled") {
-      redirect("/pricing");
-    }
-  }
-
   return (
     <DashboardShell isAdmin={isAdmin}>
-      <TrialBanner planStatus={business.planStatus} trialEndsAt={business.trialEndsAt ?? null} />
-      {children}
+      <TrialBanner
+        planStatus={business.planStatus}
+        trialEndsAt={business.trialEndsAt ?? null}
+        createdAt={business.createdAt ?? null}
+      />
+      {blocked ? (
+        <div style={{ padding: "2rem", maxWidth: 720, margin: "0 auto" }}>
+          <div
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              borderRadius: "1.25rem",
+              padding: "2rem",
+              display: "flex",
+              flexDirection: "column",
+              gap: "1rem",
+              boxShadow: "0 20px 50px rgba(0,0,0,0.12)",
+            }}
+          >
+            <div>
+              <p style={{ fontSize: "0.78rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#dc2626", marginBottom: "0.5rem" }}>
+                Acceso bloqueado
+              </p>
+              <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--fg)", lineHeight: 1.15, marginBottom: "0.5rem" }}>
+                Tu prueba de 3 días finalizó.
+              </h1>
+              <p style={{ color: "var(--fg-muted)", fontSize: "0.92rem", lineHeight: 1.6 }}>
+                Elige tu plan para reactivar Agenda, Clientes, Ajustes, cobros y la página pública de reservas.
+              </p>
+            </div>
+
+            <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+              <Link
+                href="/pricing"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "0.8rem 1.15rem",
+                  borderRadius: "0.8rem",
+                  textDecoration: "none",
+                  fontWeight: 700,
+                  color: "white",
+                  background: "linear-gradient(135deg, #6E2A96, #E8631F)",
+                }}
+              >
+                Elegir plan
+              </Link>
+            </div>
+          </div>
+        </div>
+      ) : children}
     </DashboardShell>
   );
 }

@@ -6,10 +6,10 @@ export default async function ReportsPage() {
 
   return (
     <div className="dash-page">
-      <div className="dash-page-header">
-        <div>
+      <div className="dash-page-header dash-page-header--reports">
+        <div className="dash-page-title-row">
           <p className="dash-page-eyebrow">Finanzas</p>
-          <h1 className="dash-page-title">Corte de caja</h1>
+          <p className="dash-page-report-subtitle">Corte de caja</p>
         </div>
       </div>
       <DailyReport />

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, Loader2, TrendingUp, CreditCard, Users, Calendar } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, TrendingUp, CreditCard, Users, Calendar, Wallet } from "lucide-react";
 import { DEFAULT_BUSINESS_TIMEZONE, formatTime, toLocalISODate } from "@/lib/time";
 import { CompletePaymentModal } from "@/components/dashboard/CompletePaymentModal";
 
@@ -38,7 +38,7 @@ function toISO(d: Date) {
 }
 function fmtDate(iso: string) {
   const d = new Date(iso + "T12:00:00");
-  return d.toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" });
+  return d.toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 }
 
 export function DailyReport() {
@@ -62,9 +62,16 @@ export function DailyReport() {
   function nextDay() { const d = new Date(date + "T12:00:00"); d.setDate(d.getDate() + 1); setDate(toISO(d)); }
 
   const completed  = apts.filter((a) => a.status === "completed");
+  const paidCompleted = completed.filter((a) => a.paymentStatus === "paid");
   const revenue    = completed.reduce((s, a) => s + Number(a.pricePaid ?? a.service?.price ?? 0), 0);
   const commission = completed.reduce((s, a) => s + Number(a.commissionAmount ?? 0), 0);
   const net        = revenue - commission;
+  const cashRevenue = paidCompleted
+    .filter((a) => a.paymentMethod === "cash")
+    .reduce((s, a) => s + Number(a.pricePaid ?? a.service?.price ?? 0), 0);
+  const transferRevenue = paidCompleted
+    .filter((a) => a.paymentMethod === "transfer")
+    .reduce((s, a) => s + Number(a.pricePaid ?? a.service?.price ?? 0), 0);
 
   // Desglose por profesional
   const byPro = Object.values(
@@ -95,15 +102,7 @@ export function DailyReport() {
       {/* Date nav */}
       <div className="rpt-date-nav">
         <button type="button" onClick={prevDay} className="cal-nav-btn"><ChevronLeft size={16} /></button>
-        <div style={{ textAlign: "center" }}>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="rpt-date-input"
-          />
-          <p className="rpt-date-label">{fmtDate(date)}</p>
-        </div>
+        <p className="rpt-date-label">{fmtDate(date)}</p>
         <button type="button" onClick={nextDay} className="cal-nav-btn"><ChevronRight size={16} /></button>
       </div>
 
@@ -141,6 +140,27 @@ export function DailyReport() {
               <div>
                 <p className="rpt-kpi-val" style={{ color: "#fff" }}>${net.toLocaleString("es-MX")}</p>
                 <p className="rpt-kpi-label" style={{ color: "rgba(255,255,255,.75)" }}>Ingreso neto</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rpt-payment-grid">
+            <div className="rpt-pay-card">
+              <div className="rpt-pay-card__icon" style={{ background: "#C0812B20", color: "#C0812B" }}>
+                <Wallet size={16} />
+              </div>
+              <div>
+                <p className="rpt-pay-card__label">Efectivo</p>
+                <p className="rpt-pay-card__value">${cashRevenue.toLocaleString("es-MX")}</p>
+              </div>
+            </div>
+            <div className="rpt-pay-card">
+              <div className="rpt-pay-card__icon" style={{ background: "#2F6FDC20", color: "#2F6FDC" }}>
+                <CreditCard size={16} />
+              </div>
+              <div>
+                <p className="rpt-pay-card__label">Transferencia</p>
+                <p className="rpt-pay-card__value">${transferRevenue.toLocaleString("es-MX")}</p>
               </div>
             </div>
           </div>

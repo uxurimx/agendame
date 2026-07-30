@@ -7,6 +7,7 @@ import { professionals } from "@/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { TeamManager } from "@/components/dashboard/TeamManager";
 import { BusinessSettingsCard } from "@/components/dashboard/BusinessSettingsCard";
+import BillingCard from "@/components/dashboard/BillingCard";
 import type { ProItem } from "@/components/dashboard/TeamManager";
 import { siteConfig } from "@/config/site";
 
@@ -44,6 +45,14 @@ export default async function SettingsPage() {
         logoUrl={biz.logoUrl ?? null}
         bookingUrl={`${siteConfig.url}/book/${biz.slug}`}
         schedule={(biz.schedule as BusinessSchedule | null) ?? null}
+      />
+
+      {/* Suscripción */}
+      <BillingCard
+        plan={biz.plan}
+        planStatus={biz.planStatus}
+        trialEndsAt={biz.trialEndsAt?.toISOString() ?? null}
+        stripeCustomerId={biz.stripeCustomerId ?? null}
       />
 
       {/* Equipo */}

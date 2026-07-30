@@ -1,11 +1,8 @@
 import { db } from "@/db";
 import { pageViews, analyticsEvents } from "@/db/schema";
 import { sql, gte } from "drizzle-orm";
-import { auth, currentUser } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 import AnalyticsCharts from "./AnalyticsCharts";
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
 async function getStats(since: Date) {
   const [
@@ -120,13 +117,6 @@ export default async function AnalyticsPage({
 }: {
   searchParams: Promise<{ days?: string }>;
 }) {
-  const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
-
-  const user = await currentUser();
-  const email = user?.emailAddresses[0]?.emailAddress;
-  if (ADMIN_EMAIL && email !== ADMIN_EMAIL) redirect("/dashboard");
-
   const { days: daysParam } = await searchParams;
   const days = parseInt(daysParam ?? "30", 10);
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);

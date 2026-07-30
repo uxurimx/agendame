@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   Settings, BarChart2, LayoutDashboard, Calendar,
-  Users, Scissors, FileText, ChevronRight, X, LifeBuoy,
+  Users, Scissors, FileText, ChevronRight, X, LifeBuoy, Users2,
 } from "lucide-react";
 import { UserButton, useUser } from "@clerk/nextjs";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -21,12 +21,14 @@ const navItems = [
 ];
 
 const adminItems = [
-  { name: "Métricas",  href: "/admin/analytics", icon: BarChart2 },
+  { name: "Suscriptores", href: "/admin/subscribers", icon: Users2 },
+  { name: "Métricas",     href: "/admin/analytics",   icon: BarChart2 },
 ];
 
 interface SideNavProps {
   isOpen?: boolean;
   onClose?: () => void;
+  isAdmin?: boolean;
 }
 
 function NavLink({
@@ -88,11 +90,9 @@ function NavLink({
   );
 }
 
-export default function SideNav({ isOpen = false, onClose }: SideNavProps) {
+export default function SideNav({ isOpen = false, onClose, isAdmin = false }: SideNavProps) {
   const pathname = usePathname();
   const { user } = useUser();
-  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-  const isAdmin = user?.primaryEmailAddress?.emailAddress === adminEmail;
   const [supportResolvedCount, setSupportResolvedCount] = useState(0);
 
   useEffect(() => {

@@ -6,7 +6,7 @@ import { Menu } from "lucide-react";
 import SideNav from "@/components/SideNav";
 import BrandLogo from "@/components/BrandLogo";
 
-export default function DashboardShell({ children }: { children: React.ReactNode }) {
+export default function DashboardShell({ children, isAdmin }: { children: React.ReactNode; isAdmin?: boolean }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
 
@@ -29,7 +29,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
       )}
 
       {/* SideNav */}
-      <SideNav isOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
+      <SideNav isOpen={mobileOpen} onClose={() => setMobileOpen(false)} isAdmin={isAdmin} />
 
       {/* Contenido principal */}
       <div className="flex-1 flex flex-col min-h-screen md:ml-64">

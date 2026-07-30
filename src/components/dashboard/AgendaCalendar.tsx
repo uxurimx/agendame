@@ -136,6 +136,17 @@ function toISO(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+function minutesToTime(totalMinutes: number): string {
+  const normalized = ((totalMinutes % (24 * 60)) + (24 * 60)) % (24 * 60);
+  const hour = Math.floor(normalized / 60);
+  const min = normalized % 60;
+  return `${String(hour).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+}
+
+function overlaps(startA: string, endA: string, startB: string, endB: string) {
+  return timeToMinutes(startA) < timeToMinutes(endB) && timeToMinutes(endA) > timeToMinutes(startB);
+}
+
 function endOfMonth(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth() + 1, 0);
 }
@@ -1112,79 +1123,102 @@ function DayColumn({
   professionals,
   schedule,
   businessTimeZone,
+  selectedProId,
 }: {
   iso: string;
   dayAppointments: AptItem[];
   dayBlocks: BlockItem[];
   onAptClick: (apt: AptItem) => void;
   onBlockClick: (block: BlockItem) => void;
-  onSlotClick: (date: string, time: string) => void;
+  onSlotClick: (date: string, time: string, professionalId?: string) => void;
   startHour: number;
   totalSlots: number;
   professionals: ProInfo[];
   schedule: BusinessSchedule | null;
   businessTimeZone: string;
+  selectedProId: string;
 }) {
   const daySchedule = schedule?.[getDayKey(iso)];
   const visibleStart = daySchedule && !daySchedule.closed ? timeToMinutes(daySchedule.open) : null;
   const visibleEnd = daySchedule && !daySchedule.closed ? timeToMinutes(daySchedule.close) : null;
   const minBookableMinutes = getMinBookableMinutes(iso, new Date(), 30, businessTimeZone);
-  const layoutItems = getDayLayoutItems(dayAppointments, dayBlocks);
+  const visibleProfessionals = selectedProId
+    ? professionals.filter((professional) => professional.id === selectedProId)
+    : professionals;
+  const laneProfessionals = visibleProfessionals.length > 0 ? visibleProfessionals : professionals;
+  const laneCount = Math.max(laneProfessionals.length, 1);
+  const laneMap = new Map(laneProfessionals.map((professional, index) => [professional.id, index]));
 
   return (
     <div className="ag-day-col" style={{ minHeight: totalSlots * SLOT_H }}>
-      {layoutItems.map((item) => {
-        const top = timeToY(item.startTime, startHour);
-        const height = durationToH(item.startTime, item.endTime);
-        const gapPx = item.columns > 1 ? 2 : 0;
-        const widthStyle = `calc(${100 / item.columns}% - ${gapPx}px)`;
-        const leftStyle = `calc(${(100 / item.columns) * item.column}% + ${item.column * gapPx}px + 2px)`;
-        const rightStyle = "2px";
-
-        if (item.kind === "block") {
-          return (
-            <button
-              key={`block:${item.block.id}`}
-              type="button"
-              onClick={() => onBlockClick(item.block)}
-              className={`ag-block${item.columns > 1 ? " ag-block--split" : ""}`}
-              style={{ top, height, width: widthStyle, left: leftStyle, right: rightStyle, background: BLOCKED_BG }}
-            >
-              <Ban size={10} style={{ flexShrink: 0 }} />
-              <span>{item.block.reason ?? "Bloqueado"}</span>
-            </button>
-          );
-        }
-
-        const isCompleted = item.apt.status === "completed";
-        const color = isCompleted ? COMPLETED_BG : getProfessionalColor(item.apt.professional?.id, professionals);
-        const background = isCompleted ? COMPLETED_BG : hexToRgba(color, 0.72);
-
+      {laneProfessionals.map((professional, laneIndex) => (
+        <div
+          key={`lane:${professional.id}`}
+          className={`ag-pro-lane${laneCount > 1 ? " ag-pro-lane--split" : ""}`}
+          style={{
+            left: `calc(${(100 / laneCount) * laneIndex}% + ${laneIndex > 0 ? 1 : 0}px)`,
+            width: `calc(${100 / laneCount}% - ${laneCount > 1 ? 1 : 0}px)`,
+          }}
+        />
+      ))}
+      {dayBlocks.map((block) => {
+        const top = timeToY(block.startTime, startHour);
+        const height = durationToH(block.startTime, block.endTime);
+        const blockLane = block.professional?.id ? laneMap.get(block.professional.id) : undefined;
+        const spansAll = blockLane === undefined || laneCount === 1;
         return (
           <button
-            key={`apt:${item.apt.id}`}
+            key={`block:${block.id}`}
             type="button"
-            onClick={() => onAptClick(item.apt)}
-            className={`ag-apt-block${item.columns > 1 ? " ag-apt-block--split" : ""}`}
+            onClick={() => onBlockClick(block)}
+            className={`ag-block${!spansAll ? " ag-block--split" : ""}`}
             style={{
               top,
               height,
-              width: widthStyle,
-              left: leftStyle,
-              right: rightStyle,
+              background: BLOCKED_BG,
+              left: spansAll ? "2px" : `calc(${(100 / laneCount) * blockLane!}% + ${blockLane! > 0 ? 1 : 0}px + 2px)`,
+              width: spansAll ? "calc(100% - 4px)" : `calc(${100 / laneCount}% - ${laneCount > 1 ? 3 : 4}px)`,
+              right: "auto",
+            }}
+          >
+            <Ban size={10} style={{ flexShrink: 0 }} />
+            <span>{block.reason ?? "Bloqueado"}</span>
+          </button>
+        );
+      })}
+      {dayAppointments.map((apt) => {
+        const top = timeToY(apt.startTime, startHour);
+        const height = durationToH(apt.startTime, apt.endTime);
+        const laneIndex = apt.professional?.id ? laneMap.get(apt.professional.id) : undefined;
+        const spansAll = laneIndex === undefined || laneCount === 1;
+        const isCompleted = apt.status === "completed";
+        const color = isCompleted ? COMPLETED_BG : getProfessionalColor(apt.professional?.id, professionals);
+        const background = isCompleted ? COMPLETED_BG : hexToRgba(color, 0.72);
+        return (
+          <button
+            key={`apt:${apt.id}`}
+            type="button"
+            onClick={() => onAptClick(apt)}
+            className={`ag-apt-block${!spansAll ? " ag-apt-block--split" : ""}`}
+            style={{
+              top,
+              height,
+              width: spansAll ? "calc(100% - 4px)" : `calc(${100 / laneCount}% - ${laneCount > 1 ? 3 : 4}px)`,
+              left: spansAll ? "2px" : `calc(${(100 / laneCount) * laneIndex!}% + ${laneIndex! > 0 ? 1 : 0}px + 2px)`,
+              right: "auto",
               borderColor: color,
               background,
               color: isCompleted ? "#fff" : "var(--fg)",
             }}
           >
-            <span className="ag-apt-time" style={{ color: isCompleted ? "rgba(255,255,255,.84)" : "var(--fg-muted)" }}>{formatTime(item.apt.startTime)}</span>
+            <span className="ag-apt-time" style={{ color: isCompleted ? "rgba(255,255,255,.84)" : "var(--fg-muted)" }}>{formatTime(apt.startTime)}</span>
             <span className="ag-apt-name" style={{ color: isCompleted ? "#fff" : "var(--fg)" }}>
-              <span>{item.apt.client?.name ?? "-"}</span>
-              {item.apt.client?.isPreferred && <Star size={11} fill="currentColor" className="ag-client-star" />}
+              <span>{apt.client?.name ?? "-"}</span>
+              {apt.client?.isPreferred && <Star size={11} fill="currentColor" className="ag-client-star" />}
             </span>
-            <span className="ag-apt-svc" style={{ color: isCompleted ? "rgba(255,255,255,.9)" : "var(--fg-muted)" }}>{item.apt.service?.name ?? ""}</span>
-            {height > 62 && item.apt.professional && (
-              <span className="ag-apt-pro" style={{ color: isCompleted ? "rgba(255,255,255,.82)" : "var(--fg-muted)" }}>{item.apt.professional.name}</span>
+            <span className="ag-apt-svc" style={{ color: isCompleted ? "rgba(255,255,255,.9)" : "var(--fg-muted)" }}>{apt.service?.name ?? ""}</span>
+            {height > 62 && apt.professional && (
+              <span className="ag-apt-pro" style={{ color: isCompleted ? "rgba(255,255,255,.82)" : "var(--fg-muted)" }}>{apt.professional.name}</span>
             )}
             <span className="ag-apt-dot" style={{ background: isCompleted ? "#fff" : color }} />
           </button>
@@ -1211,100 +1245,31 @@ function DayColumn({
           );
         }
 
-        return (
-          <div
-            key={time}
-            className="ag-empty-slot"
-            style={{ top: i * SLOT_H, height: SLOT_H, background: AVAILABLE_BG }}
-            onClick={() => onSlotClick(iso, time)}
-          />
-        );
+        return laneProfessionals.map((professional, laneIndex) => {
+          const bookedRanges = getBookedRanges(iso, professional.id, dayAppointments, dayBlocks);
+          const slotEndTime = minutesToTime(totalMinutes + 30);
+          const slotBlocked = bookedRanges.some((range) => overlaps(time, slotEndTime, range.startTime, range.endTime));
+          if (slotBlocked) return null;
+
+          return (
+            <div
+              key={`${time}:${professional.id}`}
+              className={`ag-empty-slot${laneCount > 1 ? " ag-empty-slot--split" : ""}`}
+              style={{
+                top: i * SLOT_H,
+                height: SLOT_H,
+                background: AVAILABLE_BG,
+                left: `calc(${(100 / laneCount) * laneIndex}% + ${laneIndex > 0 ? 1 : 0}px + 2px)`,
+                width: `calc(${100 / laneCount}% - ${laneCount > 1 ? 3 : 4}px)`,
+                right: "auto",
+              }}
+              onClick={() => onSlotClick(iso, time, professional.id)}
+            />
+          );
+        });
       })}
     </div>
   );
-}
-
-type DayLayoutItem =
-  | {
-      kind: "apt";
-      apt: AptItem;
-      startTime: string;
-      endTime: string;
-      column: number;
-      columns: number;
-    }
-  | {
-      kind: "block";
-      block: BlockItem;
-      startTime: string;
-      endTime: string;
-      column: number;
-      columns: number;
-    };
-
-function getDayLayoutItems(appointments: AptItem[], blocks: BlockItem[]): DayLayoutItem[] {
-  const baseItems: DayLayoutItem[] = [
-    ...appointments.map((apt) => ({
-      kind: "apt" as const,
-      apt,
-      startTime: apt.startTime,
-      endTime: apt.endTime,
-      column: 0,
-      columns: 1,
-    })),
-    ...blocks.map((block) => ({
-      kind: "block" as const,
-      block,
-      startTime: block.startTime,
-      endTime: block.endTime,
-      column: 0,
-      columns: 1,
-    })),
-  ].sort((a, b) => {
-    const startDiff = timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
-    if (startDiff !== 0) return startDiff;
-    return timeToMinutes(a.endTime) - timeToMinutes(b.endTime);
-  });
-
-  const clusters: DayLayoutItem[][] = [];
-  let currentCluster: DayLayoutItem[] = [];
-  let clusterEnd = -1;
-
-  for (const item of baseItems) {
-    const itemStart = timeToMinutes(item.startTime);
-    const itemEnd = timeToMinutes(item.endTime);
-    if (currentCluster.length === 0 || itemStart < clusterEnd) {
-      currentCluster.push(item);
-      clusterEnd = Math.max(clusterEnd, itemEnd);
-      continue;
-    }
-    clusters.push(currentCluster);
-    currentCluster = [item];
-    clusterEnd = itemEnd;
-  }
-
-  if (currentCluster.length > 0) clusters.push(currentCluster);
-
-  return clusters.flatMap((cluster) => {
-    const columnEndTimes: number[] = [];
-    let maxColumns = 1;
-
-    const laidOut = cluster.map((item) => {
-      const itemStart = timeToMinutes(item.startTime);
-      const itemEnd = timeToMinutes(item.endTime);
-      let column = columnEndTimes.findIndex((endTime) => endTime <= itemStart);
-      if (column === -1) {
-        column = columnEndTimes.length;
-        columnEndTimes.push(itemEnd);
-      } else {
-        columnEndTimes[column] = itemEnd;
-      }
-      maxColumns = Math.max(maxColumns, columnEndTimes.length);
-      return { ...item, column };
-    });
-
-    return laidOut.map((item) => ({ ...item, columns: maxColumns }));
-  });
 }
 
 export function AgendaCalendar({ businessId, businessTimezone, professionals, services }: AgendaProps) {
@@ -1322,6 +1287,7 @@ export function AgendaCalendar({ businessId, businessTimezone, professionals, se
   const [actionDate, setActionDate] = useState<string | null>(null);
   const [actionTime, setActionTime] = useState<string | undefined>(undefined);
   const [actionTab, setActionTab] = useState<"agendar" | "bloqueo">("agendar");
+  const [actionProfessionalId, setActionProfessionalId] = useState<string | undefined>(undefined);
   const [selectedProId, setSelectedProId] = useState("");
   const [availableOnly, setAvailableOnly] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -1433,11 +1399,11 @@ export function AgendaCalendar({ businessId, businessTimezone, professionals, se
           date={actionDate}
           startTime={actionTime}
           initialTab={actionTab}
-          defaultProfessionalId={selectedProId || undefined}
+          defaultProfessionalId={actionProfessionalId ?? selectedProId ?? undefined}
           professionals={professionals}
           services={services}
-          onClose={() => { setActionDate(null); setActionTime(undefined); setActionTab("agendar"); }}
-          onRefresh={() => { setActionDate(null); setActionTime(undefined); setActionTab("agendar"); fetchData(); }}
+          onClose={() => { setActionDate(null); setActionTime(undefined); setActionTab("agendar"); setActionProfessionalId(undefined); }}
+          onRefresh={() => { setActionDate(null); setActionTime(undefined); setActionTab("agendar"); setActionProfessionalId(undefined); fetchData(); }}
         />
       )}
 
@@ -1462,7 +1428,7 @@ export function AgendaCalendar({ businessId, businessTimezone, professionals, se
           <div className="ag-header-right">
             <button
               type="button"
-              onClick={() => { setActionTab("agendar"); setActionDate(todayIso); setActionTime(undefined); }}
+              onClick={() => { setActionTab("agendar"); setActionDate(todayIso); setActionTime(undefined); setActionProfessionalId(undefined); }}
               className="ag-icon-btn ag-icon-btn--berry"
               title="Agendar"
               aria-label="Agendar"
@@ -1471,7 +1437,7 @@ export function AgendaCalendar({ businessId, businessTimezone, professionals, se
             </button>
             <button
               type="button"
-              onClick={() => { setActionTab("bloqueo"); setActionDate(todayIso); setActionTime(undefined); }}
+              onClick={() => { setActionTab("bloqueo"); setActionDate(todayIso); setActionTime(undefined); setActionProfessionalId(undefined); }}
               className="ag-icon-btn ag-icon-btn--slate"
               title="Bloquear tiempo"
               aria-label="Bloquear tiempo"
@@ -1627,12 +1593,18 @@ export function AgendaCalendar({ businessId, businessTimezone, professionals, se
                   dayBlocks={visibleBlocks.filter((block) => block.date === iso)}
                   onAptClick={setSelectedApt}
                   onBlockClick={setSelectedBlock}
-                  onSlotClick={(date, time) => { setActionTab("agendar"); setActionDate(date); setActionTime(time); }}
+                  onSlotClick={(date, time, professionalId) => {
+                    setActionTab("agendar");
+                    setActionDate(date);
+                    setActionTime(time);
+                    setActionProfessionalId(professionalId);
+                  }}
                   startHour={startHour}
                   totalSlots={totalSlots}
                   professionals={professionals}
                   schedule={data.schedule}
                   businessTimeZone={resolvedTimeZone}
+                  selectedProId={selectedProId}
                 />
               ))}
             </div>

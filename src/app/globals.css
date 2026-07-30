@@ -2371,6 +2371,17 @@ body {
   min-height: calc(52px * 28); /* TOTAL_SLOTS * SLOT_H */
 }
 .ag-day-col:last-child { border-right: none; }
+.ag-pro-lane {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(255,255,255,.32);
+  pointer-events: none;
+  z-index: 1;
+}
+.ag-pro-lane--split {
+  box-shadow: inset -1px 0 0 rgba(148, 163, 184, .28);
+}
 
 /* Empty slot (click to block) */
 .ag-empty-slot {
@@ -2381,6 +2392,11 @@ body {
   transition: background .1s;
 }
 .ag-empty-slot:hover { background: rgba(110,42,150,.05); }
+.ag-empty-slot--split {
+  right: auto;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1px rgba(203, 213, 225, .85);
+}
 
 /* Appointment block */
 .ag-apt-block {

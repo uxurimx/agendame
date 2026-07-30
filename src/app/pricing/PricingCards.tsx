@@ -69,17 +69,20 @@ interface PricingCardsProps {
   isAuthenticated: boolean;
   currentPlan?: string | null;
   currentStatus?: string | null;
+  variant?: "landing" | "pricing";
 }
 
 export default function PricingCards({
   isAuthenticated,
   currentPlan,
   currentStatus,
+  variant = "pricing",
 }: PricingCardsProps) {
   const router = useRouter();
   const [loading, setLoading] = useState<PlanId | null>(null);
 
   const isActive = currentStatus === "active";
+  const isLanding = variant === "landing";
 
   async function handleSelect(planId: PlanId) {
     if (!isAuthenticated) {
@@ -123,6 +126,21 @@ export default function PricingCards({
         const isCurrent = isActive && currentPlan === plan.id;
         const isLoading = loading === plan.id;
         const isLockedPlan = plan.id === "pro" || plan.id === "multisucursal";
+        const forceConstructionButton = isLanding && plan.id === "multisucursal";
+        const showCurrentPlan = isCurrent && !forceConstructionButton;
+        const isDisabledButton = !!loading || isLockedPlan;
+        const buttonText = showCurrentPlan
+          ? "Plan actual"
+          : forceConstructionButton
+            ? "En construcción"
+            : isLockedPlan
+              ? plan.buttonDisabledLabel
+              : isLanding && plan.id === "basico"
+                ? "Prueba 3 días"
+                : !isAuthenticated
+                  ? "Crear cuenta gratis"
+                  : plan.buttonLabel;
+        const useStandardButtonStyle = !plan.highlight || forceConstructionButton;
 
         return (
           <div
@@ -250,9 +268,12 @@ export default function PricingCards({
                     />
                     <span
                       style={{
+                        display: "block",
+                        width: "100%",
                         fontSize: "0.83rem",
                         color: plan.highlight ? "rgba(255,255,255,0.83)" : "#231b2f",
                         lineHeight: 1.45,
+                        textAlign: "left",
                       }}
                     >
                       {f}
@@ -261,7 +282,7 @@ export default function PricingCards({
                 ))}
               </ul>
 
-              {isCurrent ? (
+              {showCurrentPlan ? (
                 <div
                   style={{
                     width: "100%",
@@ -280,13 +301,13 @@ export default function PricingCards({
               ) : (
                 <button
                   onClick={isLockedPlan ? undefined : () => handleSelect(plan.id)}
-                  disabled={!!loading || isLockedPlan}
+                  disabled={isDisabledButton}
                   style={{
                     width: "100%",
                     padding: "0.88rem 0.95rem",
                     borderRadius: "0.88rem",
                     border: "none",
-                    cursor: isLockedPlan || loading ? "not-allowed" : "pointer",
+                    cursor: isDisabledButton ? "not-allowed" : "pointer",
                     fontWeight: 700,
                     fontSize: "0.88rem",
                     display: "flex",
@@ -295,31 +316,25 @@ export default function PricingCards({
                     gap: "0.4rem",
                     transition: "opacity 0.15s, transform 0.1s",
                     background: isLockedPlan
-                      ? plan.highlight
-                        ? "linear-gradient(90deg, rgba(232,99,31,0.82), rgba(245,158,11,0.82))"
-                        : "linear-gradient(135deg, rgba(110,42,150,0.86), rgba(232,99,31,0.86))"
+                      ? useStandardButtonStyle
+                        ? "linear-gradient(135deg, rgba(110,42,150,0.86), rgba(232,99,31,0.86))"
+                        : "linear-gradient(90deg, rgba(232,99,31,0.82), rgba(245,158,11,0.82))"
                       : plan.highlight
                       ? "linear-gradient(90deg, #E8631F, #f59e0b)"
                       : "linear-gradient(135deg, #6E2A96, #E8631F)",
                     color: "white",
                     opacity: loading && !isLoading ? 0.5 : isLockedPlan ? 0.92 : 1,
-                    boxShadow: plan.highlight
-                      ? "0 4px 16px rgba(232,99,31,0.4)"
-                      : "0 4px 16px rgba(110,42,150,0.3)",
-                    textTransform: isLockedPlan ? "uppercase" : "none",
-                    letterSpacing: isLockedPlan ? "0.04em" : "normal",
+                    boxShadow: useStandardButtonStyle
+                      ? "0 4px 16px rgba(110,42,150,0.3)"
+                      : "0 4px 16px rgba(232,99,31,0.4)",
+                    textTransform: forceConstructionButton || !isLockedPlan ? "none" : "uppercase",
+                    letterSpacing: forceConstructionButton || !isLockedPlan ? "normal" : "0.04em",
                   }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)"; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)"; }}
                 >
                   {isLoading && <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />}
-                  {isCurrent
-                    ? "Plan actual"
-                    : isLockedPlan
-                      ? plan.buttonDisabledLabel
-                      : !isAuthenticated
-                        ? "Crear cuenta gratis"
-                        : plan.buttonLabel}
+                  {buttonText}
                 </button>
               )}
             </div>

@@ -199,6 +199,7 @@ export default async function LandingPage() {
               isAuthenticated={!!userId}
               currentPlan={currentPlan}
               currentStatus={currentStatus}
+              variant="landing"
             />
           </div>
         </section>

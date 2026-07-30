@@ -138,6 +138,7 @@ export default async function PricingPage() {
           isAuthenticated={!!userId}
           currentPlan={currentPlan}
           currentStatus={currentStatus}
+          variant="pricing"
         />
       </div>
 

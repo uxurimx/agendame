@@ -1049,6 +1049,9 @@ body {
   align-items: flex-start;
   margin-bottom: .8rem;
 }
+.ov-panel-head-copy--compact { padding-top: .1rem; }
+.ov-panel-head-copy--compact + span { padding-top: .1rem; }
+.ov-panel-head--tight .ov-panel-head-copy--compact { margin-bottom: 0; }
 .ov-panel-head h3 {
   font-size: .78rem;
   letter-spacing: .08em;
@@ -1452,15 +1455,55 @@ body {
   .ov-income-card {
     align-items: flex-start;
   }
-  .ov-occupancy-body,
-  .ov-spotlight-row {
+  .ov-occupancy-body {
     grid-template-columns: 1fr;
   }
   .ov-occupancy-ring {
     margin-inline: auto;
   }
+  .ov-spotlight-row {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: .65rem .8rem;
+    padding: .75rem;
+  }
+  .ov-avatar {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    width: 38px;
+    height: 38px;
+    font-size: .78rem;
+  }
+  .ov-spotlight-copy {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .ov-spotlight-title {
+    gap: .35rem;
+  }
+  .ov-spotlight-title strong {
+    font-size: .92rem;
+  }
+  .ov-spotlight-copy span {
+    margin-top: .1rem;
+    font-size: .8rem;
+    line-height: 1.18;
+  }
   .ov-spotlight-side {
-    align-items: flex-start;
+    grid-column: 2;
+    grid-row: 2;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: .75rem;
+  }
+  .ov-check-price {
+    font-size: 1rem;
+  }
+  .ov-pay-btn {
+    padding: .42rem .68rem;
+    font-size: .75rem;
   }
   .ov-service-row {
     grid-template-columns: 1fr auto;

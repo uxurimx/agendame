@@ -132,7 +132,7 @@ function ServiceBars({ services }: { services: TopServiceItem[] }) {
 
 interface AppointmentStackProps {
   title: string;
-  subtitle: string;
+  subtitle?: string;
   appointments: AppointmentItem[];
   empty: string;
   actionLabel: string;
@@ -152,9 +152,9 @@ function AppointmentStack({
   return (
     <section className="ov-panel">
       <div className="ov-panel-head ov-panel-head--tight">
-        <div>
+        <div className={!subtitle ? "ov-panel-head-copy ov-panel-head-copy--compact" : "ov-panel-head-copy"}>
           <h3>{title}</h3>
-          <p className="ov-panel-sub">{subtitle}</p>
+          {subtitle ? <p className="ov-panel-sub">{subtitle}</p> : null}
         </div>
         <span>{appointments.length}</span>
       </div>
@@ -435,7 +435,6 @@ export function OverviewDashboard({
         <div>
           <AppointmentStack
             title="Atendiendo"
-            subtitle={currentOverflow > 0 ? `Mostrando 2 de ${currentAppointments.length} clientas en curso.` : "Clientas en servicio en este momento."}
             appointments={currentSpotlight}
             empty="Sin citas en curso ahora mismo."
             actionLabel="Cobrar"
@@ -447,7 +446,6 @@ export function OverviewDashboard({
         <div>
           <AppointmentStack
             title="Próxima cita"
-            subtitle={nextOverflow > 0 ? `Mostrando las siguientes 2 de ${nextAppointments.length}.` : "Siguientes citas programadas para hoy."}
             appointments={nextSpotlight}
             empty="No hay más citas programadas hoy."
             actionLabel="Cobrar"

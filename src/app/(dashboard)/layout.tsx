@@ -16,14 +16,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
   ]);
   if (!business) redirect("/onboarding");
 
-  // Trial expirado o cancelado → forzar a elegir plan
-  const now = new Date();
-  const trialExpired = business.planStatus === "trial" && business.trialEndsAt && business.trialEndsAt < now;
-  if (trialExpired || business.planStatus === "cancelled") {
-    redirect("/pricing");
-  }
-
   const isAdmin = user?.role === "superadmin";
+
+  // Superadmin siempre pasa — no necesita suscripción
+  if (!isAdmin) {
+    const now = new Date();
+    const trialExpired = business.planStatus === "trial" && business.trialEndsAt && business.trialEndsAt < now;
+    if (trialExpired || business.planStatus === "cancelled") {
+      redirect("/pricing");
+    }
+  }
 
   return (
     <DashboardShell isAdmin={isAdmin}>

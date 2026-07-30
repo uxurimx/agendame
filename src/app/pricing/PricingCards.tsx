@@ -132,7 +132,7 @@ export default function PricingCards({
         const buttonText = showCurrentPlan
           ? "Plan actual"
           : forceConstructionButton
-            ? "En construcción"
+            ? "EN CONSTRUCCION"
             : isLockedPlan
               ? plan.buttonDisabledLabel
               : isLanding && plan.id === "basico"

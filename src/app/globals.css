@@ -599,17 +599,22 @@ body {
   padding: .625rem .875rem;
   font-size: .82rem;
   color: var(--l-ink);
-  margin-bottom: 1.25rem;
+  margin-bottom: .9rem;
   line-height: 1.5;
 }
-.bk-form  { display: flex; flex-direction: column; gap: .875rem; }
+.bk-form  { display: flex; flex-direction: column; gap: .7rem; }
 .bk-label {
   display: flex;
   flex-direction: column;
-  gap: .3rem;
+  gap: .22rem;
   font-size: .82rem;
   font-weight: 600;
   color: var(--l-ink);
+}
+.bk-label-text {
+  display: inline-flex;
+  align-items: baseline;
+  gap: .28rem;
 }
 .bk-label-row {
   display: flex;
@@ -622,7 +627,7 @@ body {
 .bk-input, .bk-textarea {
   border: 2px solid var(--l-line);
   border-radius: 10px;
-  padding: .625rem .875rem;
+  padding: .56rem .875rem;
   font-size: .9rem;
   color: var(--l-ink);
   background: #fff;
@@ -632,7 +637,7 @@ body {
   width: 100%;
 }
 .bk-input:focus, .bk-textarea:focus { border-color: var(--l-berry); }
-.bk-textarea { resize: vertical; }
+.bk-textarea { resize: vertical; min-height: 104px; }
 .bk-file-input {
   position: absolute;
   width: 1px;
@@ -699,6 +704,14 @@ body {
   gap: .85rem;
   padding: 1rem 1rem 6.5rem;
 }
+.bk-actions--hidden { display: none; }
+.bk-actions--details {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: .85rem;
+  padding: .9rem 0 0;
+}
 .bk-icon-back {
   display: inline-flex;
   align-items: center;
@@ -739,6 +752,19 @@ body {
   cursor: not-allowed;
 }
 .bk-btn-confirm:hover:not(:disabled)  { background: #c5511a; }
+
+@media (max-width: 640px) {
+  .bk-actions--details {
+    position: sticky;
+    bottom: 0;
+    padding: .6rem 0 0;
+    background: linear-gradient(180deg, rgba(250, 248, 255, 0) 0%, rgba(250, 248, 255, .92) 18%, rgba(250, 248, 255, 1) 100%);
+  }
+  .bk-btn-confirm {
+    min-width: 9.75rem;
+    padding: .72rem 1.2rem;
+  }
+}
 
 /* Confirmation ticket */
 .bk-ticket-wrap {

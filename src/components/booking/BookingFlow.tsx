@@ -576,7 +576,7 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
             </div>
             <div className="bk-form">
               <label className="bk-label">
-                Nombre <span className="bk-required">*</span>
+                <span className="bk-label-text">Nombre <span className="bk-required">*</span></span>
                 <input
                   type="text"
                   value={clientName}
@@ -587,7 +587,7 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
                 />
               </label>
               <label className="bk-label">
-                Teléfono <span className="bk-required">*</span>
+                <span className="bk-label-text">Teléfono <span className="bk-required">*</span></span>
                 <input
                   type="tel"
                   value={clientPhone}
@@ -598,7 +598,7 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
                 />
               </label>
               <label className="bk-label">
-                Email <span className="bk-optional">(opcional)</span>
+                <span className="bk-label-text">Email <span className="bk-optional">(opcional)</span></span>
                 <input
                   type="email"
                   value={clientEmail}
@@ -628,7 +628,7 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Referencias, alergias, preferencias…"
                   className="bk-textarea"
-                  rows={3}
+                  rows={2}
                 />
               </div>
               {referenceImageDataUrl && (
@@ -653,13 +653,31 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
               </div>
             </div>
             {error && <p className="bk-error">{error}</p>}
+            <div className="bk-actions bk-actions--details">
+              <button
+                type="button"
+                onClick={() => setStep(step - 1)}
+                className="bk-icon-back"
+                aria-label="Volver al paso anterior"
+              >
+                <ChevronsLeft size={18} />
+              </button>
+              <button
+                type="button"
+                disabled={submitting || !clientName.trim() || !clientPhone.trim()}
+                onClick={handleSubmit}
+                className="bk-btn-confirm"
+              >
+                {submitting ? <><Loader2 size={16} className="spin" /> Confirmando…</> : "Confirmar"}
+              </button>
+            </div>
           </div>
         )}
       </div>
 
       {/* Navigation */}
-      <div className="bk-actions">
-        {step > 0 && (
+      <div className={`bk-actions${step === detailsStep ? " bk-actions--hidden" : ""}`}>
+        {step > 0 && step !== detailsStep && (
           <button
             type="button"
             onClick={() => setStep(step - 1)}
@@ -669,16 +687,6 @@ export function BookingFlow({ business, professionals, services }: BookingFlowPr
             <ChevronsLeft size={18} />
           </button>
         )}
-        {step === detailsStep ? (
-          <button
-            type="button"
-            disabled={submitting || !clientName.trim() || !clientPhone.trim()}
-            onClick={handleSubmit}
-            className="bk-btn-confirm"
-          >
-            {submitting ? <><Loader2 size={16} className="spin" /> Confirmando…</> : "Confirmar"}
-          </button>
-        ) : null}
       </div>
     </div>
   );

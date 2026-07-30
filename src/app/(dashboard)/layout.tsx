@@ -5,6 +5,7 @@ import { businesses, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import DashboardShell from "@/components/DashboardShell";
 import TrialBanner from "@/components/TrialBanner";
+import { hasTrialExpired } from "@/lib/trial";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { userId } = await auth();
@@ -20,8 +21,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   // Superadmin siempre pasa — no necesita suscripción
   if (!isAdmin) {
-    const now = new Date();
-    const trialExpired = business.planStatus === "trial" && business.trialEndsAt && business.trialEndsAt < now;
+    const trialExpired = business.planStatus === "trial" && hasTrialExpired(business.trialEndsAt);
     if (trialExpired || business.planStatus === "cancelled") {
       redirect("/pricing");
     }

@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { businesses, users } from "@/db/schema";
 import { eq, desc, sql } from "drizzle-orm";
 import { CheckCircle2, Clock, AlertCircle, XCircle, ExternalLink } from "lucide-react";
+import { getTrialDaysRemaining, hasTrialExpired } from "@/lib/trial";
 
 const PLAN_LABELS: Record<string, string> = {
   basico:        "Básico",
@@ -25,10 +26,6 @@ const TYPE_LABELS: Record<string, string> = {
   otro:       "Otro",
 };
 
-function daysLeft(end: Date): number {
-  return Math.max(0, Math.ceil((end.getTime() - Date.now()) / 86400000));
-}
-
 function StatusCell({ status, trialEndsAt }: { status: string; trialEndsAt: Date | null }) {
   if (status === "active") {
     return (
@@ -38,12 +35,12 @@ function StatusCell({ status, trialEndsAt }: { status: string; trialEndsAt: Date
     );
   }
   if (status === "trial") {
-    const days = trialEndsAt ? daysLeft(trialEndsAt) : 0;
-    const expired = days === 0;
+    const days = trialEndsAt ? getTrialDaysRemaining(trialEndsAt) : 0;
+    const expired = hasTrialExpired(trialEndsAt);
     return (
       <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 999, fontSize: "0.72rem", fontWeight: 600, background: expired ? "#fee2e2" : "#fef3c7", color: expired ? "#991b1b" : "#92400e" }}>
         <Clock style={{ width: 11, height: 11 }} />
-        {expired ? "Trial vencido" : `Trial · ${days}d`}
+        {expired ? "Trial vencido" : "Trial · 3d"}
       </span>
     );
   }

@@ -4,6 +4,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { CreditCard, Loader2, ExternalLink, CheckCircle2, AlertCircle, XCircle, Clock } from "lucide-react";
+import { getTrialDaysRemaining } from "@/lib/trial";
 
 const PLAN_LABELS: Record<string, string> = {
   basico:        "Básico",
@@ -53,10 +54,6 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function daysLeft(iso: string): number {
-  return Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
-}
-
 export default function BillingCard({ plan, planStatus, trialEndsAt, stripeCustomerId }: BillingCardProps) {
   const [loading, setLoading] = useState(false);
 
@@ -74,7 +71,7 @@ export default function BillingCard({ plan, planStatus, trialEndsAt, stripeCusto
   const planLabel  = PLAN_LABELS[plan] ?? plan;
   const planPrice  = PLAN_PRICES[plan];
   const hasStripe  = !!stripeCustomerId;
-  const remaining  = trialEndsAt ? daysLeft(trialEndsAt) : null;
+  const remaining  = trialEndsAt ? getTrialDaysRemaining(trialEndsAt) : null;
 
   return (
     <div className="settings-card" style={{ marginBottom: "1.5rem" }}>

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { users, businesses, professionals } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { createTrialEndsAt } from "@/lib/trial";
 
 const schema = z.object({
   name:  z.string().min(2).max(100),
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest) {
       where: eq(businesses.ownerId, userId),
     });
 
-    const trialEndsAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 días
+    const trialEndsAt = createTrialEndsAt();
 
     if (myBusiness) {
       await db

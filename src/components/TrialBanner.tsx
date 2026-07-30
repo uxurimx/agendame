@@ -1,14 +1,11 @@
 // src/components/TrialBanner.tsx
 import Link from "next/link";
 import { AlertTriangle, Clock } from "lucide-react";
+import { getTrialDaysRemaining } from "@/lib/trial";
 
 interface TrialBannerProps {
   planStatus: string;
   trialEndsAt: Date | null;
-}
-
-function daysLeft(end: Date): number {
-  return Math.max(0, Math.ceil((end.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
 }
 
 export default function TrialBanner({ planStatus, trialEndsAt }: TrialBannerProps) {
@@ -49,7 +46,7 @@ export default function TrialBanner({ planStatus, trialEndsAt }: TrialBannerProp
   }
 
   if (planStatus === "trial" && trialEndsAt) {
-    const days = daysLeft(trialEndsAt);
+    const days = getTrialDaysRemaining(trialEndsAt);
     return (
       <div
         style={{

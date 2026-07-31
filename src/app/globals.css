@@ -317,6 +317,18 @@ body {
 .l-footer { padding: 40px 0 50px; border-top: 1px solid var(--l-line); }
 .l-footer .l-wrap { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
 .l-footer p   { font-size: 13px; color: var(--l-ink-soft); }
+.footer-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  text-align: right;
+}
+.footer-domain,
+.footer-signoff {
+  margin: 0;
+}
 .footer-social {
   display: flex;
   flex-direction: column;
@@ -400,7 +412,15 @@ body {
   .price-grid                { grid-template-columns: 1fr; }
   .hero-l                    { padding-top: 24px; }
   .hero-l h1                 { font-size: 34px; }
-  .l-footer .l-wrap          { align-items: flex-start; }
+  .l-footer .l-wrap          { align-items: center; justify-content: center; text-align: center; }
+  .footer-meta {
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    text-align: center;
+  }
   .ticket-split              { flex-direction: column; }
   .ticket-stub               {
     width: 100%;

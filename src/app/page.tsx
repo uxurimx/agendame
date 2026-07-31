@@ -58,13 +58,13 @@ export default async function LandingPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdApp) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdFaq) }} />
 
-      <div className="landing">
+      <div className="landing" id="top">
 
         {/* ── Nav ── */}
         <nav className="l-nav">
           <div className="l-wrap">
             <Link
-              href="/"
+              href="/#top"
               aria-label="Ir al inicio"
               className="logo-mark"
               style={{
@@ -292,9 +292,12 @@ export default async function LandingPage() {
                 @agendamemx
               </a>
             </div>
-            <p>
-              agendame.mx · © 2026 <a className="footer-credit" href="https://poxelbit.mx" target="_blank" rel="noopener noreferrer">by PoxelBit</a>
-            </p>
+            <div className="footer-meta">
+              <p className="footer-domain">agendame.mx</p>
+              <p className="footer-signoff">
+                © 2026 <a className="footer-credit" href="https://poxelbit.mx" target="_blank" rel="noopener noreferrer">by PoxelBit</a>
+              </p>
+            </div>
           </div>
         </footer>
 

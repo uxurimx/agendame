@@ -4,5 +4,6 @@ export const siteConfig = {
   description: "Agéndame organiza tus citas, bloquea tu tiempo según lo que dura cada servicio y avisa a tus clientas — todo desde un link que tú compartes.",
   url: "https://www.agendame.mx",
   instagram: "https://www.instagram.com/agendamemx",
+  tiktok: "https://www.tiktok.com/@agendamemx",
   version: "1.0.0",
 };

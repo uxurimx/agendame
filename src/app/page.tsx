@@ -22,7 +22,7 @@ const jsonLdApp = {
     { "@type": "Offer", name: "Plan Pro",           price: "399", priceCurrency: "MXN" },
     { "@type": "Offer", name: "Plan Multisucursal", price: "749", priceCurrency: "MXN" },
   ],
-  sameAs: [siteConfig.instagram],
+  sameAs: [siteConfig.instagram, siteConfig.tiktok],
 };
 
 const jsonLdFaq = {
@@ -168,7 +168,15 @@ export default async function LandingPage() {
             <div className="how-row">
               {[
                 { step: "Servicio",      desc: "Sube tus servicios, precios y duración una sola vez." },
-                { step: "Comparte",      desc: "Comparte tunombre.agendame.mx en tus redes sociales y/o WhatsApp." },
+                {
+                  step: "Comparte",
+                  desc: (
+                    <>
+                      Comparte <span className="how-inline-link">agendame.mx/tunombre</span> en tus redes
+                      sociales y/o WhatsApp.
+                    </>
+                  ),
+                },
                 { step: "Confirmación",  desc: "Tus clientas agendan solas. Tú solo revisas tu día." },
               ].map(({ step, desc }) => (
                 <div key={step} className="ticket how-step">
@@ -250,13 +258,36 @@ export default async function LandingPage() {
                 style={{ objectFit: "contain", objectPosition: "left center" }}
               />
             </span>
-            <p>
-              Síguenos en Instagram —{" "}
-              <a className="ig" href={siteConfig.instagram} target="_blank" rel="noopener noreferrer">
-                @agendamemx
+            <div className="footer-social">
+              <a
+                className="social-icon-link"
+                href={siteConfig.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram de Agéndame"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2Zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5a4.25 4.25 0 0 0 4.25 4.25h8.5a4.25 4.25 0 0 0 4.25-4.25v-8.5a4.25 4.25 0 0 0-4.25-4.25h-8.5Zm8.88 1.75a1.12 1.12 0 1 1 0 2.24 1.12 1.12 0 0 1 0-2.24ZM12 6.5A5.5 5.5 0 1 1 6.5 12 5.5 5.5 0 0 1 12 6.5Zm0 1.5A4 4 0 1 0 16 12a4 4 0 0 0-4-4Z" />
+                </svg>
               </a>
+              <a
+                className="social-handle"
+                href={siteConfig.tiktok}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="TikTok de Agéndame"
+              >
+                <span className="social-icon-link">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M14.54 2h2.64c.22 1.88 1.5 3.58 3.32 4.24v2.77a6.52 6.52 0 0 1-3.14-1.09v6.46a5.87 5.87 0 1 1-5.13-5.83v2.79a3.1 3.1 0 1 0 2.31 2.99V2Z" />
+                  </svg>
+                </span>
+                <span>@agendamemx</span>
+              </a>
+            </div>
+            <p>
+              agendame.mx · © 2026 <a className="footer-credit" href="https://poxelbit.mx" target="_blank" rel="noopener noreferrer">by PoxelBit</a>
             </p>
-            <p>agendame.mx · © 2026 Agéndame</p>
           </div>
         </footer>
 

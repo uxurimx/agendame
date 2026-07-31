@@ -320,8 +320,14 @@ body {
 .footer-social {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
+}
+.footer-social-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
 }
 .social-icon-link {
   display: inline-flex;
@@ -349,11 +355,16 @@ body {
 .social-handle {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  color: var(--l-ink-soft);
+  justify-content: center;
+  color: var(--l-berry);
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
+}
+.social-handle:hover,
+.social-handle:visited,
+.social-handle:focus-visible {
+  color: var(--l-berry);
 }
 .footer-credit {
   color: var(--l-gold);

@@ -3,6 +3,36 @@ import { pageViews, analyticsEvents } from "@/db/schema";
 import { sql, gte } from "drizzle-orm";
 import AnalyticsCharts from "./AnalyticsCharts";
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function startOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function startOfMonth(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function getAnalyticsWindow(days: number) {
+  const now = new Date();
+  const monthStart = startOfMonth(now);
+
+  if (days === 1) {
+    return {
+      since: startOfDay(now),
+      monthStart,
+      label: "1 día",
+    };
+  }
+
+  const relativeSince = new Date(now.getTime() - (days - 1) * DAY_MS);
+
+  return {
+    since: relativeSince > monthStart ? relativeSince : monthStart,
+    monthStart,
+    label: `${days} días`,
+  };
+}
 
 async function getStats(since: Date) {
   const [
@@ -118,8 +148,9 @@ export default async function AnalyticsPage({
   searchParams: Promise<{ days?: string }>;
 }) {
   const { days: daysParam } = await searchParams;
-  const days = parseInt(daysParam ?? "30", 10);
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const selectedDays = parseInt(daysParam ?? "30", 10);
+  const days = [1, 7, 30, 90].includes(selectedDays) ? selectedDays : 30;
+  const { since, monthStart, label } = getAnalyticsWindow(days);
 
   const stats = await getStats(since);
 
@@ -131,11 +162,12 @@ export default async function AnalyticsPage({
             Métricas del sitio
           </h1>
           <p className="text-sm mt-1" style={{ color: "var(--fg-muted)" }}>
-            Datos propios · sin terceros · últimos {days} días
+            Datos propios · sin terceros · corte mensual desde {monthStart.toLocaleDateString("es-MX")}
+            {" "}· ventana {label}
           </p>
         </div>
         <div className="flex gap-2">
-          {[7, 30, 90].map((d) => (
+          {[1, 7, 30, 90].map((d) => (
             <a
               key={d}
               href={`?days=${d}`}

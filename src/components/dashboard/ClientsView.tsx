@@ -102,9 +102,10 @@ function PhotoUploader({ clientId, onSaved }: { clientId: string; onSaved: (p: C
         className="cl-upload-btn"
         disabled={isUploading}
         onClick={() => inputRef.current?.click()}
+        aria-label={isUploading ? "Subiendo foto" : "Subir foto"}
+        title={isUploading ? "Subiendo foto" : "Subir foto"}
       >
         {isUploading ? <Loader2 size={13} className="spin" /> : <Upload size={13} />}
-        {isUploading ? "Subiendo…" : "Subir foto"}
       </button>
     </>
   );
@@ -187,15 +188,25 @@ function ClientDetail({
           />
         )}
         <div className="cl-detail-header">
-          <div>
+          <div className="cl-detail-head-main">
             <h3 className="cl-detail-name">{client.name}</h3>
             <div className="cl-detail-meta">
               <span><Phone size={12} /> {client.phone}</span>
               {client.email && <span><Mail size={12} /> {client.email}</span>}
-              {isPreferred && <span><Star size={12} fill="currentColor" /> Preferencial</span>}
             </div>
           </div>
-          <button type="button" onClick={onClose} className="svc-icon-btn"><X size={18} /></button>
+          <div className="cl-detail-actions">
+            <button
+              type="button"
+              onClick={() => setIsPreferred((current) => !current)}
+              className={`cl-pref-star${isPreferred ? " cl-pref-star--active" : ""}`}
+              aria-label={isPreferred ? "Quitar cliente especial" : "Marcar cliente especial"}
+              title={isPreferred ? "Quitar cliente especial" : "Marcar cliente especial"}
+            >
+              <Star size={15} fill={isPreferred ? "currentColor" : "none"} />
+            </button>
+            <button type="button" onClick={onClose} className="svc-icon-btn"><X size={18} /></button>
+          </div>
         </div>
         <div className="cl-detail-stats">
           <div className="cl-stat">
@@ -211,36 +222,26 @@ function ClientDetail({
             <span className="cl-stat-label">Última visita</span>
           </div>
         </div>
-        <div className="cl-pref-row">
-          <button
-            type="button"
-            onClick={() => setIsPreferred((current) => !current)}
-            className={`cl-pref-toggle${isPreferred ? " cl-pref-toggle--active" : ""}`}
-          >
-            <Star size={14} fill={isPreferred ? "currentColor" : "none"} />
-            Cliente especial
-          </button>
-          <button
-            type="button"
-            onClick={saveProfile}
-            disabled={!isDirty || savingProfile}
-            className="cl-save-btn"
-          >
-            {savingProfile && <Loader2 size={13} className="spin" />}
-            Guardar
-          </button>
-        </div>
-        <label className="svc-label" style={{ marginBottom: "1rem" }}>
+        <label className="svc-label cl-notes-field">
           Notas
           <textarea
-            className="svc-input"
+            className="svc-input cl-notes-input"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Preferencias de atención o información relevante"
-            rows={4}
+            rows={3}
             maxLength={500}
           />
         </label>
+        <button
+          type="button"
+          onClick={saveProfile}
+          disabled={!isDirty || savingProfile}
+          className="cl-save-btn"
+        >
+          {savingProfile && <Loader2 size={13} className="spin" />}
+          Guardar
+        </button>
         {profileMessage && (
           <p className={`cl-profile-msg${profileMessage === "Guardado" ? " cl-profile-msg--ok" : ""}`}>
             {profileMessage}
@@ -288,7 +289,7 @@ function ClientDetail({
           ))}
         </div>
         <div className="cl-photos-header">
-          <h4 className="cl-hist-title" style={{ margin: 0 }}>Referencias visuales</h4>
+          <h4 className="cl-hist-title" style={{ margin: 0 }}>Fotos</h4>
           <PhotoUploader clientId={client.id} onSaved={(p) => setPhotos((prev) => [p, ...prev])} />
         </div>
         {photosLoading && <div className="bk-slots-loading"><Loader2 size={16} className="spin" /> Cargando…</div>}
@@ -296,7 +297,7 @@ function ClientDetail({
         <div className="cl-photo-grid">
           {photos.map((photo) => (
             <button key={photo.id} type="button" className="cl-photo-card" onClick={() => setSelectedPhoto(photo)}>
-              <img src={photo.url} alt={`Referencia de ${client.name}`} className="cl-photo-thumb" />
+              <img src={photo.url} alt={`Foto de referencia de ${client.name}`} className="cl-photo-thumb" />
               <span className="cl-photo-meta">
                 <Image size={12} /> {photo.createdAt ? new Date(photo.createdAt).toLocaleDateString("es-MX") : "Sin fecha"}
               </span>

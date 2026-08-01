@@ -1997,6 +1997,8 @@ body {
   box-shadow: -8px 0 40px rgba(0,0,0,.15);
 }
 .cl-detail-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; }
+.cl-detail-head-main { min-width: 0; flex: 1; }
+.cl-detail-actions { display: flex; align-items: center; gap: .35rem; flex-shrink: 0; }
 .cl-detail-name   { font-size: 1.15rem; font-weight: 800; color: var(--fg); }
 .cl-detail-meta   { display: flex; gap: .75rem; flex-wrap: wrap; font-size: .78rem; color: var(--fg-muted); margin-top: .25rem; align-items: center; }
 .cl-detail-meta span { display: flex; align-items: center; gap: .25rem; }
@@ -2004,31 +2006,20 @@ body {
 .cl-stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: .75rem; text-align: center; }
 .cl-stat-val   { display: block; font-size: 1.25rem; font-weight: 800; color: var(--l-berry); }
 .cl-stat-label { font-size: .7rem; color: var(--fg-muted); }
-.cl-pref-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: .75rem;
-  margin-bottom: .75rem;
-}
-.cl-pref-toggle {
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--fg);
-  border-radius: 999px;
-  padding: .55rem .85rem;
+.cl-pref-star {
+  border: none;
+  background: transparent;
+  color: var(--fg-muted);
+  padding: .2rem;
   display: inline-flex;
   align-items: center;
-  gap: .45rem;
-  font-size: .82rem;
-  font-weight: 700;
   cursor: pointer;
 }
-.cl-pref-toggle--active {
-  border-color: #E8631F;
+.cl-pref-star--active {
   color: #E8631F;
-  background: rgba(232,99,31,.08);
 }
+.cl-notes-field { margin-bottom: .7rem !important; }
+.cl-notes-input { min-height: 92px; resize: vertical; }
 .cl-save-btn {
   border: none;
   background: var(--l-berry);
@@ -2041,6 +2032,7 @@ body {
   font-size: .82rem;
   font-weight: 700;
   cursor: pointer;
+  margin-bottom: .85rem;
 }
 .cl-save-btn:disabled {
   opacity: .5;
@@ -2070,8 +2062,8 @@ body {
   margin-top: 1rem; margin-bottom: .625rem;
 }
 .cl-upload-btn {
-  display: inline-flex; align-items: center; gap: .35rem;
-  padding: .3rem .75rem; border-radius: 8px; border: 1px solid var(--accent);
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; padding: 0; border-radius: 9px; border: 1px solid var(--accent);
   background: transparent; color: var(--accent);
   font-size: .78rem; font-weight: 700; cursor: pointer; transition: all .15s;
 }
@@ -2101,12 +2093,21 @@ body {
   }
   .cl-pref-row,
   .cl-photos-header {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    align-items: center;
   }
-  .cl-save-btn {
-    justify-content: center;
-  }
+  .cl-detail { padding: 1.1rem; }
+  .cl-detail-header { margin-bottom: .9rem; }
+  .cl-detail-name { font-size: 1.02rem; }
+  .cl-detail-meta { gap: .45rem .65rem; font-size: .73rem; }
+  .cl-detail-stats { gap: .45rem; margin-bottom: .9rem; }
+  .cl-stat { padding: .55rem .4rem; border-radius: 10px; }
+  .cl-stat-val { font-size: 1.02rem; line-height: 1.1; }
+  .cl-stat-label { font-size: .63rem; }
+  .cl-notes-field { margin-bottom: .55rem !important; }
+  .cl-notes-input { min-height: 76px; }
+  .cl-save-btn { width: 100%; justify-content: center; margin-bottom: .7rem; }
+  .cl-photos-header { margin-top: .85rem; }
 }
 
 @media (max-width: 420px) {

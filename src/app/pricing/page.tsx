@@ -7,10 +7,11 @@ import { businesses } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import PricingCards from "./PricingCards";
 import { siteConfig } from "@/config/site";
+import { LEGAL_PATHS } from "@/lib/legal";
 
 export const metadata = {
   title: "Precios — Agéndame",
-  description: "Planes desde $299 MXN/mes. 3 días de prueba gratis, sin tarjeta.",
+  description: "Plan Básico desde $299 MXN/mes. 3 días de prueba gratis, sin tarjeta.",
 };
 
 export default async function PricingPage() {
@@ -130,8 +131,8 @@ export default async function PricingPage() {
           </span>
         </h1>
         <p style={{ fontSize: "1rem", color: "var(--l-ink-soft)", maxWidth: 480, margin: "0 auto 3rem" }}>
-          3 días de prueba gratis en todos los planes. Sin tarjeta de crédito para empezar.
-          Cancela cuando quieras.
+          Hoy puedes empezar con el Plan Básico con 3 días de prueba gratis, sin tarjeta.
+          Los planes Pro y Multisucursal siguen en construcción.
         </p>
 
         <PricingCards
@@ -160,7 +161,7 @@ export default async function PricingPage() {
           },
           {
             q: "¿Puedo cambiar de plan después?",
-            a: "Sí. Puedes cambiar o cancelar tu plan en cualquier momento desde Ajustes.",
+            a: "Sí. Cuando los demás planes estén habilitados podrás cambiar o cancelar tu plan desde Ajustes.",
           },
           {
             q: "¿Qué métodos de pago aceptan?",
@@ -169,6 +170,10 @@ export default async function PricingPage() {
           {
             q: "¿Hay contratos o cargos ocultos?",
             a: `No. El precio que ves es todo lo que pagas. Sin cargos de instalación ni contratos.`,
+          },
+          {
+            q: "¿Qué planes puedo contratar hoy?",
+            a: "Hoy solo está habilitado el Plan Básico. Pro y Multisucursal siguen visibles como referencia, pero todavía están en construcción.",
           },
         ].map(({ q, a }) => (
           <div
@@ -196,6 +201,11 @@ export default async function PricingPage() {
           color: "var(--l-ink-soft)",
         }}
       >
+        <div style={{ marginBottom: ".45rem" }}>
+          <Link href={LEGAL_PATHS.privacy} style={{ color: "inherit", textDecoration: "none" }}>Aviso de Privacidad</Link>
+          {" · "}
+          <Link href={LEGAL_PATHS.terms} style={{ color: "inherit", textDecoration: "none" }}>Términos y Condiciones</Link>
+        </div>
         © {new Date().getFullYear()} {siteConfig.name} · Todos los derechos reservados
       </div>
     </div>

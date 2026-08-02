@@ -11,6 +11,11 @@ const schema = z.object({
   type:  z.string().max(50),
   slug:  z.string().min(3).max(50).regex(/^[a-z0-9-]+$/, "Solo letras, números y guiones"),
   phone: z.string().max(20).optional(),
+  legalAcceptance: z.object({
+    accepted: z.literal(true),
+    termsVersion: z.string().min(1).max(30),
+    privacyVersion: z.string().min(1).max(30),
+  }),
 });
 
 export async function POST(req: NextRequest) {
@@ -20,6 +25,9 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const data = schema.parse(body);
+    const forwardedFor = req.headers.get("x-forwarded-for");
+    const acceptanceIp = forwardedFor?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || null;
+    const acceptanceUserAgent = req.headers.get("user-agent");
 
     // Upsert del usuario en DB
     const clerkUser = await currentUser();
@@ -71,6 +79,11 @@ export async function POST(req: NextRequest) {
         plan:        "basico",
         planStatus:  "trial",
         trialEndsAt,
+        termsAcceptedAt: new Date(),
+        termsVersion: data.legalAcceptance.termsVersion,
+        privacyVersion: data.legalAcceptance.privacyVersion,
+        acceptanceIp,
+        acceptanceUserAgent,
       })
       .returning({ id: businesses.id });
 

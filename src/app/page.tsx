@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm";
 import TicketCarousel from "@/components/landing/TicketCarousel";
 import { siteConfig } from "@/config/site";
 import PricingCards from "@/app/pricing/PricingCards";
+import { LEGAL_PATHS } from "@/lib/legal";
 
 const jsonLdApp = {
   "@context": "https://schema.org",
@@ -18,9 +19,7 @@ const jsonLdApp = {
   description: "Sistema de citas online para manicuristas, lashistas, estilistas, barberos y estéticas en México.",
   inLanguage: "es-MX",
   offers: [
-    { "@type": "Offer", name: "Plan Básico",       price: "299", priceCurrency: "MXN" },
-    { "@type": "Offer", name: "Plan Pro",           price: "399", priceCurrency: "MXN" },
-    { "@type": "Offer", name: "Plan Multisucursal", price: "749", priceCurrency: "MXN" },
+    { "@type": "Offer", name: "Plan Básico", price: "299", priceCurrency: "MXN" },
   ],
   sameAs: [siteConfig.instagram, siteConfig.tiktok],
 };
@@ -31,7 +30,7 @@ const jsonLdFaq = {
   mainEntity: [
     { "@type": "Question", name: "¿Qué es Agéndame?", acceptedAnswer: { "@type": "Answer", text: "Agéndame es un sistema de citas online pensado para manicuristas, lashistas, estilistas, barberos y profesionales de estética en México." } },
     { "@type": "Question", name: "¿Necesito saber de tecnología?", acceptedAnswer: { "@type": "Answer", text: "No. Está diseñado para emprendedoras sin experiencia técnica, con una agenda simple tipo lista." } },
-    { "@type": "Question", name: "¿Cuánto cuesta?", acceptedAnswer: { "@type": "Answer", text: "Plan Básico $299/mes, Plan Pro $399/mes, Plan Multisucursal $749/mes. Los tres incluyen 3 días de prueba gratis." } },
+    { "@type": "Question", name: "¿Cuánto cuesta?", acceptedAnswer: { "@type": "Answer", text: "Hoy puedes contratar el Plan Básico por $299/mes con 3 días de prueba gratis. Los planes Pro y Multisucursal siguen en construcción." } },
     { "@type": "Question", name: "¿Puedo cancelar cuando quiera?", acceptedAnswer: { "@type": "Answer", text: "Sí. Ningún plan tiene contrato forzoso." } },
   ],
 };
@@ -146,7 +145,7 @@ export default async function LandingPage() {
                 { tag: "CAJA",                title: "Corte de caja diario",        desc: "Un corte automático al final del día que te dice si lo cobrado cuadra con lo que agendaste." },
                 { tag: "AVISOS",              title: "Notificaciones al instante",  desc: "Te llega una notificación cada vez que alguien agenda, cancela o está por llegar." },
                 { tag: "EQUIPO",              title: "Trabaja en equipo",           desc: "Tus clientas eligen \"cualquiera disponible\" o una profesional específica. Tú defines la comisión de cada una." },
-                { tag: "FIDELIDAD (OPCIONAL)", title: "Programa de fidelidad",      desc: "Actívalo cuando quieras premiar a tus clientas frecuentes con descuentos o visitas de regalo." },
+                { tag: "FIDELIDAD (PRÓXIMAMENTE)", title: "Programa de fidelidad",      desc: "Estamos preparando esta función para que puedas premiar a tus clientas frecuentes con descuentos o visitas de regalo." },
               ].map(({ tag, title, desc }) => (
                 <div key={tag} className="feature-card">
                   <span className="tag">{tag}</span>
@@ -224,9 +223,9 @@ export default async function LandingPage() {
                 { q: "¿Qué es Agéndame?", a: "Agéndame es un sistema de citas online pensado para manicuristas, lashistas, estilistas, barberos y profesionales de estética en México. Organiza la agenda, bloquea el tiempo automáticamente según la duración de cada servicio y avisa cuando alguien agenda.", open: true },
                 { q: "¿Necesito saber de tecnología para usarlo?", a: "No. Agéndame está pensado para emprendedoras y profesionales sin experiencia técnica: agenda tipo lista, sin cuadrículas complicadas ni configuración avanzada." },
                 { q: "¿Sirve para barberías y estéticas, o solo para manicuristas?", a: "Sirve para cualquier negocio de servicios por cita: manicuristas, lashistas, estilistas, barberos y estéticas." },
-                { q: "¿Cuánto cuesta Agéndame?", a: "Tres planes: Básico $299/mes, Pro $399/mes con fidelidad y pagos en línea, y Multisucursal $749/mes para 2 o más sucursales. Los tres incluyen 3 días de prueba gratis." },
+                { q: "¿Cuánto cuesta Agéndame?", a: "Hoy puedes contratar el Plan Básico por $299/mes con 3 días de prueba gratis. Los planes Pro y Multisucursal siguen visibles como referencia, pero todavía están en construcción." },
                 { q: "¿Puedo cancelar cuando quiera?", a: "Sí. Ningún plan tiene contrato forzoso — cancelas cuando quieras, sin penalización." },
-                { q: "¿Cómo pagan mis clientas en línea?", a: "El Plan Pro y el Plan Multisucursal incluyen pagos en línea al confirmar la cita, para reducir cancelaciones de última hora." },
+                { q: "¿Cómo pagan mis clientas en línea?", a: "Los pagos en línea forman parte de funciones planificadas para planes futuros y todavía no están liberados comercialmente." },
                 { q: "¿Puedo tener el link con el nombre de mi negocio solamente?", a: "Sí. Desde la misma plataforma levantas una solicitud de compra, ves el costo y pagas ahí mismo — sin trámites externos." },
                 { q: "¿Puedo tener varias trabajadoras y separar sus comisiones?", a: "Sí. Cada profesional se da de alta con su propia comisión (porcentaje o monto fijo), y el corte de caja diario separa automáticamente cuánto generó cada una." },
               ].map(({ q, a, open }) => (
@@ -294,6 +293,11 @@ export default async function LandingPage() {
             </div>
             <div className="footer-meta">
               <p className="footer-domain">agendame.mx</p>
+              <p className="footer-signoff">
+                <Link className="footer-credit" href={LEGAL_PATHS.privacy}>Aviso de Privacidad</Link>
+                {" · "}
+                <Link className="footer-credit" href={LEGAL_PATHS.terms}>Términos y Condiciones</Link>
+              </p>
               <p className="footer-signoff">
                 © 2026 <a className="footer-credit" href="https://poxelbit.mx" target="_blank" rel="noopener noreferrer">by PoxelBit</a>
               </p>

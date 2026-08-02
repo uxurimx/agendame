@@ -3,6 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { slugify } from "@/lib/slugify";
+import {
+  LEGAL_ACCEPTANCE_STORAGE_KEY,
+  LEGAL_CHECKBOX_LABEL,
+  LEGAL_PATHS,
+  LEGAL_VERSIONS,
+} from "@/lib/legal";
 
 // ── Constantes ────────────────────────────────────────────────
 const BUSINESS_TYPES = [
@@ -142,15 +148,36 @@ function Step1({
   const [name, setName]     = useState("");
   const [type, setType]     = useState("manicura");
   const [slug, setSlug]     = useState("");
+  const [slugEdited, setSlugEdited] = useState(false);
   const [phone, setPhone]   = useState("");
   const [slugOk, setSlugOk] = useState<boolean | null>(null);
   const [error, setError]   = useState("");
   const [loading, setLoading] = useState(false);
+  const [acceptedLegal, setAcceptedLegal] = useState(false);
+  const [legalHydrated, setLegalHydrated] = useState(false);
 
-  // Auto-generar slug desde el nombre
   useEffect(() => {
-    if (name) setSlug(slugify(name));
-  }, [name]);
+    setTimeout(() => {
+      try {
+        const raw = sessionStorage.getItem(LEGAL_ACCEPTANCE_STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw) as {
+            accepted?: boolean;
+            termsVersion?: string;
+            privacyVersion?: string;
+          };
+          if (
+            parsed.accepted === true &&
+            parsed.termsVersion === LEGAL_VERSIONS.terms &&
+            parsed.privacyVersion === LEGAL_VERSIONS.privacy
+          ) {
+            setAcceptedLegal(true);
+          }
+        }
+      } catch {}
+      setLegalHydrated(true);
+    }, 0);
+  }, []);
 
   // Verificar disponibilidad del slug con debounce
   const checkSlug = useCallback(async (s: string) => {
@@ -161,7 +188,6 @@ function Step1({
   }, []);
 
   useEffect(() => {
-    setSlugOk(null);
     const id = setTimeout(() => checkSlug(slug), 500);
     return () => clearTimeout(id);
   }, [slug, checkSlug]);
@@ -171,12 +197,23 @@ function Step1({
     setError("");
     if (!name.trim()) { setError("El nombre es requerido"); return; }
     if (slugOk === false) { setError("Ese link ya está en uso, elige otro"); return; }
+    if (!acceptedLegal) { setError("Necesitas aceptar los términos y reconocer el aviso de privacidad."); return; }
 
     setLoading(true);
     const res = await fetch("/api/onboarding/business", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, type, slug, phone }),
+      body: JSON.stringify({
+        name,
+        type,
+        slug,
+        phone,
+        legalAcceptance: {
+          accepted: true,
+          termsVersion: LEGAL_VERSIONS.terms,
+          privacyVersion: LEGAL_VERSIONS.privacy,
+        },
+      }),
     });
     const json = await res.json();
     setLoading(false);
@@ -196,7 +233,14 @@ function Step1({
         label="Nombre de tu negocio"
         placeholder="Ej: Nails by Sofía"
         value={name}
-        onChange={(e) => setName(e.target.value)}
+        onChange={(e) => {
+          const nextName = e.target.value;
+          setName(nextName);
+          if (!slugEdited) {
+            setSlug(slugify(nextName));
+            setSlugOk(null);
+          }
+        }}
         required
       />
 
@@ -224,7 +268,11 @@ function Step1({
             className="flex-1 px-3 py-3 text-sm outline-none bg-white font-mono"
             style={{ color: "#6E2A96" }}
             value={slug}
-            onChange={(e) => setSlug(slugify(e.target.value))}
+            onChange={(e) => {
+              setSlugEdited(true);
+              setSlug(slugify(e.target.value));
+              setSlugOk(null);
+            }}
             placeholder="tu-negocio"
           />
           <span className="px-3 text-lg">
@@ -244,6 +292,43 @@ function Step1({
         value={phone}
         onChange={(e) => setPhone(e.target.value)}
       />
+
+      {legalHydrated && (
+        <div className="flex flex-col gap-2 p-4 rounded-xl" style={{ background: "#F6F1FA", border: "1px solid #e8ddf2" }}>
+          <div className="flex flex-wrap gap-3 text-sm">
+            <a href={LEGAL_PATHS.terms} target="_blank" rel="noopener noreferrer" style={{ color: "#6E2A96", fontWeight: 600 }}>
+              Ver Términos y Condiciones
+            </a>
+            <a href={LEGAL_PATHS.privacy} target="_blank" rel="noopener noreferrer" style={{ color: "#6E2A96", fontWeight: 600 }}>
+              Ver Aviso de Privacidad
+            </a>
+          </div>
+          <label className="flex items-start gap-3 text-sm" style={{ color: "#3f374a", cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={acceptedLegal}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setAcceptedLegal(checked);
+                if (checked) {
+                  sessionStorage.setItem(
+                    LEGAL_ACCEPTANCE_STORAGE_KEY,
+                    JSON.stringify({
+                      accepted: true,
+                      termsVersion: LEGAL_VERSIONS.terms,
+                      privacyVersion: LEGAL_VERSIONS.privacy,
+                    }),
+                  );
+                } else {
+                  sessionStorage.removeItem(LEGAL_ACCEPTANCE_STORAGE_KEY);
+                }
+              }}
+              style={{ marginTop: 4 }}
+            />
+            <span>{LEGAL_CHECKBOX_LABEL}</span>
+          </label>
+        </div>
+      )}
 
       {error && <p className="text-sm text-center" style={{ color: "#dc2626" }}>{error}</p>}
       <BtnPrimary loading={loading}>Siguiente →</BtnPrimary>

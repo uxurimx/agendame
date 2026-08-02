@@ -4,8 +4,8 @@ import { siteConfig } from "@/config/site";
 
 type LegalSection = {
   title: string;
-  paragraphs?: string[];
-  bullets?: string[];
+  paragraphs?: readonly string[];
+  bullets?: readonly string[];
 };
 
 export default function LegalPage({
@@ -17,7 +17,7 @@ export default function LegalPage({
   title: string;
   updatedAt: string;
   intro: string;
-  sections: LegalSection[];
+  sections: readonly LegalSection[];
 }) {
   return (
     <div className="landing" style={{ minHeight: "100vh" }}>

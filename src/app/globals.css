@@ -2928,6 +2928,16 @@ body {
   justify-content: flex-end;
   flex-wrap: wrap;
 }
+.settings-plan-select {
+  min-width: 170px;
+  padding: .52rem .72rem;
+  border-radius: .7rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: .82rem;
+  font-weight: 600;
+}
 .settings-link-text {
   font-family: monospace;
   color: var(--l-berry);
@@ -3084,6 +3094,9 @@ body {
   }
   .settings-link-actions {
     justify-content: flex-start;
+  }
+  .settings-plan-select {
+    min-width: 100%;
   }
   .settings-link-text {
     max-width: 100%;

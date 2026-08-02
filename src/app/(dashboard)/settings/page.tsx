@@ -7,7 +7,6 @@ import { eq, asc } from "drizzle-orm";
 import { TeamManager } from "@/components/dashboard/TeamManager";
 import { BusinessSettingsCard } from "@/components/dashboard/BusinessSettingsCard";
 import BillingCard from "@/components/dashboard/BillingCard";
-import PricingCards from "@/app/pricing/PricingCards";
 import AccountSettingsCard from "@/components/dashboard/AccountSettingsCard";
 import type { ProItem } from "@/components/dashboard/TeamManager";
 import { siteConfig } from "@/config/site";
@@ -60,19 +59,6 @@ export default async function SettingsPage() {
         createdAt={biz.createdAt?.toISOString() ?? null}
         stripeCustomerId={biz.stripeCustomerId ?? null}
       />
-
-      <div className="settings-card" style={{ marginBottom: "1.5rem" }}>
-        <h3 className="settings-section-label">Plan</h3>
-        <p className="settings-hint" style={{ marginTop: ".15rem", marginBottom: ".85rem" }}>
-          Puedes desplazarte entre planes y elegir otro. Si ya tienes suscripción activa, el siguiente cobro se hará con el nuevo plan seleccionado.
-        </p>
-        <PricingCards
-          isAuthenticated
-          currentPlan={biz.plan}
-          currentStatus={biz.planStatus}
-          variant="settings"
-        />
-      </div>
 
       {!blocked && (
         <div className="settings-card" style={{ marginBottom: "1.5rem" }}>

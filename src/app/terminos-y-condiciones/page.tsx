@@ -66,7 +66,7 @@ const sections = [
       "Estos términos se interpretarán conforme a las leyes aplicables en México. Cualquier controversia se atenderá ante las autoridades competentes que correspondan conforme a la legislación aplicable, salvo disposición distinta obligatoria por ley.",
     ],
   },
-] as const;
+];
 
 export default function TermsPage() {
   return (

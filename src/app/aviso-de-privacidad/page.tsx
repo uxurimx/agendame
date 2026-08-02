@@ -66,7 +66,7 @@ const sections = [
       "Agéndame puede incorporar nuevas funciones, planes, mejoras o módulos en el tiempo. La aparición de funciones en desarrollo, preventa, prueba, próximo lanzamiento o construcción dentro del producto o materiales comerciales no implica disponibilidad inmediata para todos los usuarios, salvo que expresamente se indique lo contrario.",
     ],
   },
-] as const;
+];
 
 export default function PrivacyPage() {
   return (

@@ -34,6 +34,8 @@ export const businesses = pgTable('businesses', {
   schedule:             jsonb('schedule'),
   logoUrl:              text('logo_url'),
   notificationSeenAt:   timestamp('notification_seen_at'),
+  deletionRequestedAt:  timestamp('deletion_requested_at'),
+  deletionScheduledFor: timestamp('deletion_scheduled_for'),
   createdAt:            timestamp('created_at').defaultNow(),
   updatedAt:            timestamp('updated_at').defaultNow(),
 }, (t) => [

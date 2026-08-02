@@ -2943,6 +2943,122 @@ body {
 .settings-link-anchor:hover {
   color: var(--l-berry-dark);
 }
+.settings-danger-zone {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.settings-danger-title {
+  font-size: .88rem;
+  font-weight: 700;
+  color: #991b1b;
+  margin: 0 0 .25rem;
+}
+.settings-danger-copy {
+  font-size: .78rem;
+  color: var(--fg-muted);
+  margin: 0;
+  max-width: 540px;
+}
+.settings-danger-note {
+  font-size: .75rem;
+  color: #92400e;
+  margin-top: .5rem;
+}
+.settings-danger-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .72rem 1rem;
+  border-radius: .8rem;
+  border: 1px solid rgba(153,27,27,.2);
+  background: #991b1b;
+  color: #fff;
+  font-size: .82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.settings-danger-btn:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+.settings-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 300;
+}
+.settings-modal-card {
+  width: 100%;
+  max-width: 460px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  box-shadow: 0 20px 50px rgba(0,0,0,.18);
+}
+.settings-modal-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: #fee2e2;
+  color: #991b1b;
+  margin-bottom: .9rem;
+}
+.settings-modal-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--fg);
+  margin: 0 0 .5rem;
+}
+.settings-modal-copy {
+  font-size: .84rem;
+  line-height: 1.6;
+  color: var(--fg-muted);
+  margin: 0;
+}
+.settings-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .75rem;
+  margin-top: 1.1rem;
+  flex-wrap: wrap;
+}
+.settings-modal-cancel,
+.settings-modal-confirm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  min-width: 140px;
+  padding: .72rem .95rem;
+  border-radius: .8rem;
+  font-size: .82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.settings-modal-cancel {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--fg);
+}
+.settings-modal-confirm {
+  border: none;
+  background: #991b1b;
+  color: #fff;
+}
 .settings-copy-icon-btn {
   min-width: 40px;
   justify-content: center;
@@ -2973,6 +3089,17 @@ body {
     max-width: 100%;
     white-space: normal;
     word-break: break-word;
+  }
+  .settings-danger-zone {
+    align-items: stretch;
+  }
+  .settings-danger-btn,
+  .settings-modal-cancel,
+  .settings-modal-confirm {
+    width: 100%;
+  }
+  .settings-modal-actions {
+    justify-content: stretch;
   }
 }
 

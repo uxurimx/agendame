@@ -69,7 +69,7 @@ interface PricingCardsProps {
   isAuthenticated: boolean;
   currentPlan?: string | null;
   currentStatus?: string | null;
-  variant?: "landing" | "pricing";
+  variant?: "landing" | "pricing" | "settings";
 }
 
 export default function PricingCards({
@@ -80,9 +80,11 @@ export default function PricingCards({
 }: PricingCardsProps) {
   const router = useRouter();
   const [loading, setLoading] = useState<PlanId | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
 
   const isActive = currentStatus === "active";
   const isLanding = variant === "landing";
+  const isSettings = variant === "settings";
 
   async function handleSelect(planId: PlanId) {
     if (!isAuthenticated) {
@@ -90,6 +92,7 @@ export default function PricingCards({
       return;
     }
 
+    setFeedback(null);
     setLoading(planId);
     try {
       const res = await fetch("/api/billing/checkout", {
@@ -99,29 +102,51 @@ export default function PricingCards({
       });
       const data = await res.json();
       if (data.url) {
-        window.location.href = data.url;
+        window.location.assign(data.url);
+      } else if (data.updated) {
+        setFeedback(data.message ?? "Plan actualizado.");
+        setLoading(null);
+        router.refresh();
       } else {
         console.error("Sin URL de checkout:", data);
+        setFeedback(data.error ?? "No pude actualizar el plan.");
         setLoading(null);
       }
     } catch (err) {
       console.error(err);
+      setFeedback("No pude actualizar el plan.");
       setLoading(null);
     }
   }
 
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-        gap: "1.5rem",
-        maxWidth: "1000px",
-        margin: "0 auto",
-        padding: "1.4rem 1rem 0",
-        alignItems: "stretch",
-      }}
-    >
+    <>
+      {feedback && (
+        <p
+          style={{
+            fontSize: "0.8rem",
+            color: "var(--l-sage)",
+            margin: isSettings ? "0 0 .65rem" : "0 auto .65rem",
+            maxWidth: isSettings ? "none" : "1000px",
+            padding: isSettings ? "0" : "0 1rem",
+          }}
+        >
+          {feedback}
+        </p>
+      )}
+      <div
+        style={{
+          display: isSettings ? "flex" : "grid",
+          gridTemplateColumns: isSettings ? undefined : "repeat(auto-fit, minmax(280px, 1fr))",
+          gap: "1.5rem",
+          maxWidth: isSettings ? "none" : "1000px",
+          margin: isSettings ? "0" : "0 auto",
+          padding: isSettings ? ".25rem 0 .35rem" : "1.4rem 1rem 0",
+          alignItems: "stretch",
+          overflowX: isSettings ? "auto" : "visible",
+          overscrollBehaviorX: isSettings ? "contain" : undefined,
+        }}
+      >
       {PLANS.map((plan) => {
         const isCurrent = isActive && currentPlan === plan.id;
         const isLoading = loading === plan.id;
@@ -135,6 +160,8 @@ export default function PricingCards({
             ? "EN CONSTRUCCION"
             : isLockedPlan
               ? plan.buttonDisabledLabel
+              : isSettings && isActive
+                ? "Cambiar a este plan"
               : isLanding && plan.id === "basico"
                 ? "Prueba 3 días"
                 : !isAuthenticated
@@ -158,6 +185,8 @@ export default function PricingCards({
               border: plan.highlight ? "1px solid rgba(139, 92, 246, 0.5)" : "1px solid rgba(118, 83, 159, 0.08)",
               overflow: "visible",
               display: "flex",
+              minWidth: isSettings ? 292 : undefined,
+              flex: isSettings ? "0 0 292px" : undefined,
             }}
           >
             {plan.badge && (
@@ -343,6 +372,7 @@ export default function PricingCards({
       })}
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
+      </div>
+    </>
   );
 }

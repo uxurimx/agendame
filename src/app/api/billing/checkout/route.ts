@@ -34,6 +34,37 @@ export async function POST(req: NextRequest) {
     });
     if (!biz) return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
 
+    if (biz.planStatus === 'active' && biz.stripeSubscriptionId) {
+      if (biz.plan === plan) {
+        return NextResponse.json({ updated: true, message: 'Ese plan ya está activo en tu cuenta.' });
+      }
+
+      const subscription = await stripe.subscriptions.retrieve(biz.stripeSubscriptionId);
+      const item = subscription.items.data[0];
+      if (!item) {
+        return NextResponse.json({ error: 'No encontré el item de la suscripción actual' }, { status: 400 });
+      }
+
+      await stripe.subscriptions.update(biz.stripeSubscriptionId, {
+        items: [{ id: item.id, price: priceId }],
+        proration_behavior: 'none',
+        billing_cycle_anchor: 'unchanged',
+        metadata: {
+          businessId: biz.id,
+          plan,
+        },
+      });
+
+      await db.update(businesses)
+        .set({ plan, updatedAt: new Date() })
+        .where(eq(businesses.id, biz.id));
+
+      return NextResponse.json({
+        updated: true,
+        message: 'Plan actualizado. El siguiente cobro usará el nuevo plan.',
+      });
+    }
+
     let customerId = biz.stripeCustomerId;
     if (!customerId) {
       const clerkUser = await currentUser();

@@ -4,7 +4,7 @@
 
 ## 1. Responsable
 
-POXELBIT SAS, con domicilio en Hermanos Flores Magón #3102, Infonavit Humaya, Culiacán, Sinaloa, México, C.P. 80020, es responsable del tratamiento de los datos personales recabados a través de Agéndame.
+POXELBIT SAS, en su carácter de prestador de servicios digitales y operador de Agéndame en México, es responsable del tratamiento de los datos personales recabados a través de la plataforma.
 
 Medios de contacto:
 
@@ -12,68 +12,72 @@ Medios de contacto:
 - `soporte@agendame.mx`
 - `soporte@poxelbit.mx`
 
-## 2. Datos personales que podemos tratar
+## 2. Datos personales que podemos recabar y tratar
 
 Dependiendo del uso de la plataforma, Agéndame puede tratar:
 
-- Datos de cuenta del negocio, como nombre, correo, teléfono, nombre comercial y datos básicos de operación.
-- Datos de clientas o clientes capturados por el negocio usuario, como nombre, teléfono, correo, notas, historial de citas y preferencias.
-- Imágenes o referencias visuales cargadas por el negocio usuario.
-- Datos necesarios para acceso, seguridad, soporte, cobro, operación y continuidad del servicio.
+- datos de identificación y contacto del usuario o del negocio, como nombre, correo, teléfono, nombre comercial y datos básicos de operación;
+- datos de autenticación, acceso, seguridad y continuidad del servicio;
+- datos de clientas o clientes capturados por el propio usuario dentro de la plataforma;
+- notas, historial, referencias visuales, imágenes y demás contenido cargado por el usuario;
+- datos necesarios para soporte, cobro, administración de la cuenta, prevención de fraude, continuidad operativa y cumplimiento legal.
 
-## 3. Finalidades del tratamiento
+## 3. Finalidades primarias del tratamiento
 
 Tratamos los datos para:
 
-- Crear, administrar y proteger la cuenta del negocio usuario.
-- Operar la agenda, reservas, servicios, profesionales, clientas, citas y herramientas relacionadas.
-- Procesar cobros, suscripciones, cambios de plan y solicitudes del usuario.
-- Atender soporte, seguridad, prevención de fraude y cumplimiento legal.
-- Mejorar y mantener el servicio.
+- crear, administrar, autenticar y proteger la cuenta del usuario;
+- operar la plataforma y sus funciones de agenda, reservas, clientes, profesionales, historial, reportes y herramientas relacionadas;
+- procesar solicitudes, soporte, cobros, suscripciones, cambios de plan, cancelaciones y atención operativa;
+- prevenir fraude, abuso, accesos no autorizados, incidentes de seguridad o usos contrarios a los términos aplicables;
+- mantener, mejorar, diagnosticar y dar continuidad al servicio;
+- cumplir obligaciones legales, regulatorias o requerimientos de autoridad competente.
 
-## 4. Datos de terceros capturados por el negocio usuario
+## 4. Datos de terceros capturados por el usuario
 
 El negocio usuario es responsable de contar con base legal, aviso y autorizaciones necesarias para capturar datos de sus clientes dentro de Agéndame.
 
-Si el negocio usuario sube fotografías o referencias visuales que puedan identificar a una persona, declara que cuenta con autorización suficiente para dicho tratamiento y libera a Agéndame de responsabilidad por cargas no autorizadas por el propio negocio usuario.
+Si el negocio usuario sube fotografías, referencias visuales o cualquier contenido que pueda identificar a una persona, declara que cuenta con autorización suficiente para dicho tratamiento y asume la responsabilidad correspondiente frente a terceros.
 
-## 5. Acceso a la información
+## 5. Acceso, uso interno y compartición limitada
 
-Agéndame no usa los datos del negocio usuario ni de sus clientes para fines ajenos a la operación del servicio. Sin embargo, sí puede acceder a cierta información cuando sea necesario para:
+Agéndame no comercializa los datos personales recabados a través de la plataforma como parte ordinaria de su operación. No obstante, podrá acceder, utilizar o compartir cierta información cuando ello sea necesario para:
 
-- Soporte técnico solicitado por el usuario.
-- Mantenimiento, diagnóstico o recuperación ante fallas.
-- Seguridad, prevención de fraude o incidentes.
-- Cumplimiento de requerimientos legales o regulatorios.
+- operar correctamente el servicio;
+- prestar soporte técnico o atención al usuario;
+- mantenimiento, verificación, diagnóstico, recuperación o continuidad operativa;
+- seguridad, prevención de fraude o atención de incidentes;
+- cumplimiento de obligaciones legales o requerimientos de autoridad competente;
+- intervención de proveedores o terceros que apoyen la operación tecnológica del servicio en la medida estrictamente necesaria.
 
-## 6. Terceros y servicios de apoyo
+## 6. Conservación, bloqueo y eliminación
 
-Agéndame puede apoyarse en terceros e infraestructura tecnológica necesaria para autenticación, pagos, almacenamiento, mensajería, seguridad, soporte, hosting y operación general del servicio. Dichos terceros solo podrán intervenir en la medida necesaria para prestar el servicio o cumplir obligaciones legales y de seguridad.
+Agéndame podrá conservar la información mientras exista relación activa con el usuario y por el tiempo razonablemente necesario para fines operativos, contractuales, legales, de seguridad, auditoría, respaldo, continuidad del servicio o atención de controversias.
 
-## 7. Conservación y eliminación
+Cuando el usuario solicite la cancelación o eliminación de su cuenta, la información podrá quedar desactivada, bloqueada o programada para eliminación posterior conforme a las políticas operativas vigentes, incluyendo una ventana de retención temporal para validación, reactivación, prevención de abuso, seguridad o cumplimiento legal.
 
-Agéndame puede conservar la información mientras exista una relación activa con el negocio usuario y durante el tiempo necesario para fines operativos, legales, de seguridad, respaldo o resolución de controversias.
-
-Cuando el usuario solicite la eliminación de su cuenta, la cuenta puede quedar desactivada y programada para eliminación posterior. Actualmente Agéndame contempla una ventana operativa de hasta 30 días para retención temporal, reactivación, validación y proceso de eliminación correspondiente.
-
-## 8. Derechos ARCO y revocación
+## 7. Derechos ARCO y revocación del consentimiento
 
 La persona titular puede solicitar acceso, rectificación, cancelación u oposición respecto de sus propios datos, así como revocar el consentimiento cuando legalmente proceda.
 
 La solicitud deberá incluir al menos:
 
-- Nombre de la persona solicitante.
-- Medio de contacto para responder.
-- Relación con la cuenta o datos involucrados.
-- Descripción clara de la solicitud.
-- Elementos razonables para identificar la información relacionada.
+- nombre de la persona solicitante;
+- medio de contacto para responder;
+- relación con la cuenta o datos involucrados;
+- descripción clara de la solicitud;
+- elementos razonables para identificar la información relacionada.
 
 Agéndame dará trámite a la solicitud en un plazo razonable conforme a la legislación aplicable en México.
 
-## 9. Cambios al aviso
+## 8. Medidas, alcances y limitaciones
 
-Agéndame podrá modificar este aviso para reflejar cambios legales, técnicos, operativos o comerciales. La versión vigente deberá publicarse en los canales oficiales del servicio.
+Agéndame implementa medidas razonables de carácter administrativo, técnico y operativo para proteger la información tratada dentro de la plataforma. Sin embargo, el usuario reconoce que ningún entorno digital puede garantizar seguridad absoluta o invulnerabilidad total frente a incidentes, accesos no autorizados o eventos fuera del control razonable del prestador.
 
-## 10. Funciones y cambios del servicio
+El usuario también reconoce que la seguridad del servicio depende en parte del resguardo de sus accesos, contraseñas, dispositivos, cuentas y prácticas internas.
 
-Agéndame puede incorporar nuevas funciones, planes, mejoras o módulos en el tiempo. La aparición de funciones en desarrollo, preventa, prueba, próximo lanzamiento o construcción dentro del producto o materiales comerciales no implica disponibilidad inmediata para todos los usuarios, salvo que expresamente se indique lo contrario.
+## 9. Cambios al aviso y evolución del servicio
+
+Agéndame podrá modificar este aviso para reflejar cambios legales, técnicos, operativos, comerciales o funcionales del servicio. La versión vigente será la publicada en los canales oficiales de la plataforma.
+
+La incorporación de nuevas funciones, módulos, planes, herramientas, mejoras o servicios en desarrollo no modifica por sí sola la naturaleza general de este aviso, salvo que exista un cambio material en el tratamiento de datos que deba informarse de forma adicional.

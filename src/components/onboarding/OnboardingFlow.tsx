@@ -516,7 +516,7 @@ function Step3({
           return (
             <div
               key={key}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+              className="flex flex-wrap sm:flex-nowrap items-center gap-3 px-3 py-2.5 rounded-xl"
               style={{ background: day.closed ? "#f5f5fa" : "#EFE6F5" }}
             >
               {/* Toggle */}
@@ -534,7 +534,7 @@ function Step3({
 
               {/* Día */}
               <span
-                className="w-24 text-sm font-medium flex-shrink-0"
+                className="w-28 sm:w-32 text-sm font-medium flex-shrink-0"
                 style={{ color: day.closed ? "#6b6270" : "#1A1420" }}
               >
                 {label}
@@ -543,9 +543,9 @@ function Step3({
               {day.closed ? (
                 <span className="text-xs" style={{ color: "#6b6270" }}>Cerrado</span>
               ) : (
-                <div className="flex items-center gap-2 flex-1">
+                <div className="flex items-center gap-2 w-full sm:w-auto sm:flex-1 min-w-0">
                   <select
-                    className="flex-1 px-2 py-1 rounded-lg border text-xs bg-white outline-none cursor-pointer"
+                    className="flex-1 min-w-0 px-2 py-1 rounded-lg border text-xs bg-white outline-none cursor-pointer"
                     style={{ borderColor: "#e0d9e8" }}
                     value={day.open}
                     onChange={(e) => updateDay(key, "open", e.target.value)}
@@ -554,7 +554,7 @@ function Step3({
                   </select>
                   <span className="text-xs" style={{ color: "#6b6270" }}>a</span>
                   <select
-                    className="flex-1 px-2 py-1 rounded-lg border text-xs bg-white outline-none cursor-pointer"
+                    className="flex-1 min-w-0 px-2 py-1 rounded-lg border text-xs bg-white outline-none cursor-pointer"
                     style={{ borderColor: "#e0d9e8" }}
                     value={day.close}
                     onChange={(e) => updateDay(key, "close", e.target.value)}
